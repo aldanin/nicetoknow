@@ -2,23 +2,31 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2be4ebe4-e951-48c7-9a35-172e5d523702" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/svelte-typescript-template.iml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/AppDesktop.svelte" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/common/NTKList.svelte" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/common/NTKPersonPopup.svelte" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/components/Header.svelte" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/components/MoreNTKs.svelte" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/components/MyNTKs.svelte" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/state/state.model.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/state/view/view.model.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/state/view/viewRepo.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/state/view/viewStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.eslintrc.js" beforeDir="false" afterPath="$PROJECT_DIR$/.eslintrc.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/build/bundle.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/build/bundle.css.map" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/build/bundle.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/build/bundle.js.map" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/build/material.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/build/bundle.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/build/bundle.css.map" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.css.map" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/build/bundle.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/build/bundle.js.map" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.js.map" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/build/material.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/material.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/global.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/global.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/App.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/greeting-store.test.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/greeting-store.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/helpers.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Desktop.svelte" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/NTKCard.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/NTKCard.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/NTKList.svelte" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/nktStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/ntk/nktStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/ntk.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/ntk/ntk.model.ts" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -53,7 +61,7 @@
     <property name="HbShouldOpenHtmlAsHb" value="" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/components" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.standard" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -68,7 +76,13 @@
     <property name="ts.external.directory.path" value="G:\_ProfessionalProgramming\SideProjects\svelte\NiceToKnow\node_modules\typescript\lib" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="G:\_ProfessionalProgramming\SideProjects\svelte\NiceToKnow\src\components" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="G:\_ProfessionalProgramming\SideProjects\svelte\NiceToKnow\src\state\ntk" />
+      <recent name="G:\_ProfessionalProgramming\SideProjects\svelte\NiceToKnow\src\common" />
+      <recent name="G:\_ProfessionalProgramming\SideProjects\svelte\NiceToKnow\src\components" />
       <recent name="G:\_ProfessionalProgramming\SideProjects\svelte\NiceToKnow\src" />
     </key>
   </component>
@@ -96,7 +110,7 @@
       <updated>1586953131510</updated>
       <workItem from="1586953132602" duration="1145000" />
       <workItem from="1587018954533" duration="9959000" />
-      <workItem from="1587038828441" duration="8568000" />
+      <workItem from="1587038828441" duration="24067000" />
     </task>
     <servers />
   </component>

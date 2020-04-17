@@ -1,5 +1,5 @@
 <script lang="js">
-  import Desktop from './Desktop.svelte';
+  import Desktop from './AppDesktop.svelte';
   export let name;
 </script>
 

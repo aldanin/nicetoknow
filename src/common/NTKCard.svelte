@@ -4,28 +4,19 @@
     import Card, {Content, PrimaryAction, Media, MediaContent, Actions, ActionButtons, ActionIcons} from '@smui/card';
     import IconButton, {Icon} from '@smui/icon-button';
     import Button, {Label} from '@smui/button';
-    import Avatar from '../common/Avatar.svelte';
+    import Avatar from './Avatar.svelte';
 
     let clicked=0;
     const dispatch = createEventDispatcher();
 
-    export let ntkPerson={
-        ntkDetails: {
-            id : 'id-1',
-            name : 'Nkt name',
-            age : 25,
-            imageUrl : "https://encrypted-tbn0.gstatic" +
-                    ".com/images?q=tbn%3AANd9GcRu5trhUbXDbD2aQdTKFUERRxeYQH-98QIX59tug8132E-gz6Oo&usqp=CAU",
-            moreDetails : {
-                hobbies : 'Skating, joggling'
-            }
-        },
-        isMarked: true,
-        hasAccepted: false
-    }
+    export let ntkPerson;
 
     function onMarkedChanged() {
         dispatch('markedChanged', {id: ntkPerson.ntkDetails.id});
+    }
+
+    function onCardDblclick() {
+        dispatch('ntkPersonSelected', ntkPerson)
     }
 </script>
 
@@ -69,6 +60,7 @@
         justify-content: space-between;
         align-items: center;
         border-bottom: solid 1px #ececec;
+        cursor: pointer;
 
         .person-details {
             width: 200px;
@@ -117,7 +109,7 @@
 
 <div class="my-card">
     <Card style="width: 360px;">
-        <div class="card-details">
+        <div class="card-details" on:dblclick={onCardDblclick}>
             <div class="avatar-container">
                 <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl}/>
                 <div class="person-details">

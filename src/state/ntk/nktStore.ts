@@ -13,7 +13,7 @@ const customNtkStore: CustomNTKStore = {
         ntkStore.update(state => {
             const ntkp = state.ntkPersons;
             const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson)=>ntkPerson.ntkDetails.id === ntkId);
-            if (!foundIndex) {
+            if (foundIndex === -1) {
                 throw new Error('No person was found to update')
             }
             ntkp[foundIndex].isMarked = !ntkp[foundIndex].isMarked;
@@ -22,7 +22,7 @@ const customNtkStore: CustomNTKStore = {
 
             return {...state};
         })
-    }
+    },
 }
 
 export default customNtkStore;
