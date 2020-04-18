@@ -1,15 +1,16 @@
 <script>
     import { createEventDispatcher } from 'svelte';
-    import Paper, {Title, Subtitle} from '@smui/paper';
     import Card, {Content, PrimaryAction, Media, MediaContent, Actions, ActionButtons, ActionIcons} from '@smui/card';
-    import IconButton, {Icon} from '@smui/icon-button';
+    import IconButton from '@smui/icon-button';
     import Button, {Label} from '@smui/button';
     import Avatar from './Avatar.svelte';
+    import ToggleButton from './ToggleButton.svelte';
 
     let clicked=0;
     const dispatch = createEventDispatcher();
 
     export let ntkPerson;
+    export let isApproval=false;
 
     function onMarkedChanged() {
         dispatch('markedChanged', {id: ntkPerson.ntkDetails.id});
@@ -18,11 +19,29 @@
     function onCardDblclick() {
         dispatch('ntkPersonSelected', ntkPerson)
     }
+
+    function setApproval(isApproved) {
+        dispatch('approvalChanged', {id: ntkPerson.ntkDetails.id, isApproved})
+    }
+
+    $: console.log('ntkPerson', ntkPerson)
 </script>
 
 <style type="text/scss">
     .content {
 
+    }
+
+    :global(.is-approved) {
+        background-color: pink;
+    }
+
+    :global(.up) {
+        color: limegreen;
+    }
+
+    :global(.down) {
+        color: #a70000;
     }
 
     :global(.mdc-typography--body2), :global(.mdc-typography--caption) {
@@ -97,18 +116,10 @@
             }
         }
     }
-
-    :global(.toggle-button) {
-        display: none;
-    }
-    :global(.toggle-button.active){
-        display: block;
-    }
-
 </style>
 
 <div class="my-card">
-    <Card style="width: 360px;">
+    <Card class="card-theme {ntkPerson.isApproved ? 'is-approved' : ''}" style="width: 360px;">
         <div class="card-details" on:dblclick={onCardDblclick}>
             <div class="avatar-container">
                 <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl}/>
@@ -116,10 +127,12 @@
                     <h3 class="ntk-name">
                         {ntkPerson.ntkDetails.name}
                     </h3>
+                    {#if ntkPerson.ntkDetails.age}
                     <h5 class="ntk-age">
                         <span>Age:</span>
                         <span>{ntkPerson.ntkDetails.age}</span>
                     </h5>
+                    {/if}
                 </div>
 
             </div>
@@ -136,20 +149,23 @@
                 <Button on:click={() => clicked++}>
                     <Label>Action</Label>
                 </Button>
-                <Button on:click={() => clicked++}>
-                    <Label>Another</Label>
-                </Button>
             </ActionButtons>
             <ActionIcons>
-                <IconButton on:click={() => onMarkedChanged()}  aria-label="Add to favorites" title="Add to
-                favorites">
-                    <Icon
-                            class="material-icons toggle-button {ntkPerson.isMarked ? 'active' : ''}">favorite</Icon>
-                    <Icon
-                          class="material-icons toggle-button {!ntkPerson.isMarked ? 'active' :
-                          ''}">favorite_border</Icon>
-                </IconButton>
-                <IconButton class="material-icons" on:click={() => clicked++} title="Share">share</IconButton>
+                {#if !isApproval}
+                    <ToggleButton
+                            markedIcon="favorite"
+                            unmarkedIcon="favorite_border"
+                            on:click="{() => onMarkedChanged()}"
+                            isMarked="{ntkPerson.isMarked}"
+                            title="Mark as potential nice-to-know"
+                    />
+                {/if}
+                {#if isApproval}
+                    <IconButton class="material-icons up" on:click={() => setApproval(true)}
+                                title="approve">thumb_up_alt</IconButton>
+                    <IconButton class="material-icons down" on:click={() => setApproval(false)}
+                                title="disapprove">thumb_down_alt</IconButton>
+                {/if}
                 <IconButton class="material-icons" on:click={() => clicked++} title="More options">more_vert
                 </IconButton>
             </ActionIcons>

@@ -1,17 +1,22 @@
 <script>
-    import {onDestroy} from 'svelte';
+    import {onDestroy, onMount} from 'svelte';
     import NTKList from '../common/NTKList.svelte';
     import customNtkStore from '../state/ntk/nktStore.ts';
-    import {Icon} from '@smui/icon-button';
     import NTKPersonPopup from '../common/NTKPersonPopup.svelte';
 
     let ntkList=[];
     let currentSelectedPerson;
 
-    let isNTKPersonDialogOpen=false;
+    let isNTKPersonDialogOpen = false;
+
+    onMount(() => {
+        if (customNtkStore.isEmpty()) {
+            customNtkStore.setStoreAsync();
+        }
+    })
 
     const unsubscribe=customNtkStore.subscribe(state => {
-        ntkList=state.ntkPersons.filter(ntkp => ntkp.isMarked)
+        ntkList=state.ntkPersons
     })
 
     function onMarkedChanged(event) {
@@ -32,7 +37,6 @@
 <style type="text/scss">
     .container {
         overflow: auto;
-
         .card-container {
             display: grid;
             grid-template-columns: repeat(3, minmax(8rem, 1fr));
@@ -48,42 +52,14 @@
         }
     }
 
-    .no-ntks {
-        display: flex;
-        height: 100%;
-        justify-content: center;
-        align-items: center;
-        flex-direction:column;
-        color: silver;
-
-        :global(.material-icons) {
-            font-size: 300px;
-
-        }
-
-        h2 {
-            font-style: italic;
-            font-size: 30px;
-            margin: 0;
-        }
-    }
-
 </style>
 
 <div class="container">
-    {#if ntkList.length > 0}
-        <NTKList
-                ntkList={ntkList}
-                on:markedChanged={onMarkedChanged}
-                isApproval="{false}"
-        />
-        {:else}
-        <div class="no-ntks">
-            <Icon class="material-icons">favorite_border</Icon>
-            <h2>You havn't selected any Nice-to-Knows</h2>
-        </div>
-    {/if}
-
+   <NTKList
+           ntkList={ntkList}
+           on:markedChanged={onMarkedChanged}
+           isApproval="{false}"
+   />
 </div>
 <!--{#if isNTKPersonDialogOpen}-->
 <!--    <NTKPersonPopup-->

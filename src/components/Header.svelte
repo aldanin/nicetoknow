@@ -1,12 +1,32 @@
 <script>
     import IconButton, {Icon} from '@smui/icon-button';
+    import MyIconButton from '../common/MyIconButton.svelte';
+    import viewStore from '../state/view/viewStore';
+    import viewKeys from '../state/view/viewKeys';
+    import NtkStore from '../state/ntk/nktStore.ts';
+    import RegistrationPopup from '../components/RegistrationPopup.svelte';
+
+    let isRegistrationPopupOpen = false;
 
     function onMyNtksClicked() {
-        alert('fav');
+        viewStore.setView(viewKeys.MY_NTKS);
     }
 
     function onShowMoreClicked() {
-        alert('show more')
+        viewStore.setView(viewKeys.GENERAL_NTKS);
+    }
+
+    function onNtksApprovalClicked() {
+        viewStore.setView(viewKeys.NTKS_APPROVAL);
+    }
+
+    function showRegistrationForm() {
+        isRegistrationPopupOpen = true;
+    }
+
+    function registrationPopupClosed(e){
+        isRegistrationPopupOpen = false
+        NtkStore.registerUser(e.detail.value);
     }
 </script>
 
@@ -34,6 +54,10 @@
         .controls {
             color: white;
         }
+
+        :global(.focused-button) {
+            color:yellow;
+        }
     }
 </style>
 
@@ -42,13 +66,15 @@
         <span class="logo-inner">Nice to know</span>
     </div>
     <div class="controls">
-        <IconButton class="material-icons"
-                    on:click={onMyNtksClicked}
-                    title="My Nice-to-know's">favorite_border
-        </IconButton>
-        <IconButton class="material-icons"
-                    on:click={onShowMoreClicked}
-                    title="Show more">face
-        </IconButton>
+        <MyIconButton icon="favorite_border" title="My Nice-to-know's" on:click={onMyNtksClicked}/>
+        <MyIconButton icon="favorite" title="Nice-to-know's to approve" on:click={onNtksApprovalClicked}/>
+        <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked}/>
+        <MyIconButton icon="how_to_reg" title="Show more" on:click={showRegistrationForm}/>
     </div>
 </header>
+
+{#if isRegistrationPopupOpen}
+    <RegistrationPopup
+            on:popupClosed={registrationPopupClosed}
+    />
+{/if}

@@ -3,6 +3,7 @@
     import NTKPersonPopup from './NTKPersonPopup.svelte';
 
     export let ntkList=[];
+    export let isApproval;
 
     let currentSelectedPerson;
 
@@ -43,6 +44,8 @@
                     ntkPerson="{ntkPerson}"
                     on:markedChanged
                     on:ntkPersonSelected={onPersonSelected}
+                    isApproval="{isApproval}"
+                    on:approvalChanged
             />
         </div>
 

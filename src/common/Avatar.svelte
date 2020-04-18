@@ -1,6 +1,6 @@
 <script>
-    export const imageUrl = "https://encrypted-tbn0.gstatic" +
-            ".com/images?q=tbn%3AANd9GcSapNUPagpDkSy9fopZTUcxOzxWoFMDHXMvRe2Ke3IoUEJMkXIQ&usqp=CAU"
+    export let imageUrl = './media/download.png';
+    $: console.log('avatar', imageUrl)
 </script>
 
 <style type="text/scss">
