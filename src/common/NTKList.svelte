@@ -1,6 +1,7 @@
 <script>
     import NTKCard from './NTKCard.svelte';
     import NTKPersonPopup from './NTKPersonPopup.svelte';
+    import VirtualList from '@sveltejs/svelte-virtual-list';
 
     export let ntkList=[];
     export let isApproval;
@@ -20,16 +21,21 @@
     .container {
         overflow: auto;
         .card-container {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(8rem, 1fr));
-            grid-auto-rows: 1fr;
-            grid-gap: 30px;
-            width: 1200px;
+            /*display: grid;*/
+            /*grid-template-columns: repeat(3, minmax(8rem, 1fr));*/
+            /*grid-auto-rows: 1fr;*/
+            /*grid-gap: 30px;*/
+            /*width: 1200px;*/
             height: 100%;
-            margin: 30px auto;
+            /*margin: 30px auto;*/
+
+            :global(svelte-virtual-list-row) {
+                display: flex;
+                justify-content: center;
+            }
 
             .item {
-                margin: auto;
+                margin: 20px;
             }
         }
     }
@@ -38,16 +44,28 @@
 
 <div class="container">
     <div class="card-container">
+        <VirtualList items={ntkList} let:item>
+            <!-- this will be rendered for each currently visible item -->
+            <div class="item">
+                <NTKCard
+                        ntkPerson="{item}"
+                        on:markedChanged
+                        on:ntkPersonSelected={onPersonSelected}
+                        isApproval="{isApproval}"
+                        on:approvalChanged
+                />
+            </div>
+        </VirtualList>
         {#each ntkList as ntkPerson}
-        <div class="item">
-            <NTKCard
-                    ntkPerson="{ntkPerson}"
-                    on:markedChanged
-                    on:ntkPersonSelected={onPersonSelected}
-                    isApproval="{isApproval}"
-                    on:approvalChanged
-            />
-        </div>
+<!--        <div class="item">-->
+<!--            <NTKCard-->
+<!--                    ntkPerson="{ntkPerson}"-->
+<!--                    on:markedChanged-->
+<!--                    on:ntkPersonSelected={onPersonSelected}-->
+<!--                    isApproval="{isApproval}"-->
+<!--                    on:approvalChanged-->
+<!--            />-->
+<!--        </div>-->
 
         {/each}
     </div>

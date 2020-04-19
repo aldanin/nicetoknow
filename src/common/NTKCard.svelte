@@ -68,6 +68,10 @@
         text-transform: inherit;
     }
 
+    .my-card {
+        width: 650px;
+    }
+
     .card-details {
         padding: 0 15px;
     }
@@ -76,12 +80,13 @@
         display: flex;
         height: 120px;
         width: 100%;
-        justify-content: space-between;
+        justify-content: left;
         align-items: center;
         border-bottom: solid 1px #ececec;
         cursor: pointer;
 
         .person-details {
+            margin-left: 30px;
             width: 200px;
 
             h3, h5 {
@@ -103,6 +108,8 @@
         margin-top: 5px;
 
         .ntk-details-row {
+            margin-bottom: 10px;
+
             .caption {
                 color: #b3b3b3;
                 text-transform: uppercase;
@@ -119,7 +126,7 @@
 </style>
 
 <div class="my-card">
-    <Card class="card-theme {ntkPerson.isApproved ? 'is-approved' : ''}" style="width: 360px;">
+    <Card class="card-theme {ntkPerson.isApproved ? 'is-approved' : ''}">
         <div class="card-details" on:dblclick={onCardDblclick}>
             <div class="avatar-container">
                 <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl}/>
@@ -138,6 +145,10 @@
             </div>
             <div class="ntk-details-rows-container">
                 <div class="ntk-details-row">
+                    <div class="caption">About Me</div>
+                    <div class="details"> {ntkPerson.ntkDetails.moreDetails.aboutMe}</div>
+                </div>
+                <div class="ntk-details-row">
                     <div class="caption">Hobbies</div>
                     <div class="details"> {ntkPerson.ntkDetails.moreDetails.hobbies}</div>
                 </div>
@@ -146,8 +157,13 @@
         </div>
         <Actions>
             <ActionButtons>
-                <Button on:click={() => clicked++}>
+                <Button
+                        on:click={() => clicked++}
+                        variant="raised"
+                        color="secondary"
+                >
                     <Label>Action</Label>
+
                 </Button>
             </ActionButtons>
             <ActionIcons>

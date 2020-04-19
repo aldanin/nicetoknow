@@ -12,6 +12,7 @@
 <style type="text/scss">
     .container-flex {
         flex-direction: column;
+        background-color: whitesmoke;
     }
 </style>
 

@@ -1,5 +1,4 @@
 <script>
-    import IconButton, {Icon} from '@smui/icon-button';
     import MyIconButton from '../common/MyIconButton.svelte';
     import viewStore from '../state/view/viewStore';
     import viewKeys from '../state/view/viewKeys';
@@ -13,7 +12,7 @@
     }
 
     function onShowMoreClicked() {
-        viewStore.setView(viewKeys.GENERAL_NTKS);
+        viewStore.setView(viewKeys.ALL_NTKS);
     }
 
     function onNtksApprovalClicked() {
@@ -24,8 +23,8 @@
         isRegistrationPopupOpen = true;
     }
 
-    function registrationPopupClosed(e){
-        isRegistrationPopupOpen = false
+    function registrationSubmitted(e){
+        isRegistrationPopupOpen = false;
         NtkStore.registerUser(e.detail.value);
     }
 </script>
@@ -75,6 +74,6 @@
 
 {#if isRegistrationPopupOpen}
     <RegistrationPopup
-            on:popupClosed={registrationPopupClosed}
+            on:submit={registrationSubmitted}
     />
 {/if}

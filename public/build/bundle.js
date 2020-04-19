@@ -72,12 +72,6 @@ var app = (function () {
     function detach(node) {
         node.parentNode.removeChild(node);
     }
-    function destroy_each(iterations, detaching) {
-        for (let i = 0; i < iterations.length; i += 1) {
-            if (iterations[i])
-                iterations[i].d(detaching);
-        }
-    }
     function element(name) {
         return document.createElement(name);
     }
@@ -113,6 +107,14 @@ var app = (function () {
             }
         }
     }
+    function set_custom_element_data(node, prop, value) {
+        if (prop in node) {
+            node[prop] = value;
+        }
+        else {
+            attr(node, prop, value);
+        }
+    }
     function children(element) {
         return Array.from(element.childNodes);
     }
@@ -125,6 +127,37 @@ var app = (function () {
         if (value != null || input.value) {
             input.value = value;
         }
+    }
+    function set_style(node, key, value, important) {
+        node.style.setProperty(key, value, important ? 'important' : '');
+    }
+    function add_resize_listener(element, fn) {
+        if (getComputedStyle(element).position === 'static') {
+            element.style.position = 'relative';
+        }
+        const object = document.createElement('object');
+        object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+        object.type = 'text/html';
+        object.tabIndex = -1;
+        let win;
+        object.onload = () => {
+            win = object.contentDocument.defaultView;
+            win.addEventListener('resize', fn);
+        };
+        if (/Trident/.test(navigator.userAgent)) {
+            element.appendChild(object);
+            object.data = 'about:blank';
+        }
+        else {
+            object.data = 'about:blank';
+            element.appendChild(object);
+        }
+        return {
+            cancel: () => {
+                win && win.removeEventListener && win.removeEventListener('resize', fn);
+                element.removeChild(object);
+            }
+        };
     }
     function custom_event(type, detail) {
         const e = document.createEvent('CustomEvent');
@@ -188,6 +221,10 @@ var app = (function () {
             update_scheduled = true;
             resolved_promise.then(flush);
         }
+    }
+    function tick() {
+        schedule_update();
+        return resolved_promise;
     }
     function add_render_callback(fn) {
         render_callbacks.push(fn);
@@ -273,6 +310,86 @@ var app = (function () {
     }
 
     const globals = (typeof window !== 'undefined' ? window : global);
+    function outro_and_destroy_block(block, lookup) {
+        transition_out(block, 1, 1, () => {
+            lookup.delete(block.key);
+        });
+    }
+    function update_keyed_each(old_blocks, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+        let o = old_blocks.length;
+        let n = list.length;
+        let i = o;
+        const old_indexes = {};
+        while (i--)
+            old_indexes[old_blocks[i].key] = i;
+        const new_blocks = [];
+        const new_lookup = new Map();
+        const deltas = new Map();
+        i = n;
+        while (i--) {
+            const child_ctx = get_context(ctx, list, i);
+            const key = get_key(child_ctx);
+            let block = lookup.get(key);
+            if (!block) {
+                block = create_each_block(key, child_ctx);
+                block.c();
+            }
+            else if (dynamic) {
+                block.p(changed, child_ctx);
+            }
+            new_lookup.set(key, new_blocks[i] = block);
+            if (key in old_indexes)
+                deltas.set(key, Math.abs(i - old_indexes[key]));
+        }
+        const will_move = new Set();
+        const did_move = new Set();
+        function insert(block) {
+            transition_in(block, 1);
+            block.m(node, next);
+            lookup.set(block.key, block);
+            next = block.first;
+            n--;
+        }
+        while (o && n) {
+            const new_block = new_blocks[n - 1];
+            const old_block = old_blocks[o - 1];
+            const new_key = new_block.key;
+            const old_key = old_block.key;
+            if (new_block === old_block) {
+                // do nothing
+                next = new_block.first;
+                o--;
+                n--;
+            }
+            else if (!new_lookup.has(old_key)) {
+                // remove old block
+                destroy(old_block, lookup);
+                o--;
+            }
+            else if (!lookup.has(new_key) || will_move.has(new_key)) {
+                insert(new_block);
+            }
+            else if (did_move.has(old_key)) {
+                o--;
+            }
+            else if (deltas.get(new_key) > deltas.get(old_key)) {
+                did_move.add(new_key);
+                insert(new_block);
+            }
+            else {
+                will_move.add(old_key);
+                o--;
+            }
+        }
+        while (o--) {
+            const old_block = old_blocks[o];
+            if (!new_lookup.has(old_block.key))
+                destroy(old_block, lookup);
+        }
+        while (n)
+            insert(new_blocks[n - 1]);
+        return new_blocks;
+    }
 
     function get_spread_update(levels, updates) {
         const update = {};
@@ -5210,7 +5327,7 @@ var app = (function () {
 
     const file$9 = "src\\common\\NTKCard.svelte";
 
-    // (107:20) {#if ntkPerson.ntkDetails.age}
+    // (113:20) {#if ntkPerson.ntkDetails.age}
     function create_if_block_2(ctx) {
     	var h5, span0, t1, span1, t2_value = ctx.ntkPerson.ntkDetails.age + "", t2;
 
@@ -5222,10 +5339,10 @@ var app = (function () {
     			t1 = space();
     			span1 = element("span");
     			t2 = text(t2_value);
-    			add_location(span0, file$9, 108, 24, 6725);
-    			add_location(span1, file$9, 109, 24, 6768);
-    			attr(h5, "class", "ntk-age svelte-wtp07c");
-    			add_location(h5, file$9, 107, 20, 6679);
+    			add_location(span0, file$9, 114, 24, 7101);
+    			add_location(span1, file$9, 115, 24, 7144);
+    			attr(h5, "class", "ntk-age svelte-1f7w0gg");
+    			add_location(h5, file$9, 113, 20, 7055);
     		},
 
     		m: function mount(target, anchor) {
@@ -5250,7 +5367,7 @@ var app = (function () {
     	};
     }
 
-    // (127:20) <Label>
+    // (141:20) <Label>
     function create_default_slot_8(ctx) {
     	var t;
 
@@ -5271,7 +5388,7 @@ var app = (function () {
     	};
     }
 
-    // (126:16) <Button on:click={() => clicked++}>
+    // (136:16) <Button                          on:click={() => clicked++}                          variant="raised"                          color="secondary"                  >
     function create_default_slot_7(ctx) {
     	var current;
 
@@ -5317,12 +5434,14 @@ var app = (function () {
     	};
     }
 
-    // (125:12) <ActionButtons>
+    // (135:12) <ActionButtons>
     function create_default_slot_6(ctx) {
     	var current;
 
     	var button = new Button_1({
     		props: {
+    		variant: "raised",
+    		color: "secondary",
     		$$slots: { default: [create_default_slot_7] },
     		$$scope: { ctx }
     	},
@@ -5364,7 +5483,7 @@ var app = (function () {
     	};
     }
 
-    // (131:16) {#if !isApproval}
+    // (146:16) {#if !isApproval}
     function create_if_block_1(ctx) {
     	var current;
 
@@ -5413,7 +5532,7 @@ var app = (function () {
     	};
     }
 
-    // (140:16) {#if isApproval}
+    // (155:16) {#if isApproval}
     function create_if_block$1(ctx) {
     	var t, current;
 
@@ -5480,7 +5599,7 @@ var app = (function () {
     	};
     }
 
-    // (141:20) <IconButton class="material-icons up" on:click={() => setApproval(true)}                                  title="approve">
+    // (156:20) <IconButton class="material-icons up" on:click={() => setApproval(true)}                                  title="approve">
     function create_default_slot_5(ctx) {
     	var t;
 
@@ -5501,7 +5620,7 @@ var app = (function () {
     	};
     }
 
-    // (143:20) <IconButton class="material-icons down" on:click={() => setApproval(false)}                                  title="disapprove">
+    // (158:20) <IconButton class="material-icons down" on:click={() => setApproval(false)}                                  title="disapprove">
     function create_default_slot_4(ctx) {
     	var t;
 
@@ -5522,7 +5641,7 @@ var app = (function () {
     	};
     }
 
-    // (146:16) <IconButton class="material-icons" on:click={() => clicked++} title="More options">
+    // (161:16) <IconButton class="material-icons" on:click={() => clicked++} title="More options">
     function create_default_slot_3(ctx) {
     	var t;
 
@@ -5543,7 +5662,7 @@ var app = (function () {
     	};
     }
 
-    // (130:12) <ActionIcons>
+    // (145:12) <ActionIcons>
     function create_default_slot_2$1(ctx) {
     	var t0, t1, current;
 
@@ -5656,7 +5775,7 @@ var app = (function () {
     	};
     }
 
-    // (124:8) <Actions>
+    // (134:8) <Actions>
     function create_default_slot_1$1(ctx) {
     	var t, current;
 
@@ -5727,9 +5846,9 @@ var app = (function () {
     	};
     }
 
-    // (99:4) <Card class="card-theme {ntkPerson.isApproved ? 'is-approved' : ''}" style="width: 360px;">
+    // (105:4) <Card class="card-theme {ntkPerson.isApproved ? 'is-approved' : ''}">
     function create_default_slot$4(ctx) {
-    	var div6, div1, t0, div0, h3, t1_value = ctx.ntkPerson.ntkDetails.name + "", t1, t2, t3, div5, div4, div2, t5, div3, t6_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "", t6, t7, current, dispose;
+    	var div9, div1, t0, div0, h3, t1_value = ctx.ntkPerson.ntkDetails.name + "", t1, t2, t3, div8, div4, div2, t5, div3, t6_value = ctx.ntkPerson.ntkDetails.moreDetails.aboutMe + "", t6, t7, div7, div5, t9, div6, t10_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "", t10, t11, current, dispose;
 
     	var avatar = new Avatar({
     		props: { imageUrl: ctx.ntkPerson.ntkDetails.imageUrl },
@@ -5748,7 +5867,7 @@ var app = (function () {
 
     	return {
     		c: function create() {
-    			div6 = element("div");
+    			div9 = element("div");
     			div1 = element("div");
     			avatar.$$.fragment.c();
     			t0 = space();
@@ -5758,37 +5877,50 @@ var app = (function () {
     			t2 = space();
     			if (if_block) if_block.c();
     			t3 = space();
-    			div5 = element("div");
+    			div8 = element("div");
     			div4 = element("div");
     			div2 = element("div");
-    			div2.textContent = "Hobbies";
+    			div2.textContent = "About Me";
     			t5 = space();
     			div3 = element("div");
     			t6 = text(t6_value);
     			t7 = space();
+    			div7 = element("div");
+    			div5 = element("div");
+    			div5.textContent = "Hobbies";
+    			t9 = space();
+    			div6 = element("div");
+    			t10 = text(t10_value);
+    			t11 = space();
     			actions.$$.fragment.c();
-    			attr(h3, "class", "ntk-name svelte-wtp07c");
-    			add_location(h3, file$9, 103, 20, 6504);
-    			attr(div0, "class", "person-details svelte-wtp07c");
-    			add_location(div0, file$9, 102, 16, 6454);
-    			attr(div1, "class", "avatar-container svelte-wtp07c");
-    			add_location(div1, file$9, 100, 12, 6338);
-    			attr(div2, "class", "caption svelte-wtp07c");
-    			add_location(div2, file$9, 117, 20, 7030);
-    			attr(div3, "class", "details svelte-wtp07c");
-    			add_location(div3, file$9, 118, 20, 7086);
-    			attr(div4, "class", "ntk-details-row");
-    			add_location(div4, file$9, 116, 16, 6979);
-    			attr(div5, "class", "ntk-details-rows-container svelte-wtp07c");
-    			add_location(div5, file$9, 115, 12, 6921);
-    			attr(div6, "class", "card-details svelte-wtp07c");
-    			add_location(div6, file$9, 99, 8, 6269);
-    			dispose = listen(div6, "dblclick", ctx.onCardDblclick);
+    			attr(h3, "class", "ntk-name svelte-1f7w0gg");
+    			add_location(h3, file$9, 109, 20, 6880);
+    			attr(div0, "class", "person-details svelte-1f7w0gg");
+    			add_location(div0, file$9, 108, 16, 6830);
+    			attr(div1, "class", "avatar-container svelte-1f7w0gg");
+    			add_location(div1, file$9, 106, 12, 6714);
+    			attr(div2, "class", "caption svelte-1f7w0gg");
+    			add_location(div2, file$9, 123, 20, 7406);
+    			attr(div3, "class", "details svelte-1f7w0gg");
+    			add_location(div3, file$9, 124, 20, 7463);
+    			attr(div4, "class", "ntk-details-row svelte-1f7w0gg");
+    			add_location(div4, file$9, 122, 16, 7355);
+    			attr(div5, "class", "caption svelte-1f7w0gg");
+    			add_location(div5, file$9, 127, 20, 7626);
+    			attr(div6, "class", "details svelte-1f7w0gg");
+    			add_location(div6, file$9, 128, 20, 7682);
+    			attr(div7, "class", "ntk-details-row svelte-1f7w0gg");
+    			add_location(div7, file$9, 126, 16, 7575);
+    			attr(div8, "class", "ntk-details-rows-container svelte-1f7w0gg");
+    			add_location(div8, file$9, 121, 12, 7297);
+    			attr(div9, "class", "card-details svelte-1f7w0gg");
+    			add_location(div9, file$9, 105, 8, 6645);
+    			dispose = listen(div9, "dblclick", ctx.onCardDblclick);
     		},
 
     		m: function mount(target, anchor) {
-    			insert(target, div6, anchor);
-    			append(div6, div1);
+    			insert(target, div9, anchor);
+    			append(div9, div1);
     			mount_component(avatar, div1, null);
     			append(div1, t0);
     			append(div1, div0);
@@ -5796,14 +5928,20 @@ var app = (function () {
     			append(h3, t1);
     			append(div0, t2);
     			if (if_block) if_block.m(div0, null);
-    			append(div6, t3);
-    			append(div6, div5);
-    			append(div5, div4);
+    			append(div9, t3);
+    			append(div9, div8);
+    			append(div8, div4);
     			append(div4, div2);
     			append(div4, t5);
     			append(div4, div3);
     			append(div3, t6);
-    			insert(target, t7, anchor);
+    			append(div8, t7);
+    			append(div8, div7);
+    			append(div7, div5);
+    			append(div7, t9);
+    			append(div7, div6);
+    			append(div6, t10);
+    			insert(target, t11, anchor);
     			mount_component(actions, target, anchor);
     			current = true;
     		},
@@ -5830,8 +5968,12 @@ var app = (function () {
     				if_block = null;
     			}
 
-    			if ((!current || changed.ntkPerson) && t6_value !== (t6_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "")) {
+    			if ((!current || changed.ntkPerson) && t6_value !== (t6_value = ctx.ntkPerson.ntkDetails.moreDetails.aboutMe + "")) {
     				set_data(t6, t6_value);
+    			}
+
+    			if ((!current || changed.ntkPerson) && t10_value !== (t10_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "")) {
+    				set_data(t10, t10_value);
     			}
 
     			var actions_changes = {};
@@ -5856,7 +5998,7 @@ var app = (function () {
 
     		d: function destroy(detaching) {
     			if (detaching) {
-    				detach(div6);
+    				detach(div9);
     			}
 
     			destroy_component(avatar);
@@ -5864,7 +6006,7 @@ var app = (function () {
     			if (if_block) if_block.d();
 
     			if (detaching) {
-    				detach(t7);
+    				detach(t11);
     			}
 
     			destroy_component(actions, detaching);
@@ -5880,7 +6022,6 @@ var app = (function () {
     	var card = new Card({
     		props: {
     		class: "card-theme " + (ctx.ntkPerson.isApproved ? 'is-approved' : ''),
-    		style: "width: 360px;",
     		$$slots: { default: [create_default_slot$4] },
     		$$scope: { ctx }
     	},
@@ -5891,8 +6032,8 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			card.$$.fragment.c();
-    			attr(div, "class", "my-card");
-    			add_location(div, file$9, 97, 0, 6141);
+    			attr(div, "class", "my-card svelte-1f7w0gg");
+    			add_location(div, file$9, 103, 0, 6539);
     		},
 
     		l: function claim(nodes) {
@@ -8043,23 +8184,432 @@ var app = (function () {
     	}
     }
 
-    /* src\common\NTKList.svelte generated by Svelte v3.9.1 */
+    /* node_modules\@sveltejs\svelte-virtual-list\VirtualList.svelte generated by Svelte v3.9.1 */
 
-    const file$e = "src\\common\\NTKList.svelte";
+    const file$e = "node_modules\\@sveltejs\\svelte-virtual-list\\VirtualList.svelte";
+
+    const get_default_slot_changes = ({ row, visible }) => ({ item: visible });
+    const get_default_slot_context = ({ row, visible }) => ({ item: row.data });
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = Object.create(ctx);
-    	child_ctx.ntkPerson = list[i];
+    	child_ctx.row = list[i];
     	return child_ctx;
     }
 
-    // (35:8) {#each ntkList as ntkPerson}
-    function create_each_block(ctx) {
-    	var div, t, current;
+    // (165:2) {#each visible as row (row.index)}
+    function create_each_block(key_1, ctx) {
+    	var svelte_virtual_list_row, t0, t1, current;
+
+    	const default_slot_template = ctx.$$slots.default;
+    	const default_slot = create_slot(default_slot_template, ctx, get_default_slot_context);
+
+    	return {
+    		key: key_1,
+
+    		first: null,
+
+    		c: function create() {
+    			svelte_virtual_list_row = element("svelte-virtual-list-row");
+
+    			if (!default_slot) {
+    				t0 = text("Missing template");
+    			}
+
+    			if (default_slot) default_slot.c();
+    			t1 = space();
+
+    			set_custom_element_data(svelte_virtual_list_row, "class", "svelte-1ou9eu9");
+    			add_location(svelte_virtual_list_row, file$e, 165, 3, 4331);
+    			this.first = svelte_virtual_list_row;
+    		},
+
+    		l: function claim(nodes) {
+    			if (default_slot) default_slot.l(svelte_virtual_list_row_nodes);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, svelte_virtual_list_row, anchor);
+
+    			if (!default_slot) {
+    				append(svelte_virtual_list_row, t0);
+    			}
+
+    			else {
+    				default_slot.m(svelte_virtual_list_row, null);
+    			}
+
+    			append(svelte_virtual_list_row, t1);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			if (default_slot && default_slot.p && (changed.$$scope || changed.visible)) {
+    				default_slot.p(
+    					get_slot_changes(default_slot_template, ctx, changed, get_default_slot_changes),
+    					get_slot_context(default_slot_template, ctx, get_default_slot_context)
+    				);
+    			}
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(svelte_virtual_list_row);
+    			}
+
+    			if (default_slot) default_slot.d(detaching);
+    		}
+    	};
+    }
+
+    function create_fragment$i(ctx) {
+    	var svelte_virtual_list_viewport, svelte_virtual_list_contents, each_blocks = [], each_1_lookup = new Map(), svelte_virtual_list_viewport_resize_listener, current, dispose;
+
+    	var each_value = ctx.visible;
+
+    	const get_key = ctx => ctx.row.index;
+
+    	for (var i = 0; i < each_value.length; i += 1) {
+    		let child_ctx = get_each_context(ctx, each_value, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+    	}
+
+    	return {
+    		c: function create() {
+    			svelte_virtual_list_viewport = element("svelte-virtual-list-viewport");
+    			svelte_virtual_list_contents = element("svelte-virtual-list-contents");
+
+    			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
+    			set_style(svelte_virtual_list_contents, "padding-top", "" + ctx.top + "px");
+    			set_style(svelte_virtual_list_contents, "padding-bottom", "" + ctx.bottom + "px");
+    			set_custom_element_data(svelte_virtual_list_contents, "class", "svelte-1ou9eu9");
+    			add_location(svelte_virtual_list_contents, file$e, 160, 1, 4175);
+    			add_render_callback(() => ctx.svelte_virtual_list_viewport_resize_handler.call(svelte_virtual_list_viewport));
+    			set_style(svelte_virtual_list_viewport, "height", ctx.height);
+    			set_custom_element_data(svelte_virtual_list_viewport, "class", "svelte-1ou9eu9");
+    			add_location(svelte_virtual_list_viewport, file$e, 154, 0, 4029);
+    			dispose = listen(svelte_virtual_list_viewport, "scroll", ctx.handle_scroll);
+    		},
+
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, svelte_virtual_list_viewport, anchor);
+    			append(svelte_virtual_list_viewport, svelte_virtual_list_contents);
+
+    			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(svelte_virtual_list_contents, null);
+
+    			ctx.svelte_virtual_list_contents_binding(svelte_virtual_list_contents);
+    			svelte_virtual_list_viewport_resize_listener = add_resize_listener(svelte_virtual_list_viewport, ctx.svelte_virtual_list_viewport_resize_handler.bind(svelte_virtual_list_viewport));
+    			ctx.svelte_virtual_list_viewport_binding(svelte_virtual_list_viewport);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			const each_value = ctx.visible;
+
+    			group_outros();
+    			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, svelte_virtual_list_contents, outro_and_destroy_block, create_each_block, null, get_each_context);
+    			check_outros();
+
+    			if (!current || changed.top) {
+    				set_style(svelte_virtual_list_contents, "padding-top", "" + ctx.top + "px");
+    			}
+
+    			if (!current || changed.bottom) {
+    				set_style(svelte_virtual_list_contents, "padding-bottom", "" + ctx.bottom + "px");
+    			}
+
+    			if (!current || changed.height) {
+    				set_style(svelte_virtual_list_viewport, "height", ctx.height);
+    			}
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			for (var i = 0; i < each_value.length; i += 1) transition_in(each_blocks[i]);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			for (i = 0; i < each_blocks.length; i += 1) transition_out(each_blocks[i]);
+
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(svelte_virtual_list_viewport);
+    			}
+
+    			for (i = 0; i < each_blocks.length; i += 1) each_blocks[i].d();
+
+    			ctx.svelte_virtual_list_contents_binding(null);
+    			svelte_virtual_list_viewport_resize_listener.cancel();
+    			ctx.svelte_virtual_list_viewport_binding(null);
+    			dispose();
+    		}
+    	};
+    }
+
+    function instance$i($$self, $$props, $$invalidate) {
+    	// props
+    	let { items, height = '100%', itemHeight = undefined } = $$props;
+
+    	// read-only, but visible to consumers via bind:start
+    	let { start = 0, end = 0 } = $$props;
+
+    	// local state
+    	let height_map = [];
+    	let rows;
+    	let viewport;
+    	let contents;
+    	let viewport_height = 0;
+    	let visible;
+    	let mounted;
+
+    	let top = 0;
+    	let bottom = 0;
+    	let average_height;
+
+    	async function refresh(items, viewport_height, itemHeight) {
+    		const { scrollTop } = viewport;
+
+    		await tick(); // wait until the DOM is up to date
+
+    		let content_height = top - scrollTop;
+    		let i = start;
+
+    		while (content_height < viewport_height && i < items.length) {
+    			let row = rows[i - start];
+
+    			if (!row) {
+    				$$invalidate('end', end = i + 1);
+    				await tick(); // render the newly visible row
+    				row = rows[i - start];
+    			}
+
+    			const row_height = height_map[i] = itemHeight || row.offsetHeight;
+    			content_height += row_height;			i += 1;
+    		}
+
+    		$$invalidate('end', end = i);
+
+    		const remaining = items.length - end;
+    		average_height = (top + content_height) / end;
+
+    		$$invalidate('bottom', bottom = remaining * average_height);
+    		height_map.length = items.length;
+    	}
+
+    	async function handle_scroll() {
+    		const { scrollTop } = viewport;
+
+    		const old_start = start;
+
+    		for (let v = 0; v < rows.length; v += 1) {
+    			height_map[start + v] = itemHeight || rows[v].offsetHeight;		}
+
+    		let i = 0;
+    		let y = 0;
+
+    		while (i < items.length) {
+    			const row_height = height_map[i] || average_height;
+    			if (y + row_height > scrollTop) {
+    				$$invalidate('start', start = i);
+    				$$invalidate('top', top = y);
+
+    				break;
+    			}
+
+    			y += row_height;
+    			i += 1;
+    		}
+
+    		while (i < items.length) {
+    			y += height_map[i] || average_height;
+    			i += 1;
+
+    			if (y > scrollTop + viewport_height) break;
+    		}
+
+    		$$invalidate('end', end = i);
+
+    		const remaining = items.length - end;
+    		average_height = y / end;
+
+    		while (i < items.length) { height_map[i++] = average_height; }
+    		$$invalidate('bottom', bottom = remaining * average_height);
+
+    		// prevent jumping if we scrolled up into unknown territory
+    		if (start < old_start) {
+    			await tick();
+
+    			let expected_height = 0;
+    			let actual_height = 0;
+
+    			for (let i = start; i < old_start; i +=1) {
+    				if (rows[i - start]) {
+    					expected_height += height_map[i];
+    					actual_height += itemHeight || rows[i - start].offsetHeight;
+    				}
+    			}
+
+    			const d = actual_height - expected_height;
+    			viewport.scrollTo(0, scrollTop + d);
+    		}
+
+    		// TODO if we overestimated the space these
+    		// rows would occupy we may need to add some
+    		// more. maybe we can just call handle_scroll again?
+    	}
+
+    	// trigger initial refresh
+    	onMount(() => {
+    		rows = contents.getElementsByTagName('svelte-virtual-list-row');
+    		$$invalidate('mounted', mounted = true);
+    	});
+
+    	const writable_props = ['items', 'height', 'itemHeight', 'start', 'end'];
+    	Object.keys($$props).forEach(key => {
+    		if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(`<VirtualList> was created with unknown prop '${key}'`);
+    	});
+
+    	let { $$slots = {}, $$scope } = $$props;
+
+    	function svelte_virtual_list_contents_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			$$invalidate('contents', contents = $$value);
+    		});
+    	}
+
+    	function svelte_virtual_list_viewport_resize_handler() {
+    		viewport_height = this.offsetHeight;
+    		$$invalidate('viewport_height', viewport_height);
+    	}
+
+    	function svelte_virtual_list_viewport_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			$$invalidate('viewport', viewport = $$value);
+    		});
+    	}
+
+    	$$self.$set = $$props => {
+    		if ('items' in $$props) $$invalidate('items', items = $$props.items);
+    		if ('height' in $$props) $$invalidate('height', height = $$props.height);
+    		if ('itemHeight' in $$props) $$invalidate('itemHeight', itemHeight = $$props.itemHeight);
+    		if ('start' in $$props) $$invalidate('start', start = $$props.start);
+    		if ('end' in $$props) $$invalidate('end', end = $$props.end);
+    		if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);
+    	};
+
+    	$$self.$$.update = ($$dirty = { items: 1, start: 1, end: 1, mounted: 1, viewport_height: 1, itemHeight: 1 }) => {
+    		if ($$dirty.items || $$dirty.start || $$dirty.end) { $$invalidate('visible', visible = items.slice(start, end).map((data, i) => {
+    				return { index: i + start, data };
+    			})); }
+    		if ($$dirty.mounted || $$dirty.items || $$dirty.viewport_height || $$dirty.itemHeight) { if (mounted) refresh(items, viewport_height, itemHeight); }
+    	};
+
+    	return {
+    		items,
+    		height,
+    		itemHeight,
+    		start,
+    		end,
+    		viewport,
+    		contents,
+    		viewport_height,
+    		visible,
+    		top,
+    		bottom,
+    		handle_scroll,
+    		svelte_virtual_list_contents_binding,
+    		svelte_virtual_list_viewport_resize_handler,
+    		svelte_virtual_list_viewport_binding,
+    		$$slots,
+    		$$scope
+    	};
+    }
+
+    class VirtualList extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$i, create_fragment$i, safe_not_equal, ["items", "height", "itemHeight", "start", "end"]);
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+    		if (ctx.items === undefined && !('items' in props)) {
+    			console.warn("<VirtualList> was created without expected prop 'items'");
+    		}
+    	}
+
+    	get items() {
+    		throw new Error("<VirtualList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set items(value) {
+    		throw new Error("<VirtualList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get height() {
+    		throw new Error("<VirtualList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set height(value) {
+    		throw new Error("<VirtualList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get itemHeight() {
+    		throw new Error("<VirtualList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set itemHeight(value) {
+    		throw new Error("<VirtualList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get start() {
+    		throw new Error("<VirtualList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set start(value) {
+    		throw new Error("<VirtualList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get end() {
+    		throw new Error("<VirtualList>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set end(value) {
+    		throw new Error("<VirtualList>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    /* src\common\NTKList.svelte generated by Svelte v3.9.1 */
+
+    const file$f = "src\\common\\NTKList.svelte";
+
+    // (43:8) <VirtualList items={ntkList} let:item>
+    function create_default_slot$6(ctx) {
+    	var div, current;
 
     	var ntkcard = new NTKCard({
     		props: {
-    		ntkPerson: ctx.ntkPerson,
+    		ntkPerson: ctx.item,
     		isApproval: ctx.isApproval
     	},
     		$$inline: true
@@ -8072,21 +8622,19 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			ntkcard.$$.fragment.c();
-    			t = space();
-    			attr(div, "class", "item svelte-76k8a2");
-    			add_location(div, file$e, 35, 8, 1744);
+    			attr(div, "class", "item svelte-1kh51ze");
+    			add_location(div, file$f, 44, 12, 2485);
     		},
 
     		m: function mount(target, anchor) {
     			insert(target, div, anchor);
     			mount_component(ntkcard, div, null);
-    			append(div, t);
     			current = true;
     		},
 
     		p: function update(changed, ctx) {
     			var ntkcard_changes = {};
-    			if (changed.ntkList) ntkcard_changes.ntkPerson = ctx.ntkPerson;
+    			if (changed.item) ntkcard_changes.ntkPerson = ctx.item;
     			if (changed.isApproval) ntkcard_changes.isApproval = ctx.isApproval;
     			ntkcard.$set(ntkcard_changes);
     		},
@@ -8113,7 +8661,7 @@ var app = (function () {
     	};
     }
 
-    // (49:0) {#if isNTKPersonDialogOpen}
+    // (69:0) {#if isNTKPersonDialogOpen}
     function create_if_block$2(ctx) {
     	var current;
 
@@ -8157,19 +8705,18 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$i(ctx) {
-    	var div1, div0, t, if_block_anchor, current;
+    function create_fragment$j(ctx) {
+    	var div1, div0, t0, t1, if_block_anchor, current;
 
-    	var each_value = ctx.ntkList;
-
-    	var each_blocks = [];
-
-    	for (var i = 0; i < each_value.length; i += 1) {
-    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
-    	}
-
-    	const out = i => transition_out(each_blocks[i], 1, 1, () => {
-    		each_blocks[i] = null;
+    	var virtuallist = new VirtualList({
+    		props: {
+    		items: ctx.ntkList,
+    		$$slots: {
+    		default: [create_default_slot$6, ({ item }) => ({ item })]
+    	},
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
     	});
 
     	var if_block = (ctx.isNTKPersonDialogOpen) && create_if_block$2(ctx);
@@ -8178,18 +8725,15 @@ var app = (function () {
     		c: function create() {
     			div1 = element("div");
     			div0 = element("div");
-
-    			for (var i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].c();
-    			}
-
-    			t = space();
+    			virtuallist.$$.fragment.c();
+    			t0 = space();
+    			t1 = space();
     			if (if_block) if_block.c();
     			if_block_anchor = empty();
-    			attr(div0, "class", "card-container svelte-76k8a2");
-    			add_location(div0, file$e, 33, 4, 1668);
-    			attr(div1, "class", "container svelte-76k8a2");
-    			add_location(div1, file$e, 32, 0, 1639);
+    			attr(div0, "class", "card-container svelte-1kh51ze");
+    			add_location(div0, file$f, 41, 4, 2319);
+    			attr(div1, "class", "container svelte-1kh51ze");
+    			add_location(div1, file$f, 40, 0, 2290);
     		},
 
     		l: function claim(nodes) {
@@ -8199,39 +8743,19 @@ var app = (function () {
     		m: function mount(target, anchor) {
     			insert(target, div1, anchor);
     			append(div1, div0);
-
-    			for (var i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(div0, null);
-    			}
-
-    			insert(target, t, anchor);
+    			mount_component(virtuallist, div0, null);
+    			append(div0, t0);
+    			insert(target, t1, anchor);
     			if (if_block) if_block.m(target, anchor);
     			insert(target, if_block_anchor, anchor);
     			current = true;
     		},
 
     		p: function update(changed, ctx) {
-    			if (changed.ntkList || changed.isApproval) {
-    				each_value = ctx.ntkList;
-
-    				for (var i = 0; i < each_value.length; i += 1) {
-    					const child_ctx = get_each_context(ctx, each_value, i);
-
-    					if (each_blocks[i]) {
-    						each_blocks[i].p(changed, child_ctx);
-    						transition_in(each_blocks[i], 1);
-    					} else {
-    						each_blocks[i] = create_each_block(child_ctx);
-    						each_blocks[i].c();
-    						transition_in(each_blocks[i], 1);
-    						each_blocks[i].m(div0, null);
-    					}
-    				}
-
-    				group_outros();
-    				for (i = each_value.length; i < each_blocks.length; i += 1) out(i);
-    				check_outros();
-    			}
+    			var virtuallist_changes = {};
+    			if (changed.ntkList) virtuallist_changes.items = ctx.ntkList;
+    			if (changed.$$scope || changed.isApproval) virtuallist_changes.$$scope = { changed, ctx };
+    			virtuallist.$set(virtuallist_changes);
 
     			if (ctx.isNTKPersonDialogOpen) {
     				if (if_block) {
@@ -8254,16 +8778,14 @@ var app = (function () {
 
     		i: function intro(local) {
     			if (current) return;
-    			for (var i = 0; i < each_value.length; i += 1) transition_in(each_blocks[i]);
+    			transition_in(virtuallist.$$.fragment, local);
 
     			transition_in(if_block);
     			current = true;
     		},
 
     		o: function outro(local) {
-    			each_blocks = each_blocks.filter(Boolean);
-    			for (let i = 0; i < each_blocks.length; i += 1) transition_out(each_blocks[i]);
-
+    			transition_out(virtuallist.$$.fragment, local);
     			transition_out(if_block);
     			current = false;
     		},
@@ -8273,10 +8795,10 @@ var app = (function () {
     				detach(div1);
     			}
 
-    			destroy_each(each_blocks, detaching);
+    			destroy_component(virtuallist);
 
     			if (detaching) {
-    				detach(t);
+    				detach(t1);
     			}
 
     			if (if_block) if_block.d(detaching);
@@ -8288,7 +8810,7 @@ var app = (function () {
     	};
     }
 
-    function instance$i($$self, $$props, $$invalidate) {
+    function instance$j($$self, $$props, $$invalidate) {
     	
 
         let { ntkList=[], isApproval } = $$props;
@@ -8341,7 +8863,7 @@ var app = (function () {
     class NTKList extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$i, create_fragment$i, safe_not_equal, ["ntkList", "isApproval"]);
+    		init(this, options, instance$j, create_fragment$j, safe_not_equal, ["ntkList", "isApproval"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -8367,6 +8889,70 @@ var app = (function () {
     	}
     }
 
+    var createProperty = function (object, key, value) {
+      var propertyKey = toPrimitive(key);
+      if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
+      else object[propertyKey] = value;
+    };
+
+    var SPECIES$1 = wellKnownSymbol('species');
+
+    var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
+      return !fails(function () {
+        var array = [];
+        var constructor = array.constructor = {};
+        constructor[SPECIES$1] = function () {
+          return { foo: 1 };
+        };
+        return array[METHOD_NAME](Boolean).foo !== 1;
+      });
+    };
+
+    var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+    var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+    var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+    var IS_CONCAT_SPREADABLE_SUPPORT = !fails(function () {
+      var array = [];
+      array[IS_CONCAT_SPREADABLE] = false;
+      return array.concat()[0] !== array;
+    });
+
+    var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+    var isConcatSpreadable = function (O) {
+      if (!isObject(O)) return false;
+      var spreadable = O[IS_CONCAT_SPREADABLE];
+      return spreadable !== undefined ? !!spreadable : isArray(O);
+    };
+
+    var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+    // `Array.prototype.concat` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.concat
+    // with adding support of @@isConcatSpreadable and @@species
+    _export({ target: 'Array', proto: true, forced: FORCED }, {
+      concat: function concat(arg) { // eslint-disable-line no-unused-vars
+        var O = toObject(this);
+        var A = arraySpeciesCreate(O, 0);
+        var n = 0;
+        var i, k, length, len, E;
+        for (i = -1, length = arguments.length; i < length; i++) {
+          E = i === -1 ? O : arguments[i];
+          if (isConcatSpreadable(E)) {
+            len = toLength(E.length);
+            if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+            for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+          } else {
+            if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+            createProperty(A, n++, E);
+          }
+        }
+        A.length = n;
+        return A;
+      }
+    });
+
     var $findIndex = arrayIteration.findIndex;
 
 
@@ -8387,28 +8973,9 @@ var app = (function () {
     // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
     addToUnscopables(FIND_INDEX);
 
-    var createProperty = function (object, key, value) {
-      var propertyKey = toPrimitive(key);
-      if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
-      else object[propertyKey] = value;
-    };
-
-    var SPECIES$1 = wellKnownSymbol('species');
-
-    var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
-      return !fails(function () {
-        var array = [];
-        var constructor = array.constructor = {};
-        constructor[SPECIES$1] = function () {
-          return { foo: 1 };
-        };
-        return array[METHOD_NAME](Boolean).foo !== 1;
-      });
-    };
-
     var max$1 = Math.max;
     var min$2 = Math.min;
-    var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+    var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
     var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 
     // `Array.prototype.splice` method
@@ -8430,7 +8997,7 @@ var app = (function () {
           insertCount = argumentsLength - 2;
           actualDeleteCount = min$2(max$1(toInteger(deleteCount), 0), len - actualStart);
         }
-        if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER) {
+        if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER$1) {
           throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);
         }
         A = arraySpeciesCreate(O, actualDeleteCount);
@@ -8548,50 +9115,25 @@ var app = (function () {
       return target;
     }
 
-    var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
-    var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
-    var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+    function _toConsumableArray(arr) {
+      return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    }
 
-    var IS_CONCAT_SPREADABLE_SUPPORT = !fails(function () {
-      var array = [];
-      array[IS_CONCAT_SPREADABLE] = false;
-      return array.concat()[0] !== array;
-    });
+    function _arrayWithoutHoles(arr) {
+      if (Array.isArray(arr)) {
+        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
 
-    var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
-
-    var isConcatSpreadable = function (O) {
-      if (!isObject(O)) return false;
-      var spreadable = O[IS_CONCAT_SPREADABLE];
-      return spreadable !== undefined ? !!spreadable : isArray(O);
-    };
-
-    var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
-
-    // `Array.prototype.concat` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.concat
-    // with adding support of @@isConcatSpreadable and @@species
-    _export({ target: 'Array', proto: true, forced: FORCED }, {
-      concat: function concat(arg) { // eslint-disable-line no-unused-vars
-        var O = toObject(this);
-        var A = arraySpeciesCreate(O, 0);
-        var n = 0;
-        var i, k, length, len, E;
-        for (i = -1, length = arguments.length; i < length; i++) {
-          E = i === -1 ? O : arguments[i];
-          if (isConcatSpreadable(E)) {
-            len = toLength(E.length);
-            if (n + len > MAX_SAFE_INTEGER$1) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-            for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
-          } else {
-            if (n >= MAX_SAFE_INTEGER$1) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-            createProperty(A, n++, E);
-          }
-        }
-        A.length = n;
-        return A;
+        return arr2;
       }
-    });
+    }
+
+    function _iterableToArray(iter) {
+      if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    }
+
+    function _nonIterableSpread() {
+      throw new TypeError("Invalid attempt to spread non-iterable instance");
+    }
 
     // call something on iterator step with safe closing on error
     var callWithSafeIterationClosing = function (iterator, fn, value, ENTRIES) {
@@ -10536,7 +11078,8 @@ var app = (function () {
                       age: user.dob.age,
                       imageUrl: "".concat(user.picture.large),
                       moreDetails: {
-                        hobbies: [],
+                        about: "Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the browser, Svelte shifts that work into a compile step that happens when you build your app.\n\nInstead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.",
+                        hobbies: "bike, dance, comedies",
                         email: "".concat(user.email)
                       }
                     },
@@ -10567,18 +11110,22 @@ var app = (function () {
     }
 
     var ntkStore = writable({
-      ntkPersons: []
+      ntkPersons: [],
+      hasFetched: false
     });
     var customNtkStore = {
       subscribe: ntkStore.subscribe,
       isEmpty: function isEmpty() {
         var store = get_store_value(ntkStore);
-        return store.ntkPersons.length === 0;
+        return !store.hasFetched;
       },
       setStoreAsync: function setStoreAsync() {
-        getMockUsers(100).then(function (ntks) {
-          ntkStore.set({
-            ntkPersons: ntks
+        getMockUsers(1500).then(function (ntks) {
+          ntkStore.update(function (state) {
+            return {
+              ntkPersons: [].concat(_toConsumableArray(ntks), _toConsumableArray(state.ntkPersons)),
+              hasFetched: true
+            };
           });
         });
       },
@@ -10645,11 +11192,11 @@ var app = (function () {
 
     };
 
-    /* src\components\GeneralNTKs.svelte generated by Svelte v3.9.1 */
+    /* src\components\AllNTKs.svelte generated by Svelte v3.9.1 */
 
-    const file$f = "src\\components\\GeneralNTKs.svelte";
+    const file$g = "src\\components\\AllNTKs.svelte";
 
-    function create_fragment$j(ctx) {
+    function create_fragment$k(ctx) {
     	var div, current;
 
     	var ntklist = new NTKList({
@@ -10665,8 +11212,8 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			ntklist.$$.fragment.c();
-    			attr(div, "class", "container svelte-86kc1o");
-    			add_location(div, file$f, 50, 0, 2165);
+    			attr(div, "class", "container svelte-1mbbivc");
+    			add_location(div, file$g, 50, 0, 2149);
     		},
 
     		l: function claim(nodes) {
@@ -10711,7 +11258,7 @@ var app = (function () {
           customNtkStore.onMarkedChanged(event.detail.id);
       }
 
-    function instance$j($$self, $$props, $$invalidate) {
+    function instance$k($$self, $$props, $$invalidate) {
     	
 
         let ntkList=[];
@@ -10738,16 +11285,16 @@ var app = (function () {
     	return { ntkList };
     }
 
-    class GeneralNTKs extends SvelteComponentDev {
+    class AllNTKs extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$j, create_fragment$j, safe_not_equal, []);
+    		init(this, options, instance$k, create_fragment$k, safe_not_equal, []);
     	}
     }
 
     /* src\components\MyNTKs.svelte generated by Svelte v3.9.1 */
 
-    const file$g = "src\\components\\MyNTKs.svelte";
+    const file$h = "src\\components\\MyNTKs.svelte";
 
     // (76:8) {:else}
     function create_else_block$1(ctx) {
@@ -10756,7 +11303,7 @@ var app = (function () {
     	var icon = new Icon({
     		props: {
     		class: "material-icons",
-    		$$slots: { default: [create_default_slot$6] },
+    		$$slots: { default: [create_default_slot$7] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -10770,9 +11317,9 @@ var app = (function () {
     			h2 = element("h2");
     			h2.textContent = "You havn't selected any Nice-to-Knows";
     			attr(h2, "class", "svelte-10qzlp5");
-    			add_location(h2, file$g, 78, 12, 3719);
+    			add_location(h2, file$h, 78, 12, 3719);
     			attr(div, "class", "no-ntks svelte-10qzlp5");
-    			add_location(div, file$g, 76, 8, 3619);
+    			add_location(div, file$h, 76, 8, 3619);
     		},
 
     		m: function mount(target, anchor) {
@@ -10859,7 +11406,7 @@ var app = (function () {
     }
 
     // (78:12) <Icon class="material-icons">
-    function create_default_slot$6(ctx) {
+    function create_default_slot$7(ctx) {
     	var t;
 
     	return {
@@ -10879,7 +11426,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$k(ctx) {
+    function create_fragment$l(ctx) {
     	var div, current_block_type_index, if_block, current;
 
     	var if_block_creators = [
@@ -10902,7 +11449,7 @@ var app = (function () {
     			div = element("div");
     			if_block.c();
     			attr(div, "class", "container svelte-10qzlp5");
-    			add_location(div, file$g, 68, 0, 3384);
+    			add_location(div, file$h, 68, 0, 3384);
     		},
 
     		l: function claim(nodes) {
@@ -10962,7 +11509,7 @@ var app = (function () {
           customNtkStore.onMarkedChanged(event.detail.id);
       }
 
-    function instance$k($$self, $$props, $$invalidate) {
+    function instance$l($$self, $$props, $$invalidate) {
     	
 
         let ntkList=[];
@@ -10986,13 +11533,13 @@ var app = (function () {
     class MyNTKs extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$k, create_fragment$k, safe_not_equal, []);
+    		init(this, options, instance$l, create_fragment$l, safe_not_equal, []);
     	}
     }
 
     /* src\components\NTKsApproval.svelte generated by Svelte v3.9.1 */
 
-    const file$h = "src\\components\\NTKsApproval.svelte";
+    const file$i = "src\\components\\NTKsApproval.svelte";
 
     // (81:8) {:else}
     function create_else_block$2(ctx) {
@@ -11001,7 +11548,7 @@ var app = (function () {
     	var icon = new Icon({
     		props: {
     		class: "material-icons",
-    		$$slots: { default: [create_default_slot$7] },
+    		$$slots: { default: [create_default_slot$8] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -11015,9 +11562,9 @@ var app = (function () {
     			h2 = element("h2");
     			h2.textContent = "No nice-to-knows to approve";
     			attr(h2, "class", "svelte-r70l8g");
-    			add_location(h2, file$h, 83, 12, 3932);
+    			add_location(h2, file$i, 83, 12, 3932);
     			attr(div, "class", "no-ntks svelte-r70l8g");
-    			add_location(div, file$h, 81, 8, 3832);
+    			add_location(div, file$i, 81, 8, 3832);
     		},
 
     		m: function mount(target, anchor) {
@@ -11105,7 +11652,7 @@ var app = (function () {
     }
 
     // (83:12) <Icon class="material-icons">
-    function create_default_slot$7(ctx) {
+    function create_default_slot$8(ctx) {
     	var t;
 
     	return {
@@ -11125,7 +11672,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$l(ctx) {
+    function create_fragment$m(ctx) {
     	var div, current_block_type_index, if_block, current;
 
     	var if_block_creators = [
@@ -11148,7 +11695,7 @@ var app = (function () {
     			div = element("div");
     			if_block.c();
     			attr(div, "class", "container svelte-r70l8g");
-    			add_location(div, file$h, 72, 0, 3542);
+    			add_location(div, file$i, 72, 0, 3542);
     		},
 
     		l: function claim(nodes) {
@@ -11212,7 +11759,7 @@ var app = (function () {
           customNtkStore.onApprovalChanged(event.detail.id, event.detail.isApproved);
       }
 
-    function instance$l($$self, $$props, $$invalidate) {
+    function instance$m($$self, $$props, $$invalidate) {
     	
 
         let ntkList=[];
@@ -11236,19 +11783,19 @@ var app = (function () {
     class NTKsApproval extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$l, create_fragment$l, safe_not_equal, []);
+    		init(this, options, instance$m, create_fragment$m, safe_not_equal, []);
     	}
     }
 
     var viewKeys = {
-      GENERAL_NTKS: 'generalNtks',
+      ALL_NTKS: 'allNtks',
       MY_NTKS: 'myNtks',
       NTKS_APPROVAL: 'ntksApproval'
     };
 
     var viewsRepo = [{
-      id: viewKeys.GENERAL_NTKS,
-      view: GeneralNTKs,
+      id: viewKeys.ALL_NTKS,
+      view: AllNTKs,
       caption: 'All Nice-to-knows'
     }, {
       id: viewKeys.MY_NTKS,
@@ -13386,7 +13933,7 @@ var app = (function () {
 
     /* node_modules\@smui\floating-label\FloatingLabel.svelte generated by Svelte v3.9.1 */
 
-    const file$i = "node_modules\\@smui\\floating-label\\FloatingLabel.svelte";
+    const file$j = "node_modules\\@smui\\floating-label\\FloatingLabel.svelte";
 
     // (9:0) {:else}
     function create_else_block$3(ctx) {
@@ -13413,7 +13960,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			set_attributes(label, label_data);
-    			add_location(label, file$i, 9, 2, 225);
+    			add_location(label, file$j, 9, 2, 225);
     		},
 
     		l: function claim(nodes) {
@@ -13500,7 +14047,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			set_attributes(span, span_data);
-    			add_location(span, file$i, 1, 2, 16);
+    			add_location(span, file$j, 1, 2, 16);
     		},
 
     		l: function claim(nodes) {
@@ -13562,7 +14109,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$m(ctx) {
+    function create_fragment$n(ctx) {
     	var current_block_type_index, if_block, if_block_anchor, current;
 
     	var if_block_creators = [
@@ -13639,7 +14186,7 @@ var app = (function () {
     	};
     }
 
-    function instance$m($$self, $$props, $$invalidate) {
+    function instance$n($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -13716,7 +14263,7 @@ var app = (function () {
     class FloatingLabel extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$m, create_fragment$m, safe_not_equal, ["use", "class", "for", "wrapped", "shake", "float", "getWidth"]);
+    		init(this, options, instance$n, create_fragment$n, safe_not_equal, ["use", "class", "for", "wrapped", "shake", "float", "getWidth"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -13790,9 +14337,9 @@ var app = (function () {
 
     /* node_modules\@smui\line-ripple\LineRipple.svelte generated by Svelte v3.9.1 */
 
-    const file$j = "node_modules\\@smui\\line-ripple\\LineRipple.svelte";
+    const file$k = "node_modules\\@smui\\line-ripple\\LineRipple.svelte";
 
-    function create_fragment$n(ctx) {
+    function create_fragment$o(ctx) {
     	var div, useActions_action, forwardEvents_action;
 
     	var div_levels = [
@@ -13809,7 +14356,7 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			set_attributes(div, div_data);
-    			add_location(div, file$j, 0, 0, 0);
+    			add_location(div, file$k, 0, 0, 0);
     		},
 
     		l: function claim(nodes) {
@@ -13849,7 +14396,7 @@ var app = (function () {
     	};
     }
 
-    function instance$n($$self, $$props, $$invalidate) {
+    function instance$o($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -13910,7 +14457,7 @@ var app = (function () {
     class LineRipple extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$n, create_fragment$n, safe_not_equal, ["use", "class", "active", "activate", "deactivate", "setRippleCenter"]);
+    		init(this, options, instance$o, create_fragment$o, safe_not_equal, ["use", "class", "active", "activate", "deactivate", "setRippleCenter"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -13976,7 +14523,7 @@ var app = (function () {
 
     /* node_modules\@smui\notched-outline\NotchedOutline.svelte generated by Svelte v3.9.1 */
 
-    const file$k = "node_modules\\@smui\\notched-outline\\NotchedOutline.svelte";
+    const file$l = "node_modules\\@smui\\notched-outline\\NotchedOutline.svelte";
 
     // (14:2) {#if !noLabel}
     function create_if_block$6(ctx) {
@@ -13992,7 +14539,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			attr(div, "class", "mdc-notched-outline__notch");
-    			add_location(div, file$k, 14, 4, 367);
+    			add_location(div, file$l, 14, 4, 367);
     		},
 
     		l: function claim(nodes) {
@@ -14039,7 +14586,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$o(ctx) {
+    function create_fragment$p(ctx) {
     	var div2, div0, t0, t1, div1, useActions_action, forwardEvents_action, current;
 
     	var if_block = (!ctx.noLabel) && create_if_block$6(ctx);
@@ -14063,11 +14610,11 @@ var app = (function () {
     			t1 = space();
     			div1 = element("div");
     			attr(div0, "class", "mdc-notched-outline__leading");
-    			add_location(div0, file$k, 12, 2, 297);
+    			add_location(div0, file$l, 12, 2, 297);
     			attr(div1, "class", "mdc-notched-outline__trailing");
-    			add_location(div1, file$k, 16, 2, 437);
+    			add_location(div1, file$l, 16, 2, 437);
     			set_attributes(div2, div2_data);
-    			add_location(div2, file$k, 0, 0, 0);
+    			add_location(div2, file$l, 0, 0, 0);
     		},
 
     		l: function claim(nodes) {
@@ -14140,7 +14687,7 @@ var app = (function () {
     	};
     }
 
-    function instance$o($$self, $$props, $$invalidate) {
+    function instance$p($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -14203,7 +14750,7 @@ var app = (function () {
     class NotchedOutline extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$o, create_fragment$o, safe_not_equal, ["use", "class", "notched", "noLabel", "notch", "closeNotch"]);
+    		init(this, options, instance$p, create_fragment$p, safe_not_equal, ["use", "class", "notched", "noLabel", "notch", "closeNotch"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -14266,9 +14813,9 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\Input.svelte generated by Svelte v3.9.1 */
 
-    const file$l = "node_modules\\@smui\\textfield\\Input.svelte";
+    const file$m = "node_modules\\@smui\\textfield\\Input.svelte";
 
-    function create_fragment$p(ctx) {
+    function create_fragment$q(ctx) {
     	var input, useActions_action, forwardEvents_action, dispose;
 
     	var input_levels = [
@@ -14287,7 +14834,7 @@ var app = (function () {
     		c: function create() {
     			input = element("input");
     			set_attributes(input, input_data);
-    			add_location(input, file$l, 0, 0, 0);
+    			add_location(input, file$m, 0, 0, 0);
 
     			dispose = [
     				listen(input, "change", ctx.change_handler),
@@ -14345,7 +14892,7 @@ var app = (function () {
       return +value;
     }
 
-    function instance$p($$self, $$props, $$invalidate) {
+    function instance$q($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component, ['change', 'input']);
@@ -14442,7 +14989,7 @@ var app = (function () {
     class Input extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$p, create_fragment$p, safe_not_equal, ["use", "class", "type", "value", "files", "dirty", "invalid", "updateInvalid"]);
+    		init(this, options, instance$q, create_fragment$q, safe_not_equal, ["use", "class", "type", "value", "files", "dirty", "invalid", "updateInvalid"]);
     	}
 
     	get use() {
@@ -14512,9 +15059,9 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\Textarea.svelte generated by Svelte v3.9.1 */
 
-    const file$m = "node_modules\\@smui\\textfield\\Textarea.svelte";
+    const file$n = "node_modules\\@smui\\textfield\\Textarea.svelte";
 
-    function create_fragment$q(ctx) {
+    function create_fragment$r(ctx) {
     	var textarea, useActions_action, forwardEvents_action, dispose;
 
     	var textarea_levels = [
@@ -14531,7 +15078,7 @@ var app = (function () {
     		c: function create() {
     			textarea = element("textarea");
     			set_attributes(textarea, textarea_data);
-    			add_location(textarea, file$m, 0, 0, 0);
+    			add_location(textarea, file$n, 0, 0, 0);
 
     			dispose = [
     				listen(textarea, "input", ctx.textarea_input_handler),
@@ -14582,7 +15129,7 @@ var app = (function () {
     	};
     }
 
-    function instance$q($$self, $$props, $$invalidate) {
+    function instance$r($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component, ['change', 'input']);
@@ -14645,7 +15192,7 @@ var app = (function () {
     class Textarea extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$q, create_fragment$q, safe_not_equal, ["use", "class", "value", "dirty", "invalid", "updateInvalid"]);
+    		init(this, options, instance$r, create_fragment$r, safe_not_equal, ["use", "class", "value", "dirty", "invalid", "updateInvalid"]);
     	}
 
     	get use() {
@@ -14699,7 +15246,7 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\Textfield.svelte generated by Svelte v3.9.1 */
 
-    const file$n = "node_modules\\@smui\\textfield\\Textfield.svelte";
+    const file$o = "node_modules\\@smui\\textfield\\Textfield.svelte";
 
     const get_label_slot_changes_1 = () => ({});
     const get_label_slot_context_1 = () => ({});
@@ -14731,7 +15278,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			set_attributes(div, div_data);
-    			add_location(div, file$n, 65, 2, 2082);
+    			add_location(div, file$o, 65, 2, 2082);
     		},
 
     		l: function claim(nodes) {
@@ -14842,7 +15389,7 @@ var app = (function () {
     			if (if_block2) if_block2.c();
 
     			set_attributes(label_1, label_1_data);
-    			add_location(label_1, file$n, 1, 2, 15);
+    			add_location(label_1, file$o, 1, 2, 15);
     		},
 
     		l: function claim(nodes) {
@@ -15452,7 +15999,7 @@ var app = (function () {
     	];
 
     	let notchedoutline_props = {
-    		$$slots: { default: [create_default_slot$8] },
+    		$$slots: { default: [create_default_slot$9] },
     		$$scope: { ctx }
     	};
     	for (var i = 0; i < notchedoutline_spread_levels.length; i += 1) {
@@ -15621,7 +16168,7 @@ var app = (function () {
     }
 
     // (58:6) <NotchedOutline noLabel={noLabel || label == null} {...prefixFilter($$props, 'outline$')}>
-    function create_default_slot$8(ctx) {
+    function create_default_slot$9(ctx) {
     	var if_block_anchor, current;
 
     	var if_block = (!ctx.noLabel && ctx.label != null) && create_if_block_2$1(ctx);
@@ -15679,7 +16226,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$r(ctx) {
+    function create_fragment$s(ctx) {
     	var current_block_type_index, if_block, if_block_anchor, current;
 
     	var if_block_creators = [
@@ -15756,7 +16303,7 @@ var app = (function () {
     	};
     }
 
-    function instance$r($$self, $$props, $$invalidate) {
+    function instance$s($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -15958,7 +16505,7 @@ var app = (function () {
     class Textfield extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$r, create_fragment$r, safe_not_equal, ["use", "class", "ripple", "disabled", "fullwidth", "textarea", "variant", "dense", "withLeadingIcon", "withTrailingIcon", "noLabel", "label", "type", "value", "files", "dirty", "invalid", "updateInvalid", "useNativeValidation", "focus", "layout"]);
+    		init(this, options, instance$s, create_fragment$s, safe_not_equal, ["use", "class", "ripple", "disabled", "fullwidth", "textarea", "variant", "dense", "withLeadingIcon", "withTrailingIcon", "noLabel", "label", "type", "value", "files", "dirty", "invalid", "updateInvalid", "useNativeValidation", "focus", "layout"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -16141,12 +16688,12 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\helper-text\HelperText.svelte generated by Svelte v3.9.1 */
 
-    const file$o = "node_modules\\@smui\\textfield\\helper-text\\HelperText.svelte";
+    const file$p = "node_modules\\@smui\\textfield\\helper-text\\HelperText.svelte";
 
     const get_character_counter_slot_changes = () => ({});
     const get_character_counter_slot_context = () => ({});
 
-    function create_fragment$s(ctx) {
+    function create_fragment$t(ctx) {
     	var div1, div0, useActions_action, forwardEvents_action, t, useActions_action_1, current;
 
     	const default_slot_template = ctx.$$slots.default;
@@ -16187,10 +16734,10 @@ var app = (function () {
     			if (character_counter_slot) character_counter_slot.c();
 
     			set_attributes(div0, div0_data);
-    			add_location(div0, file$o, 5, 2, 152);
+    			add_location(div0, file$p, 5, 2, 152);
 
     			set_attributes(div1, div1_data);
-    			add_location(div1, file$o, 0, 0, 0);
+    			add_location(div1, file$p, 0, 0, 0);
     		},
 
     		l: function claim(nodes) {
@@ -16285,7 +16832,7 @@ var app = (function () {
     	};
     }
 
-    function instance$s($$self, $$props, $$invalidate) {
+    function instance$t($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -16342,7 +16889,7 @@ var app = (function () {
     class HelperText extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$s, create_fragment$s, safe_not_equal, ["use", "class", "persistent", "validationMsg", "line$use", "line$class"]);
+    		init(this, options, instance$t, create_fragment$t, safe_not_equal, ["use", "class", "persistent", "validationMsg", "line$use", "line$class"]);
     	}
 
     	get use() {
@@ -16395,92 +16942,38 @@ var app = (function () {
     }
 
     /* src\common\TextBox.svelte generated by Svelte v3.9.1 */
+    const { console: console_1$3 } = globals;
 
-    // (23:0) <Textfield type="{type}"             withTrailingIcon={value !== ''}             bind:dirty={dirty}             bind:invalid={invalid}             updateInvalid             bind:value={value}             label="{label}"             style="min-width: {minWidth ? `${minWidth}px`: '250px'}"    >
-    function create_default_slot_1$4(ctx) {
-    	return {
-    		c: noop,
-    		m: noop,
-    		d: noop
-    	};
-    }
+    // (39:4) {:else}
+    function create_else_block$5(ctx) {
+    	var updating_value, t, current;
 
-    // (34:0) <HelperText validationMsg>
-    function create_default_slot$9(ctx) {
-    	var t;
-
-    	return {
-    		c: function create() {
-    			t = text(ctx.errorMessage);
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, t, anchor);
-    		},
-
-    		p: function update(changed, ctx) {
-    			if (changed.errorMessage) {
-    				set_data(t, ctx.errorMessage);
-    			}
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(t);
-    			}
-    		}
-    	};
-    }
-
-    function create_fragment$t(ctx) {
-    	var updating_dirty, updating_invalid, updating_value, t, current;
-
-    	function textfield_dirty_binding(value_1) {
-    		ctx.textfield_dirty_binding.call(null, value_1);
-    		updating_dirty = true;
-    		add_flush_callback(() => updating_dirty = false);
-    	}
-
-    	function textfield_invalid_binding(value_2) {
-    		ctx.textfield_invalid_binding.call(null, value_2);
-    		updating_invalid = true;
-    		add_flush_callback(() => updating_invalid = false);
-    	}
-
-    	function textfield_value_binding(value_3) {
-    		ctx.textfield_value_binding.call(null, value_3);
+    	function textfield_value_binding_1(value_1) {
+    		ctx.textfield_value_binding_1.call(null, value_1);
     		updating_value = true;
     		add_flush_callback(() => updating_value = false);
     	}
 
     	let textfield_props = {
-    		type: ctx.type,
-    		withTrailingIcon: ctx.value !== '',
-    		updateInvalid: true,
+    		class: ctx.$$props.class,
+    		textarea: true,
+    		fullwidth: true,
+    		lineRipple: false,
     		label: ctx.label,
-    		style: "min-width: " + (ctx.minWidth ? `${ctx.minWidth}px`: '250px'),
-    		$$slots: { default: [create_default_slot_1$4] },
-    		$$scope: { ctx }
+    		"input$aria-controls": "helper-text-fullwidth",
+    		"input$aria-describedby": "helper-text-fullwidth"
     	};
-    	if (ctx.dirty !== void 0) {
-    		textfield_props.dirty = ctx.dirty;
-    	}
-    	if (ctx.invalid !== void 0) {
-    		textfield_props.invalid = ctx.invalid;
-    	}
     	if (ctx.value !== void 0) {
     		textfield_props.value = ctx.value;
     	}
     	var textfield = new Textfield({ props: textfield_props, $$inline: true });
 
-    	binding_callbacks.push(() => bind(textfield, 'dirty', textfield_dirty_binding));
-    	binding_callbacks.push(() => bind(textfield, 'invalid', textfield_invalid_binding));
-    	binding_callbacks.push(() => bind(textfield, 'value', textfield_value_binding));
+    	binding_callbacks.push(() => bind(textfield, 'value', textfield_value_binding_1));
 
     	var helpertext = new HelperText({
     		props: {
     		validationMsg: true,
-    		$$slots: { default: [create_default_slot$9] },
+    		$$slots: { default: [create_default_slot_1$4] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -16493,10 +16986,6 @@ var app = (function () {
     			helpertext.$$.fragment.c();
     		},
 
-    		l: function claim(nodes) {
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-
     		m: function mount(target, anchor) {
     			mount_component(textfield, target, anchor);
     			insert(target, t, anchor);
@@ -16506,17 +16995,8 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var textfield_changes = {};
-    			if (changed.type) textfield_changes.type = ctx.type;
-    			if (changed.value) textfield_changes.withTrailingIcon = ctx.value !== '';
+    			if (changed.$$props) textfield_changes.class = ctx.$$props.class;
     			if (changed.label) textfield_changes.label = ctx.label;
-    			if (changed.minWidth) textfield_changes.style = "min-width: " + (ctx.minWidth ? `${ctx.minWidth}px`: '250px');
-    			if (changed.$$scope) textfield_changes.$$scope = { changed, ctx };
-    			if (!updating_dirty && changed.dirty) {
-    				textfield_changes.dirty = ctx.dirty;
-    			}
-    			if (!updating_invalid && changed.invalid) {
-    				textfield_changes.invalid = ctx.invalid;
-    			}
     			if (!updating_value && changed.value) {
     				textfield_changes.value = ctx.value;
     			}
@@ -16554,15 +17034,219 @@ var app = (function () {
     	};
     }
 
-    function instance$t($$self, $$props, $$invalidate) {
+    // (25:0) {#if !isTextArea}
+    function create_if_block$8(ctx) {
+    	var updating_dirty, updating_invalid, updating_value, current;
+
+    	function textfield_dirty_binding(value_1) {
+    		ctx.textfield_dirty_binding.call(null, value_1);
+    		updating_dirty = true;
+    		add_flush_callback(() => updating_dirty = false);
+    	}
+
+    	function textfield_invalid_binding(value_2) {
+    		ctx.textfield_invalid_binding.call(null, value_2);
+    		updating_invalid = true;
+    		add_flush_callback(() => updating_invalid = false);
+    	}
+
+    	function textfield_value_binding(value_3) {
+    		ctx.textfield_value_binding.call(null, value_3);
+    		updating_value = true;
+    		add_flush_callback(() => updating_value = false);
+    	}
+
+    	let textfield_props = {
+    		type: ctx.type,
+    		class: ctx.$$props.class,
+    		fullwidth: true,
+    		withTrailingIcon: ctx.value !== '',
+    		updateInvalid: true,
+    		label: ctx.label,
+    		style: "min-width: " + (ctx.minWidth ? `${ctx.minWidth}px`: '250px'),
+    		$$slots: { default: [create_default_slot$a] },
+    		$$scope: { ctx }
+    	};
+    	if (ctx.dirty !== void 0) {
+    		textfield_props.dirty = ctx.dirty;
+    	}
+    	if (ctx.invalid !== void 0) {
+    		textfield_props.invalid = ctx.invalid;
+    	}
+    	if (ctx.value !== void 0) {
+    		textfield_props.value = ctx.value;
+    	}
+    	var textfield = new Textfield({ props: textfield_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textfield, 'dirty', textfield_dirty_binding));
+    	binding_callbacks.push(() => bind(textfield, 'invalid', textfield_invalid_binding));
+    	binding_callbacks.push(() => bind(textfield, 'value', textfield_value_binding));
+
+    	return {
+    		c: function create() {
+    			textfield.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(textfield, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var textfield_changes = {};
+    			if (changed.type) textfield_changes.type = ctx.type;
+    			if (changed.$$props) textfield_changes.class = ctx.$$props.class;
+    			if (changed.value) textfield_changes.withTrailingIcon = ctx.value !== '';
+    			if (changed.label) textfield_changes.label = ctx.label;
+    			if (changed.minWidth) textfield_changes.style = "min-width: " + (ctx.minWidth ? `${ctx.minWidth}px`: '250px');
+    			if (changed.$$scope) textfield_changes.$$scope = { changed, ctx };
+    			if (!updating_dirty && changed.dirty) {
+    				textfield_changes.dirty = ctx.dirty;
+    			}
+    			if (!updating_invalid && changed.invalid) {
+    				textfield_changes.invalid = ctx.invalid;
+    			}
+    			if (!updating_value && changed.value) {
+    				textfield_changes.value = ctx.value;
+    			}
+    			textfield.$set(textfield_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(textfield.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(textfield.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(textfield, detaching);
+    		}
+    	};
+    }
+
+    // (50:4) <HelperText validationMsg>
+    function create_default_slot_1$4(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text(ctx.errorMessage);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		p: function update(changed, ctx) {
+    			if (changed.errorMessage) {
+    				set_data(t, ctx.errorMessage);
+    			}
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
+    	};
+    }
+
+    // (26:4) <Textfield type="{type}"                 class="{$$props.class}"                 fullwidth                 withTrailingIcon={value !== ''}                 bind:dirty={dirty}                 bind:invalid={invalid}                 updateInvalid                 bind:value={value}                 label="{label}"                 style="min-width: {minWidth ? `${minWidth}px`: '250px'}"        >
+    function create_default_slot$a(ctx) {
+    	return {
+    		c: noop,
+    		m: noop,
+    		d: noop
+    	};
+    }
+
+    function create_fragment$u(ctx) {
+    	var current_block_type_index, if_block, if_block_anchor, current;
+
+    	var if_block_creators = [
+    		create_if_block$8,
+    		create_else_block$5
+    	];
+
+    	var if_blocks = [];
+
+    	function select_block_type(changed, ctx) {
+    		if (!ctx.isTextArea) return 0;
+    		return 1;
+    	}
+
+    	current_block_type_index = select_block_type(null, ctx);
+    	if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+
+    	return {
+    		c: function create() {
+    			if_block.c();
+    			if_block_anchor = empty();
+    		},
+
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			if_blocks[current_block_type_index].m(target, anchor);
+    			insert(target, if_block_anchor, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var previous_block_index = current_block_type_index;
+    			current_block_type_index = select_block_type(changed, ctx);
+    			if (current_block_type_index === previous_block_index) {
+    				if_blocks[current_block_type_index].p(changed, ctx);
+    			} else {
+    				group_outros();
+    				transition_out(if_blocks[previous_block_index], 1, 1, () => {
+    					if_blocks[previous_block_index] = null;
+    				});
+    				check_outros();
+
+    				if_block = if_blocks[current_block_type_index];
+    				if (!if_block) {
+    					if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
+    					if_block.c();
+    				}
+    				transition_in(if_block, 1);
+    				if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    			}
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block);
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(if_block);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if_blocks[current_block_type_index].d(detaching);
+
+    			if (detaching) {
+    				detach(if_block_anchor);
+    			}
+    		}
+    	};
+    }
+
+    function instance$u($$self, $$props, $$invalidate) {
     	
 
-        let { errorMessage='', label = '', minWidth, type, value='', dirty=false, invalid=false } = $$props;
-
-    	const writable_props = ['errorMessage', 'label', 'minWidth', 'type', 'value', 'dirty', 'invalid'];
-    	Object.keys($$props).forEach(key => {
-    		if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(`<TextBox> was created with unknown prop '${key}'`);
-    	});
+        let { errorMessage='', label = '', minWidth, type, value='', dirty=false, invalid=false, isTextArea = false } = $$props;
 
     	function textfield_dirty_binding(value_1) {
     		dirty = value_1;
@@ -16579,14 +17263,25 @@ var app = (function () {
     		$$invalidate('value', value);
     	}
 
-    	$$self.$set = $$props => {
-    		if ('errorMessage' in $$props) $$invalidate('errorMessage', errorMessage = $$props.errorMessage);
-    		if ('label' in $$props) $$invalidate('label', label = $$props.label);
-    		if ('minWidth' in $$props) $$invalidate('minWidth', minWidth = $$props.minWidth);
-    		if ('type' in $$props) $$invalidate('type', type = $$props.type);
-    		if ('value' in $$props) $$invalidate('value', value = $$props.value);
-    		if ('dirty' in $$props) $$invalidate('dirty', dirty = $$props.dirty);
-    		if ('invalid' in $$props) $$invalidate('invalid', invalid = $$props.invalid);
+    	function textfield_value_binding_1(value_1) {
+    		value = value_1;
+    		$$invalidate('value', value);
+    	}
+
+    	$$self.$set = $$new_props => {
+    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
+    		if ('errorMessage' in $$new_props) $$invalidate('errorMessage', errorMessage = $$new_props.errorMessage);
+    		if ('label' in $$new_props) $$invalidate('label', label = $$new_props.label);
+    		if ('minWidth' in $$new_props) $$invalidate('minWidth', minWidth = $$new_props.minWidth);
+    		if ('type' in $$new_props) $$invalidate('type', type = $$new_props.type);
+    		if ('value' in $$new_props) $$invalidate('value', value = $$new_props.value);
+    		if ('dirty' in $$new_props) $$invalidate('dirty', dirty = $$new_props.dirty);
+    		if ('invalid' in $$new_props) $$invalidate('invalid', invalid = $$new_props.invalid);
+    		if ('isTextArea' in $$new_props) $$invalidate('isTextArea', isTextArea = $$new_props.isTextArea);
+    	};
+
+    	$$self.$$.update = ($$dirty = { isTextArea: 1 }) => {
+    		if ($$dirty.isTextArea) { console.log('isTextArea',isTextArea); }
     	};
 
     	return {
@@ -16597,24 +17292,28 @@ var app = (function () {
     		value,
     		dirty,
     		invalid,
+    		isTextArea,
+    		$$props,
     		textfield_dirty_binding,
     		textfield_invalid_binding,
-    		textfield_value_binding
+    		textfield_value_binding,
+    		textfield_value_binding_1,
+    		$$props: $$props = exclude_internal_props($$props)
     	};
     }
 
     class TextBox extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$t, create_fragment$t, safe_not_equal, ["errorMessage", "label", "minWidth", "type", "value", "dirty", "invalid"]);
+    		init(this, options, instance$u, create_fragment$u, safe_not_equal, ["errorMessage", "label", "minWidth", "type", "value", "dirty", "invalid", "isTextArea"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
     		if (ctx.minWidth === undefined && !('minWidth' in props)) {
-    			console.warn("<TextBox> was created without expected prop 'minWidth'");
+    			console_1$3.warn("<TextBox> was created without expected prop 'minWidth'");
     		}
     		if (ctx.type === undefined && !('type' in props)) {
-    			console.warn("<TextBox> was created without expected prop 'type'");
+    			console_1$3.warn("<TextBox> was created without expected prop 'type'");
     		}
     	}
 
@@ -16673,13 +17372,21 @@ var app = (function () {
     	set invalid(value) {
     		throw new Error("<TextBox>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
+
+    	get isTextArea() {
+    		throw new Error("<TextBox>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set isTextArea(value) {
+    		throw new Error("<TextBox>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
     }
 
     /* src\components\RegistrationPopup.svelte generated by Svelte v3.9.1 */
 
-    const file$p = "src\\components\\RegistrationPopup.svelte";
+    const file$q = "src\\components\\RegistrationPopup.svelte";
 
-    // (141:12) <Label>
+    // (161:12) <Label>
     function create_default_slot_3$2(ctx) {
     	var t;
 
@@ -16700,7 +17407,7 @@ var app = (function () {
     	};
     }
 
-    // (140:8) <Button variant="raised" on:click={submit}>
+    // (160:8) <Button variant="raised" on:click={submit}>
     function create_default_slot_2$4(ctx) {
     	var current;
 
@@ -16746,7 +17453,7 @@ var app = (function () {
     	};
     }
 
-    // (139:4) <Actions>
+    // (159:4) <Actions class="actions">
     function create_default_slot_1$5(ctx) {
     	var current;
 
@@ -16794,9 +17501,9 @@ var app = (function () {
     	};
     }
 
-    // (102:0) <Dialog bind:this={simpleDialog}          aria-labelledby="simple-title"          aria-describedby="simple-content"          on:MDCDialog:closed={closeHandler}          on:MDCDialog:closing={onClosing}  >
-    function create_default_slot$a(ctx) {
-    	var header, t1, div3, div1, t2, div0, updating_value, t3, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, current;
+    // (121:0) <Dialog bind:this={simpleDialog}          aria-labelledby="simple-title"          aria-describedby="simple-content"          on:MDCDialog:closed={closeHandler}          on:MDCDialog:closing={onClosing}  >
+    function create_default_slot$b(ctx) {
+    	var header, t1, div3, div1, t2, div0, updating_value, t3, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, current;
 
     	var avatar = new Avatar({ $$inline: true });
 
@@ -16863,18 +17570,37 @@ var app = (function () {
     	}
 
     	let textbox3_props = {
-    		label: "Hobbies",
-    		minWidth: 350
+    		class: "about-me",
+    		isTextArea: true,
+    		label: "About Me"
     	};
-    	if (ctx.hobbies !== void 0) {
-    		textbox3_props.value = ctx.hobbies;
+    	if (ctx.aboutMe !== void 0) {
+    		textbox3_props.value = ctx.aboutMe;
     	}
     	var textbox3 = new TextBox({ props: textbox3_props, $$inline: true });
 
     	binding_callbacks.push(() => bind(textbox3, 'value', textbox3_value_binding));
 
+    	function textbox4_value_binding(value_4) {
+    		ctx.textbox4_value_binding.call(null, value_4);
+    		updating_value_4 = true;
+    		add_flush_callback(() => updating_value_4 = false);
+    	}
+
+    	let textbox4_props = {
+    		label: "Hobbies (seperated with commas)",
+    		minWidth: 350
+    	};
+    	if (ctx.hobbies !== void 0) {
+    		textbox4_props.value = ctx.hobbies;
+    	}
+    	var textbox4 = new TextBox({ props: textbox4_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox4, 'value', textbox4_value_binding));
+
     	var actions = new Actions$1({
     		props: {
+    		class: "actions",
     		$$slots: { default: [create_default_slot_1$5] },
     		$$scope: { ctx }
     	},
@@ -16900,17 +17626,19 @@ var app = (function () {
     			t5 = space();
     			textbox3.$$.fragment.c();
     			t6 = space();
+    			textbox4.$$.fragment.c();
+    			t7 = space();
     			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-hnu7pg");
-    			add_location(header, file$p, 107, 4, 5719);
+    			attr(header, "class", "header svelte-9z5hx0");
+    			add_location(header, file$q, 126, 4, 6334);
     			attr(div0, "class", "name-tb");
-    			add_location(div0, file$p, 111, 12, 5868);
-    			attr(div1, "class", "avatar-container svelte-hnu7pg");
-    			add_location(div1, file$p, 109, 8, 5801);
+    			add_location(div0, file$q, 130, 12, 6483);
+    			attr(div1, "class", "avatar-container svelte-9z5hx0");
+    			add_location(div1, file$q, 128, 8, 6416);
     			attr(div2, "class", "form-details");
-    			add_location(div2, file$p, 120, 8, 6167);
-    			attr(div3, "class", "card-details svelte-hnu7pg");
-    			add_location(div3, file$p, 108, 4, 5765);
+    			add_location(div2, file$q, 139, 8, 6782);
+    			attr(div3, "class", "card-details svelte-9z5hx0");
+    			add_location(div3, file$q, 127, 4, 6380);
     		},
 
     		m: function mount(target, anchor) {
@@ -16929,7 +17657,9 @@ var app = (function () {
     			mount_component(textbox2, div2, null);
     			append(div2, t5);
     			mount_component(textbox3, div2, null);
-    			insert(target, t6, anchor);
+    			append(div2, t6);
+    			mount_component(textbox4, div2, null);
+    			insert(target, t7, anchor);
     			mount_component(actions, target, anchor);
     			current = true;
     		},
@@ -16954,10 +17684,16 @@ var app = (function () {
     			textbox2.$set(textbox2_changes);
 
     			var textbox3_changes = {};
-    			if (!updating_value_3 && changed.hobbies) {
-    				textbox3_changes.value = ctx.hobbies;
+    			if (!updating_value_3 && changed.aboutMe) {
+    				textbox3_changes.value = ctx.aboutMe;
     			}
     			textbox3.$set(textbox3_changes);
+
+    			var textbox4_changes = {};
+    			if (!updating_value_4 && changed.hobbies) {
+    				textbox4_changes.value = ctx.hobbies;
+    			}
+    			textbox4.$set(textbox4_changes);
 
     			var actions_changes = {};
     			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
@@ -16976,6 +17712,8 @@ var app = (function () {
 
     			transition_in(textbox3.$$.fragment, local);
 
+    			transition_in(textbox4.$$.fragment, local);
+
     			transition_in(actions.$$.fragment, local);
 
     			current = true;
@@ -16987,6 +17725,7 @@ var app = (function () {
     			transition_out(textbox1.$$.fragment, local);
     			transition_out(textbox2.$$.fragment, local);
     			transition_out(textbox3.$$.fragment, local);
+    			transition_out(textbox4.$$.fragment, local);
     			transition_out(actions.$$.fragment, local);
     			current = false;
     		},
@@ -17008,8 +17747,10 @@ var app = (function () {
 
     			destroy_component(textbox3);
 
+    			destroy_component(textbox4);
+
     			if (detaching) {
-    				detach(t6);
+    				detach(t7);
     			}
 
     			destroy_component(actions, detaching);
@@ -17017,19 +17758,19 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$u(ctx) {
+    function create_fragment$v(ctx) {
     	var current;
 
     	let dialog_props = {
     		"aria-labelledby": "simple-title",
     		"aria-describedby": "simple-content",
-    		$$slots: { default: [create_default_slot$a] },
+    		$$slots: { default: [create_default_slot$b] },
     		$$scope: { ctx }
     	};
     	var dialog = new Dialog({ props: dialog_props, $$inline: true });
 
     	ctx.dialog_binding(dialog);
-    	dialog.$on("MDCDialog:closed", ctx.closeHandler);
+    	dialog.$on("MDCDialog:closed", closeHandler);
     	dialog.$on("MDCDialog:closing", onClosing$1);
 
     	return {
@@ -17048,7 +17789,7 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var dialog_changes = {};
-    			if (changed.$$scope || changed.hobbies || changed.email || changed.age || changed.name) dialog_changes.$$scope = { changed, ctx };
+    			if (changed.$$scope || changed.hobbies || changed.aboutMe || changed.email || changed.age || changed.name) dialog_changes.$$scope = { changed, ctx };
     			dialog.$set(dialog_changes);
     		},
 
@@ -17072,12 +17813,26 @@ var app = (function () {
     	};
     }
 
+    function closeHandler(e) {
+          // dispatch('popupClosed', {
+          //     value : {
+          //         name,
+          //         age,
+          //         email,
+          //         moreDetails : {
+          //             hobbies,
+          //             aboutMe
+          //         }
+          //     }
+          // });
+      }
+
     function onClosing$1(e) {
           console.log('onClosing', e);
           e.stopPropagation();
       }
 
-    function instance$u($$self, $$props, $$invalidate) {
+    function instance$v($$self, $$props, $$invalidate) {
     	
 
         let simpleDialog;
@@ -17085,6 +17840,7 @@ var app = (function () {
         let email;
         let hobbies;
         let age;
+        let aboutMe;
 
         const dispatch=createEventDispatcher();
 
@@ -17092,21 +17848,18 @@ var app = (function () {
             simpleDialog.open();
         });
 
-        function closeHandler(e) {
-            dispatch('popupClosed', {
-                value: {
+        function submit(e) {
+            dispatch('submit', {
+                value : {
                     name,
                     age,
                     email,
-                    moreDetails: {
-                        hobbies
+                    moreDetails : {
+                        hobbies,
+                        aboutMe
                     }
                 }
             });
-        }
-
-        function submit(e) {
-            console.log('name, email', name, email, hobbies, e);
         }
 
     	function textbox0_value_binding(value) {
@@ -17125,7 +17878,12 @@ var app = (function () {
     	}
 
     	function textbox3_value_binding(value_3) {
-    		hobbies = value_3;
+    		aboutMe = value_3;
+    		$$invalidate('aboutMe', aboutMe);
+    	}
+
+    	function textbox4_value_binding(value_4) {
+    		hobbies = value_4;
     		$$invalidate('hobbies', hobbies);
     	}
 
@@ -17141,12 +17899,13 @@ var app = (function () {
     		email,
     		hobbies,
     		age,
-    		closeHandler,
+    		aboutMe,
     		submit,
     		textbox0_value_binding,
     		textbox1_value_binding,
     		textbox2_value_binding,
     		textbox3_value_binding,
+    		textbox4_value_binding,
     		dialog_binding
     	};
     }
@@ -17154,20 +17913,20 @@ var app = (function () {
     class RegistrationPopup extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$u, create_fragment$u, safe_not_equal, []);
+    		init(this, options, instance$v, create_fragment$v, safe_not_equal, []);
     	}
     }
 
     /* src\components\Header.svelte generated by Svelte v3.9.1 */
 
-    const file$q = "src\\components\\Header.svelte";
+    const file$r = "src\\components\\Header.svelte";
 
-    // (75:0) {#if isRegistrationPopupOpen}
-    function create_if_block$8(ctx) {
+    // (74:0) {#if isRegistrationPopupOpen}
+    function create_if_block$9(ctx) {
     	var current;
 
     	var registrationpopup = new RegistrationPopup({ $$inline: true });
-    	registrationpopup.$on("popupClosed", ctx.registrationPopupClosed);
+    	registrationpopup.$on("submit", ctx.registrationSubmitted);
 
     	return {
     		c: function create() {
@@ -17197,7 +17956,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$v(ctx) {
+    function create_fragment$w(ctx) {
     	var header, div0, span, t1, div1, t2, t3, t4, t5, if_block_anchor, current;
 
     	var myiconbutton0 = new MyIconButton({
@@ -17230,7 +17989,7 @@ var app = (function () {
     	});
     	myiconbutton3.$on("click", ctx.showRegistrationForm);
 
-    	var if_block = (ctx.isRegistrationPopupOpen) && create_if_block$8(ctx);
+    	var if_block = (ctx.isRegistrationPopupOpen) && create_if_block$9(ctx);
 
     	return {
     		c: function create() {
@@ -17251,13 +18010,13 @@ var app = (function () {
     			if (if_block) if_block.c();
     			if_block_anchor = empty();
     			attr(span, "class", "logo-inner svelte-1yysrkk");
-    			add_location(span, file$q, 64, 8, 3174);
+    			add_location(span, file$r, 63, 8, 3112);
     			attr(div0, "class", "logo svelte-1yysrkk");
-    			add_location(div0, file$q, 63, 4, 3146);
+    			add_location(div0, file$r, 62, 4, 3084);
     			attr(div1, "class", "controls svelte-1yysrkk");
-    			add_location(div1, file$q, 66, 4, 3236);
+    			add_location(div1, file$r, 65, 4, 3174);
     			attr(header, "class", "container svelte-1yysrkk");
-    			add_location(header, file$q, 62, 0, 3114);
+    			add_location(header, file$r, 61, 0, 3052);
     		},
 
     		l: function claim(nodes) {
@@ -17286,7 +18045,7 @@ var app = (function () {
     		p: function update(changed, ctx) {
     			if (ctx.isRegistrationPopupOpen) {
     				if (!if_block) {
-    					if_block = create_if_block$8(ctx);
+    					if_block = create_if_block$9(ctx);
     					if_block.c();
     					transition_in(if_block, 1);
     					if_block.m(if_block_anchor.parentNode, if_block_anchor);
@@ -17356,14 +18115,14 @@ var app = (function () {
       }
 
     function onShowMoreClicked() {
-          customViewStore.setView(viewKeys.GENERAL_NTKS);
+          customViewStore.setView(viewKeys.ALL_NTKS);
       }
 
     function onNtksApprovalClicked() {
           customViewStore.setView(viewKeys.NTKS_APPROVAL);
       }
 
-    function instance$v($$self, $$props, $$invalidate) {
+    function instance$w($$self, $$props, $$invalidate) {
     	
 
         let isRegistrationPopupOpen = false;
@@ -17372,7 +18131,7 @@ var app = (function () {
             $$invalidate('isRegistrationPopupOpen', isRegistrationPopupOpen = true);
         }
 
-        function registrationPopupClosed(e){
+        function registrationSubmitted(e){
             $$invalidate('isRegistrationPopupOpen', isRegistrationPopupOpen = false);
             customNtkStore.registerUser(e.detail.value);
         }
@@ -17380,22 +18139,22 @@ var app = (function () {
     	return {
     		isRegistrationPopupOpen,
     		showRegistrationForm,
-    		registrationPopupClosed
+    		registrationSubmitted
     	};
     }
 
     class Header extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$v, create_fragment$v, safe_not_equal, []);
+    		init(this, options, instance$w, create_fragment$w, safe_not_equal, []);
     	}
     }
 
     /* src\AppDesktop.svelte generated by Svelte v3.9.1 */
 
-    const file$r = "src\\AppDesktop.svelte";
+    const file$s = "src\\AppDesktop.svelte";
 
-    function create_fragment$w(ctx) {
+    function create_fragment$x(ctx) {
     	var div, t, current;
 
     	var header = new Header({ $$inline: true });
@@ -17416,8 +18175,8 @@ var app = (function () {
     			header.$$.fragment.c();
     			t = space();
     			if (switch_instance) switch_instance.$$.fragment.c();
-    			attr(div, "class", "container-flex svelte-1t29fi9");
-    			add_location(div, file$r, 18, 0, 985);
+    			attr(div, "class", "container-flex svelte-nskwby");
+    			add_location(div, file$s, 19, 0, 1077);
     		},
 
     		l: function claim(nodes) {
@@ -17486,7 +18245,7 @@ var app = (function () {
     	};
     }
 
-    function instance$w($$self, $$props, $$invalidate) {
+    function instance$x($$self, $$props, $$invalidate) {
     	
 
         let currentView;
@@ -17500,15 +18259,15 @@ var app = (function () {
     class AppDesktop extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$w, create_fragment$w, safe_not_equal, []);
+    		init(this, options, instance$x, create_fragment$x, safe_not_equal, []);
     	}
     }
 
     /* src\App.svelte generated by Svelte v3.9.1 */
 
-    const file$s = "src\\App.svelte";
+    const file$t = "src\\App.svelte";
 
-    function create_fragment$x(ctx) {
+    function create_fragment$y(ctx) {
     	var main, current;
 
     	var desktop = new AppDesktop({ $$inline: true });
@@ -17518,7 +18277,7 @@ var app = (function () {
     			main = element("main");
     			desktop.$$.fragment.c();
     			attr(main, "class", "container");
-    			add_location(main, file$s, 8, 0, 289);
+    			add_location(main, file$t, 8, 0, 289);
     		},
 
     		l: function claim(nodes) {
@@ -17555,7 +18314,7 @@ var app = (function () {
     	};
     }
 
-    function instance$x($$self, $$props, $$invalidate) {
+    function instance$y($$self, $$props, $$invalidate) {
     	let { name } = $$props;
 
     	const writable_props = ['name'];
@@ -17573,7 +18332,7 @@ var app = (function () {
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$x, create_fragment$x, safe_not_equal, ["name"]);
+    		init(this, options, instance$y, create_fragment$y, safe_not_equal, ["name"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};

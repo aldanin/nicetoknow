@@ -43,6 +43,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "@sveltejs/svelte-virtual-list": "^3.0.1",
     "@types/lodash": "^4.14.137",
     "core-js": "^3.2.1",
     "regenerator-runtime": "^0.13.3",

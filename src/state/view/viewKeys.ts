@@ -1,5 +1,5 @@
 const viewKeys = {
-    GENERAL_NTKS: 'generalNtks',
+    ALL_NTKS: 'allNtks',
     MY_NTKS: 'myNtks',
     NTKS_APPROVAL: 'ntksApproval',
 }

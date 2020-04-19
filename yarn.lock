@@ -1473,6 +1473,10 @@
     "@material/top-app-bar" "^3.2.0"
     "@smui/common" "^1.0.0-beta.20"
 
+"@sveltejs/svelte-virtual-list@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@sveltejs/svelte-virtual-list/-/svelte-virtual-list-3.0.1.tgz#3784d6426508836b4471bba8ba293430e73717d8"
+
 "@testing-library/dom@^5.0.1":
   version "5.6.1"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-5.6.1.tgz#705a1cb4a039b877c1e69e916824038e837ab637"

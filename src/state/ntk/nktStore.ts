@@ -6,18 +6,22 @@ import uid from 'uid';
 
 const ntkStore = writable<NTKStore>({
     ntkPersons: [],
+    hasFetched: false
 });
 
 const customNtkStore: CustomNTKStore = {
     subscribe: ntkStore.subscribe,
     isEmpty: () => {
         const store = get(ntkStore);
-        return store.ntkPersons.length === 0;
+        return !store.hasFetched;
     },
     setStoreAsync: () => {
-        getMockUsers(100).then(ntks => {
-            ntkStore.set({
-                ntkPersons: ntks
+        getMockUsers(1500).then(ntks => {
+            ntkStore.update(state => {
+                return {
+                    ntkPersons: [...ntks, ...state.ntkPersons],
+                    hasFetched: true
+                }
             })
         })
     },

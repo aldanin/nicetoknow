@@ -10,6 +10,7 @@
     let email;
     let hobbies;
     let age;
+    let aboutMe;
 
     const dispatch=createEventDispatcher();
 
@@ -18,20 +19,31 @@
     })
 
     function closeHandler(e) {
-        dispatch('popupClosed', {
-            value: {
-                name,
-                age,
-                email,
-                moreDetails: {
-                    hobbies
-                }
-            }
-        });
+        // dispatch('popupClosed', {
+        //     value : {
+        //         name,
+        //         age,
+        //         email,
+        //         moreDetails : {
+        //             hobbies,
+        //             aboutMe
+        //         }
+        //     }
+        // });
     }
 
     function submit(e) {
-        console.log('name, email', name, email, hobbies, e);
+        dispatch('submit', {
+            value : {
+                name,
+                age,
+                email,
+                moreDetails : {
+                    hobbies,
+                    aboutMe
+                }
+            }
+        });
     }
 
     function onClosing(e) {
@@ -67,11 +79,19 @@
         text-transform: inherit;
     }
 
+    :global(.actions) {
+        margin-top:10px;
+    }
+
+    :global(.about-me) {
+        margin-top:20px;
+    }
 
 
     .card-details {
         width: 400px;
         padding: 0 15px;
+        overflow: auto;
     }
 
     .avatar-container {
@@ -153,11 +173,12 @@
                     label="Email"
                     minWidth="{350}"
                     errorMessage="Please enter a valid email address"
-                      />
-            <TextBox bind:value={hobbies} label="Hobbies" minWidth="{350}"/>
+            />
+            <TextBox class="about-me" isTextArea="{true}" bind:value={aboutMe} label="About Me"/>
+            <TextBox bind:value={hobbies} label="Hobbies (seperated with commas)" minWidth="{350}"/>
         </div>
     </div>
-    <Actions>
+    <Actions class="actions">
         <Button variant="raised" on:click={submit}>
             <Label>Submit</Label>
         </Button>

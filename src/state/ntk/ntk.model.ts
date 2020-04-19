@@ -6,7 +6,8 @@ export type NTKPersonDetails = {
     age: number,
     imageUrl: string,
     moreDetails: {
-        hobbies: string[],
+        about: string;
+        hobbies: string,
         email: string
     }
 }
@@ -19,8 +20,7 @@ export type NTKPerson = {
 
 export type NTKStore = {
     ntkPersons: NTKPerson[],
-    // myNtkPersons: NTKPerson[],
-    // moreNtkPersons: NTKPerson[],
+    hasFetched: boolean,
 }
 
 export type Gender = 'male' | 'female' | '';

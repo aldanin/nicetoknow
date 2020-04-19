@@ -1,5 +1,5 @@
 // @ts-ignore
-import GeneralNTKs from '../../components/GeneralNTKs.svelte';
+import GeneralNTKs from '../../components/AllNTKs.svelte';
 // @ts-ignore
 import MyNTKs from '../../components/MyNTKs.svelte';
 // @ts-ignore
@@ -15,7 +15,7 @@ export type ViewObject = {
 
 const viewsRepo: ViewObject[] = [
     {
-        id: viewKeys.GENERAL_NTKS,
+        id: viewKeys.ALL_NTKS,
         view: GeneralNTKs,
         caption: 'All Nice-to-knows',
     },
