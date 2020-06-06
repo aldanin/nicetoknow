@@ -1,7 +1,7 @@
 <script>
     import {onDestroy, onMount} from 'svelte';
     import NTKList from '../common/NTKList.svelte';
-    import customNtkStore from '../state/ntk/nktStore.ts';
+    import customNtkStore from '../state/ntk/nktStore';
     import NTKPersonPopup from '../common/NTKPersonPopup.svelte';
 
     let ntkList=[];
@@ -20,7 +20,7 @@
     })
 
     function onMarkedChanged(event) {
-        customNtkStore.onMarkedChanged(event.detail.id)
+        customNtkStore.onMarkedChanged(event.detail.id) 
     }
 
     onDestroy(() => {

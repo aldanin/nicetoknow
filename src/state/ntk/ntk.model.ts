@@ -29,7 +29,7 @@ export type Gender = 'male' | 'female' | '';
 export interface CustomNTKStore {
     subscribe: (state: NTKStore) => Unsubscriber,
     setStoreAsync: () => void,
-    onMarkedChanged: (id: string) => void,
+    onMarkedChanged: (id: string) => Promise<any>,
     onApprovalChanged: (id: string, isApproved: boolean) => void,
     myNtkPersons:  NTKPerson[],
     moreNtkPersons:  NTKPerson[],

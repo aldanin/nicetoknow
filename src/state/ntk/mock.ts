@@ -31,7 +31,7 @@ export async function getMockNtk(): Promise<NTKPerson[]> {
 
 export async function getMockUsers(count = 20, gender: Gender = '') :  Promise<NTKPerson[]> {
     const res =
-        await fetch(`https://randomuser.me/api/?results=${count}&gender={${gender}&seed=alondanin`);
+        await fetch(`https://randomuser.me/api/?results=${count}&gender=${gender}&seed=alondanin`);
     const data = await res.json();
     const ntkData: NTKPerson[] = data.results.map((user: any) => {
         const ntkPerson: NTKPerson = {
