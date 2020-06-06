@@ -17,20 +17,31 @@ const customNtkStore: CustomNTKStore = {
     },
     setStoreAsync: async () => {
         try {
-            const res = await fetch('https://nice-to-know.firebaseio.com/ntkp.json');
-            if (res.ok) {
-                const ntks = await res.json();
-    
-                ntkStore.update(state => {
-                    return {
-                        ntkPersons: [...ntks, ...state.ntkPersons],
-                        hasFetched: true
-                    }
+            if (customNtkStore.isEmpty()) {
+                getMockUsers(1500).then(ntks => {
+                    ntkStore.update(state => {
+                        return {
+                            ntkPersons: [...ntks, ...state.ntkPersons],
+                            hasFetched: true
+                        }
+                    })
                 })
             } else {
-                throw new Error("Server error");
-            }
-            
+                const res = await fetch('https://nice-to-know.firebaseio.com/ntkp.json');
+                if (res.ok) {
+                    const ntks = await res.json();
+        
+                    ntkStore.update(state => {
+                        return {
+                            ntkPersons: [...ntks, ...state.ntkPersons],
+                            hasFetched: true
+                        }
+                    })
+                } else {
+                    throw new Error("Server error");
+                }
+            }    
+        
         } catch(err) {
             console.log(err)
         }  
