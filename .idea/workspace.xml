@@ -3,12 +3,30 @@
   <component name="ChangeListManager">
     <list default="true" id="2be4ebe4-e951-48c7-9a35-172e5d523702" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/build/bundle.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/build/bundle.css.map" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.css.map" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/build/bundle.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/build/bundle.js.map" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/bundle.js.map" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/build/material.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/build/material.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/AppDesktop.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/AppDesktop.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/common/NTKCard.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/NTKCard.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/common/TextBox.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/TextBox.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/AllNTKs.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/AllNTKs.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Header.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Header.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/MyNTKs.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/MyNTKs.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/NTKsApproval.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/NTKsApproval.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/RegistrationPopup.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/RegistrationPopup.svelte" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/state/ntk/mock.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/ntk/mock.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/state/ntk/nktStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/ntk/nktStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/ntk/ntk.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/ntk/ntk.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/view/view.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/view/view.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/view/viewKeys.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/view/viewKeys.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/view/viewRepo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/view/viewRepo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/state/view/viewStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/state/view/viewStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/yarn.lock" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -94,6 +112,7 @@
       <workItem from="1587018954533" duration="9959000" />
       <workItem from="1587038828441" duration="71273000" />
       <workItem from="1590161865959" duration="599000" />
+      <workItem from="1592383278741" duration="848000" />
     </task>
     <servers />
   </component>

@@ -2,10 +2,11 @@
     import MyIconButton from '../common/MyIconButton.svelte';
     import viewStore from '../state/view/viewStore';
     import viewKeys from '../state/view/viewKeys';
-    import NtkStore from '../state/ntk/nktStore.ts';
+    import NtkStore from '../state/ntk/nktStore';
     import RegistrationPopup from '../components/RegistrationPopup.svelte';
 
     let isRegistrationPopupOpen = false;
+    export let isHidden = false;
 
     function onMyNtksClicked() {
         viewStore.setView(viewKeys.MY_NTKS);
@@ -58,9 +59,13 @@
             color:yellow;
         }
     }
+
+    .is-hidden {
+        visibility: hidden;
+    }
 </style>
 
-<header class="container">
+<header class="container {isHidden? 'is-hidden': ''}">
     <div class="logo">
         <span class="logo-inner">Nice to know</span>
     </div>

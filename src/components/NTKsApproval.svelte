@@ -1,7 +1,7 @@
 <script>
     import {onDestroy} from 'svelte';
     import NTKList from '../common/NTKList.svelte';
-    import customNtkStore from '../state/ntk/nktStore.ts';
+    import customNtkStore from '../state/ntk/nktStore';
     import {Icon} from '@smui/icon-button';
     import NTKPersonPopup from '../common/NTKPersonPopup.svelte';
 

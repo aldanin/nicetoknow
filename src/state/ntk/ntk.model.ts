@@ -15,7 +15,7 @@ export type NTKPersonDetails = {
 export type NTKPerson = {
     ntkDetails: Partial<NTKPersonDetails>,
     isMarked: boolean,
-    isApproved?: boolean,
+    approvalStatus?: ApprovalStatus,
 }
 
 export type NTKStore = {
@@ -25,12 +25,19 @@ export type NTKStore = {
 
 export type Gender = 'male' | 'female' | '';
 
+export enum ApprovalStatus {
+    pending = 1,
+    disapproved = 2,
+    approved = 3
+}
+
 
 export interface CustomNTKStore {
+    isEmpty: () => boolean,
     subscribe: (state: NTKStore) => Unsubscriber,
     setStoreAsync: () => void,
     onMarkedChanged: (id: string) => Promise<any>,
-    onApprovalChanged: (id: string, isApproved: boolean) => void,
+    onApprovalChanged: (id: string, approvalStatus: ApprovalStatus) => void,
     myNtkPersons:  NTKPerson[],
     moreNtkPersons:  NTKPerson[],
     registerUser: (user: NTKPersonDetails)  => void

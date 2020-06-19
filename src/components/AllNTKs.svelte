@@ -3,16 +3,15 @@
     import NTKList from '../common/NTKList.svelte';
     import customNtkStore from '../state/ntk/nktStore';
     import NTKPersonPopup from '../common/NTKPersonPopup.svelte';
+    import { BLM } from '../BLM/BLM';
 
-    let ntkList=[];
+    let ntkList;
     let currentSelectedPerson;
 
     let isNTKPersonDialogOpen = false;
 
-    onMount(() => {
-        if (customNtkStore.isEmpty()) {
-            customNtkStore.setStoreAsync();
-        }
+    onMount( async () => {
+        ntkList = await BLM.getNtks();
     })
 
     const unsubscribe=customNtkStore.subscribe(state => {

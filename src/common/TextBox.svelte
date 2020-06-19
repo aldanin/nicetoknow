@@ -1,4 +1,4 @@
-<script>
+<script >
     import Textfield, {Input, Textarea} from '@smui/textfield';
     import HelperText from '@smui/textfield/helper-text/index';
 

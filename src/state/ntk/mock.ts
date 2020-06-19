@@ -49,7 +49,7 @@ Instead of using techniques like virtual DOM diffing, Svelte writes code that su
                 }
             },
             isMarked: false,
-            isApproved: false,
+            approvalStatus: false,
         }
 
         return ntkPerson;

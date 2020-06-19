@@ -1,12 +1,12 @@
 <script>
   import { createEventDispatcher, onMount } from "svelte";
+  import Paper from "@smui/paper";
   import TextBox from "../common/TextBox.svelte";
   import Dialog, { Title, Content, Actions, InitialFocus } from "@smui/dialog";
   import Button, { Label } from "@smui/button";
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
 
-  let simpleDialog;
   let name;
   let email;
   let hobbies;
@@ -17,12 +17,12 @@
   const dispatch = createEventDispatcher();
 
   onMount(() => {
-    simpleDialog.open();
+    
   });
 
   async function gotFiles(event) {
     const data = await getBase64(event.detail.files[0]);
-    console.log('vase84', data)
+    console.log("vase84", data);
     imageUrl = data;
   }
 
@@ -156,8 +156,7 @@
   }
 </style>
 
-<Dialog
-  bind:this={simpleDialog}
+<Paper
   aria-labelledby="simple-title"
   aria-describedby="simple-content"
   on:MDCDialog:closed={closeHandler}
@@ -165,8 +164,10 @@
   <header class="header">register</header>
   <div class="card-details">
     <div class="avatar-container">
-      <FileUpload on:input={gotFiles}><Avatar imageUrl={imageUrl}/></FileUpload>
-      
+      <FileUpload on:input={gotFiles}>
+        <Avatar {imageUrl} />
+      </FileUpload>
+
       <div class="name-tb">
         <TextBox
           bind:value={name}
@@ -204,4 +205,4 @@
       <Label>Submit</Label>
     </Button>
   </Actions>
-</Dialog>
+</Paper>
