@@ -27,42 +27,6 @@ const customNtkStore: CustomNTKStore = {
                     hasFetched: true
                 }
             })
-            // const res = await fetch('https://nice-to-know.firebaseio.com/ntkp.json');
-            // if (res.ok) {
-            //     const data = await res.json();
-
-            //     let ntks: NTKPerson[];
-
-            //     if (data) {
-            //         const dataArray = Object.values(data);
-            //         ntks = await dataArray[0] as NTKPerson[];
-            //     } else {
-            //         ntks = await getMockUsers(50);
-
-            //         ntks.forEach((ntk, index)=> {
-            //             ntk.ntkDetails.id = uid();
-            //         })
-
-            //         await fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-            //             method: 'POST',
-            //             body: JSON.stringify(ntks),
-            //             headers: {
-            //                 'Content-Type': 'application/json'
-            //             }
-
-            //         })
-            //     }
-
-            //     ntkStore.update(state => {
-            //         return {
-            //             ntkPersons: [...ntks, ...state.ntkPersons],
-            //             hasFetched: true
-            //         }
-            //     })
-            // } else {
-            //     throw new Error("Server error");
-            // } 
-
         } catch (err) {
             console.log(err)
         }
@@ -158,6 +122,11 @@ const customNtkStore: CustomNTKStore = {
 
             return { ...state };
         })
+    },
+    updateStore: (newState) => {
+        ntkStore.update(()=> {
+            return newState
+        }) 
     }
 }
 

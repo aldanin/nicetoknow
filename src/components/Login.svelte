@@ -1,5 +1,7 @@
 <script>
-  import { createEventDispatcher, onMount } from "svelte";
+  import viewKeys from "../state/view/viewKeys";
+  import Register from "./Register.svelte";
+  import { createEventDispatcher, getContext, onMount } from "svelte";
   import TextBox from "../common/TextBox.svelte";
   import Paper from "@smui/paper";
   import { Actions } from "@smui/dialog";
@@ -7,16 +9,22 @@
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
   import ViewStore from "../state/view/viewStore";
-  import { BLM } from "../BLM/BLM";
+  import {BLM} from "../BLM/BLM"
+  
 
   let userName;
 
   const dispatch = createEventDispatcher();
+  const setViewToRegister = getContext("setViewToRegister");
 
   onMount(() => {});
 
   function submit(e) {
     BLM.login(userName);
+  }
+
+  function showRegisterView() {
+    ViewStore.setView(viewKeys.REGISTER);
   }
 
   function getBase64(file) {
@@ -27,7 +35,8 @@
       reader.onerror = error => reject(error);
     });
   }
-  
+
+  let clicked = 0;
 </script>
 
 <style type="text/scss">
@@ -71,6 +80,14 @@
 
   :global(.actions) {
     margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+
+    .myClass {
+      color: var(--mdc-theme-primary, #ff3e00);
+      text-decoration: underline;
+      font-size: 80%;
+    }
   }
 
   :global(.about-me) {
@@ -141,6 +158,9 @@
       </div>
     </div>
     <Actions class="actions">
+      <Button on:click={showRegisterView} class="myClass">
+        <Label>Not Registered</Label>
+      </Button>
       <Button variant="raised" on:click={submit}>
         <Label>Submit</Label>
       </Button>

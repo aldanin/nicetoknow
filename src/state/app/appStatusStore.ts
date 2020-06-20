@@ -14,6 +14,13 @@ const customAppStatusStore = {
             }
         })
     },
+    onLogout: () => {
+        appStatusStore.update(state => {
+            return {
+                loginStatus: LoginStatus.Pending ,
+            }
+        })
+    }
 }
 
 export default customAppStatusStore;

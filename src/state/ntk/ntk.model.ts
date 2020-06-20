@@ -40,6 +40,7 @@ export interface CustomNTKStore {
     onApprovalChanged: (id: string, approvalStatus: ApprovalStatus) => void,
     myNtkPersons:  NTKPerson[],
     moreNtkPersons:  NTKPerson[],
-    registerUser: (user: NTKPersonDetails)  => void
+    registerUser: (user: NTKPersonDetails)  => void,
+    updateStore: (newState) => void,
 }
 

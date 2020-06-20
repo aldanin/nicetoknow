@@ -6,6 +6,7 @@
   import Button, { Label } from "@smui/button";
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
+  import { BLM } from "../BLM/BLM";
 
   let name;
   let email;
@@ -16,9 +17,7 @@
 
   const dispatch = createEventDispatcher();
 
-  onMount(() => {
-    
-  });
+  onMount(() => {});
 
   async function gotFiles(event) {
     const data = await getBase64(event.detail.files[0]);
@@ -41,8 +40,7 @@
   }
 
   function submit(e) {
-    dispatch("submit", {
-      value: {
+     BLM.register({
         name,
         age,
         email,
@@ -51,8 +49,7 @@
           hobbies,
           aboutMe
         }
-      }
-    });
+      });
   }
 
   function getBase64(file) {
@@ -64,10 +61,6 @@
     });
   }
 
-  function onClosing(e) {
-    console.log("onClosing", e);
-    e.stopPropagation();
-  }
 </script>
 
 <style type="text/scss">
@@ -80,6 +73,19 @@
     color: gray;
     padding-left: 10px;
     line-height: 45px;
+  }
+
+  .paper-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    min-height: 0;
+
+    .paper {
+      width: 400px;
+    }
   }
 
   .form-details {
@@ -108,6 +114,10 @@
     width: 400px;
     padding: 0 15px;
     overflow: auto;
+
+    .file-uploader-class {
+      height: 100px;
+    }
   }
 
   .avatar-container {
@@ -156,53 +166,51 @@
   }
 </style>
 
-<Paper
-  aria-labelledby="simple-title"
-  aria-describedby="simple-content"
-  on:MDCDialog:closed={closeHandler}
-  on:MDCDialog:closing={onClosing}>
-  <header class="header">register</header>
-  <div class="card-details">
-    <div class="avatar-container">
-      <FileUpload on:input={gotFiles}>
-        <Avatar {imageUrl} />
-      </FileUpload>
+<div class="paper-wrap">
+  <Paper aria-labelledby="simple-title" aria-describedby="simple-content">
+    <header class="header">register</header>
+    <div class="card-details">
+      <div class="avatar-container">
+        <FileUpload on:input={gotFiles}>
+          <Avatar imageUrl={imageUrl} height="100px"/>
+        </FileUpload>
 
-      <div class="name-tb">
+        <div class="name-tb">
+          <TextBox
+            bind:value={name}
+            label="Name"
+            minWidth={250}
+            errorMessage="This field is required" />
+        </div>
+      </div>
+      <div class="form-details">
         <TextBox
-          bind:value={name}
-          label="Name"
-          minWidth={250}
-          errorMessage="This field is required" />
+          type="number"
+          bind:value={age}
+          label="Age"
+          minWidth={150}
+          errorMessage="Please enter a number for your age" />
+        <TextBox
+          type="email"
+          bind:value={email}
+          label="Email"
+          minWidth={350}
+          errorMessage="Please enter a valid email address" />
+        <TextBox
+          class="about-me"
+          isTextArea={true}
+          bind:value={aboutMe}
+          label="About Me" />
+        <TextBox
+          bind:value={hobbies}
+          label="Hobbies (seperated with commas)"
+          minWidth={350} />
       </div>
     </div>
-    <div class="form-details">
-      <TextBox
-        type="number"
-        bind:value={age}
-        label="Age"
-        minWidth={150}
-        errorMessage="Please enter a number for your age" />
-      <TextBox
-        type="email"
-        bind:value={email}
-        label="Email"
-        minWidth={350}
-        errorMessage="Please enter a valid email address" />
-      <TextBox
-        class="about-me"
-        isTextArea={true}
-        bind:value={aboutMe}
-        label="About Me" />
-      <TextBox
-        bind:value={hobbies}
-        label="Hobbies (seperated with commas)"
-        minWidth={350} />
-    </div>
-  </div>
-  <Actions class="actions">
-    <Button variant="raised" on:click={submit}>
-      <Label>Submit</Label>
-    </Button>
-  </Actions>
-</Paper>
+    <Actions class="actions">
+      <Button variant="raised" on:click={submit}>
+        <Label>Submit</Label>
+      </Button>
+    </Actions>
+  </Paper>
+</div>

@@ -10,6 +10,7 @@
   import Loading from "./components/Loading.svelte";
 
   let currentView;
+  let currentUser;
   let showHeader;
 
   let viewStoreUnsubscriber;
@@ -25,15 +26,21 @@
           showHeader = false;
           break;
         case 2: // LogedIn
-        case 3: // LoginFailed
           currentView = getView(viewKeys.ALL_NTKS);
           customNtkStore.setStoreAsync();
+          currentUser = BLM.getCurrentUser();
           showHeader = true;
+          break;
+          case 3: // LoginFailed
+          alert('failed')
           break;
       }
     });
 
-    viewStoreUnsubscriber = viewStore.subscribe(state => {});
+    viewStoreUnsubscriber = viewStore.subscribe(state => {
+        console.log('state.currentView',state.currentView)
+        currentView = state.currentView;
+    });
   });
 
   onDestroy(() => {
@@ -50,6 +57,6 @@
 </style>
 
 <div class="container-flex">
-  <Header isHidden={!showHeader} />
+  <Header isHidden={!showHeader} currentUser={currentUser}/>
   <svelte:component this={currentView ? currentView.view : Loading} />
 </div>

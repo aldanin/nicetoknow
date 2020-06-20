@@ -1,84 +1,144 @@
 <script>
-    import MyIconButton from '../common/MyIconButton.svelte';
-    import viewStore from '../state/view/viewStore';
-    import viewKeys from '../state/view/viewKeys';
-    import NtkStore from '../state/ntk/nktStore';
-    import RegistrationPopup from '../components/RegistrationPopup.svelte';
+  import { setContext, onMount } from "svelte";
+  import MyIconButton from "../common/MyIconButton.svelte";
+  import viewStore from "../state/view/viewStore";
+  import viewKeys from "../state/view/viewKeys";
+  import NtkStore from "../state/ntk/nktStore";
+  import RegistrationPopup from "../components/RegistrationPopup.svelte";
+  import Avatar from "../common/Avatar.svelte";
+  import Button, { Label } from "@smui/button";
+  import { BLM } from "../BLM/BLM";
+  import Card from "@smui/card";
 
-    let isRegistrationPopupOpen = false;
-    export let isHidden = false;
+  let isRegistrationPopupOpen = false;
+  export let currentUser;
+  export let isHidden = false;
+  let isLogoutShowing = false;
 
-    function onMyNtksClicked() {
-        viewStore.setView(viewKeys.MY_NTKS);
-    }
+  $: console.log("hjeader currentUser", currentUser);
 
-    function onShowMoreClicked() {
-        viewStore.setView(viewKeys.ALL_NTKS);
-    }
+  setContext("setViewToRegister", {
+    setViewToRegister: () => viewStore.setView(viewKeys.REGISTER)
+  });
 
-    function onNtksApprovalClicked() {
-        viewStore.setView(viewKeys.NTKS_APPROVAL);
-    }
+  function onMyNtksClicked() {
+    viewStore.setView(viewKeys.MY_NTKS);
+  }
 
-    function showRegistrationForm() {
-        isRegistrationPopupOpen = true;
-    }
+  function onShowMoreClicked() {
+    viewStore.setView(viewKeys.ALL_NTKS);
+  }
 
-    function registrationSubmitted(e){
-        isRegistrationPopupOpen = false;
-        NtkStore.registerUser(e.detail.value);
-    }
+  function onNtksApprovalClicked() {
+    viewStore.setView(viewKeys.NTKS_APPROVAL);
+  }
+
+  function logout() {
+   BLM.logout();
+  }
+
+  function registrationSubmitted(e) {
+    isRegistrationPopupOpen = false;
+    NtkStore.registerUser(e.detail.value);
+  }
 </script>
 
 <style type="text/scss">
-    .container {
-        max-width: 100%;
-        width: unset;
-        height: 60px;
-        box-shadow: 0 4px 2px -2px grey;
-        background-color: #a70000;
+  .container {
+    max-width: 100%;
+    width: unset;
+    height: 60px;
+    box-shadow: 0 4px 2px -2px grey;
+    background-color: #a70000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    position: relative;
+
+    .logo {
+      font-family: fantasy;
+      font-style: italic;
+      fonty-weight: bold;
+      color: #e8e8ff;
+      font-weight: 500;
+      font-size: 25px;
+    }
+
+    .controls {
+      display: flex;
+      height: 100%;
+      color: white;
+      align-items: center;
+      .userWrap {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 0 30px;
+        height: 80%;
 
-        .logo {
-            font-family: fantasy;
-            font-style: italic;
-            fonty-weight: bold;
-            color: #e8e8ff;
-            font-weight: 500;
-            font-size: 25px;
+        :global(.myClass) {
+          color: white;
         }
 
-        .controls {
-            color: white;
+        :global(.mdc-button__label) {
+          color: gainsboro;
+          font-size: 70%;
+          text-decoration: underline;
         }
 
-        :global(.focused-button) {
-            color:yellow;
+        .hi-span {
+          margin-right: 1em;
         }
+      }
     }
 
-    .is-hidden {
-        visibility: hidden;
+    :global(.focused-button) {
+      color: yellow;
     }
+  }
+
+  .is-hidden {
+    visibility: hidden;
+  }
+
+  :global(.logout-card) {
+    position: absolute;
+    top: 40px;
+    right: 100px;
+    z-index: 2;
+    cursor: pointer;
+  }
 </style>
 
-<header class="container {isHidden? 'is-hidden': ''}">
-    <div class="logo">
-        <span class="logo-inner">Nice to know</span>
-    </div>
-    <div class="controls">
-        <MyIconButton icon="favorite_border" title="My Nice-to-know's" on:click={onMyNtksClicked}/>
-        <MyIconButton icon="favorite" title="Nice-to-know's to approve" on:click={onNtksApprovalClicked}/>
-        <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked}/>
-        <MyIconButton icon="how_to_reg" title="Show more" on:click={showRegistrationForm}/>
-    </div>
-</header>
+<header class="container {isHidden ? 'is-hidden' : ''}">
+  <div class="logo">
+    <span class="logo-inner">Nice to know</span>
+  </div>
+  <div class="controls">
+    <MyIconButton
+      icon="favorite_border"
+      title="My Nice-to-know's"
+      on:click={onMyNtksClicked} />
+    <MyIconButton
+      icon="favorite"
+      title="Nice-to-know's to approve"
+      on:click={onNtksApprovalClicked} />
+    <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked} />
+    <div class="userWrap">
+      <Button on:click={()=>isLogoutShowing = true} class="myClass">
+        <span class="hi-span">Hi</span>
+        <span class="userName-span">
+          {currentUser ? currentUser.ntkDetails.name : ''}
+        </span>
 
-{#if isRegistrationPopupOpen}
-    <RegistrationPopup
-            on:submit={registrationSubmitted}
-    />
-{/if}
+      </Button>
+      <Avatar
+        imageUrl={currentUser ? currentUser.ntkDetails.imageUrl : 'https://randomuser.me/api/portraits/men/63.jpg'} />
+    </div>
+
+  </div>
+  {#if isLogoutShowing}
+    <Card class="logout-card" padded on:click={()=>isLogoutShowing = false}>
+      <Label on:click={logout}>Log out</Label>
+    </Card>
+  {/if}
+</header>

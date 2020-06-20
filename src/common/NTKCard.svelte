@@ -40,13 +40,13 @@
     let approvalClass;
     switch (ntkPerson.approvalStatus) {
       case ApprovalStatus.approved:
-        approvalClass = 'is-approved';
+        approvalClass = "is-approved";
         break;
       case ApprovalStatus.disapproved:
-        approvalClass = 'is-disapproved';
+        approvalClass = "is-disapproved";
         break;
       case ApprovalStatus.pending:
-        approvalClass = '';
+        approvalClass = "";
         break;
     }
 
@@ -62,7 +62,7 @@
     background-color: pink;
   }
 
-   :global(.is-disapproved) {
+  :global(.is-disapproved) {
     background-color: rgb(226, 226, 226);
   }
 
@@ -117,6 +117,10 @@
     border-bottom: solid 1px #ececec;
     cursor: pointer;
 
+    .inner {
+      height: 100px;
+    }
+
     .person-details {
       margin-left: 30px;
       width: 200px;
@@ -161,7 +165,9 @@
   <Card class="card-theme {getApprovalClass()}">
     <div class="card-details" on:dblclick={onCardDblclick}>
       <div class="avatar-container">
-        <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl} />
+        <div class="inner">
+          <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl} />
+        </div>
         <div class="person-details">
           <h3 class="ntk-name">{ntkPerson.ntkDetails.name}</h3>
           {#if ntkPerson.ntkDetails.age}

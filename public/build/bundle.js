@@ -5006,10 +5006,11 @@ var app = (function () {
     			div = element("div");
     			img = element("img");
     			attr(img, "src", ctx.imageUrl);
-    			attr(img, "class", "svelte-wq6y7q");
-    			add_location(img, file$8, 21, 4, 1189);
-    			attr(div, "class", "avatar svelte-wq6y7q");
-    			add_location(div, file$8, 20, 0, 1163);
+    			attr(img, "class", "svelte-kx2vjb");
+    			add_location(img, file$8, 22, 4, 1240);
+    			attr(div, "class", "avatar svelte-kx2vjb");
+    			set_style(div, "height", ctx.height);
+    			add_location(div, file$8, 21, 0, 1189);
     		},
 
     		l: function claim(nodes) {
@@ -5025,6 +5026,10 @@ var app = (function () {
     			if (changed.imageUrl) {
     				attr(img, "src", ctx.imageUrl);
     			}
+
+    			if (changed.height) {
+    				set_style(div, "height", ctx.height);
+    			}
     		},
 
     		i: noop,
@@ -5039,28 +5044,29 @@ var app = (function () {
     }
 
     function instance$b($$self, $$props, $$invalidate) {
-    	let { imageUrl = './media/download.png' } = $$props;
+    	let { imageUrl = './media/download.png', height = '100%' } = $$props;
 
-    	const writable_props = ['imageUrl'];
+    	const writable_props = ['imageUrl', 'height'];
     	Object.keys($$props).forEach(key => {
     		if (!writable_props.includes(key) && !key.startsWith('$$')) console_1.warn(`<Avatar> was created with unknown prop '${key}'`);
     	});
 
     	$$self.$set = $$props => {
     		if ('imageUrl' in $$props) $$invalidate('imageUrl', imageUrl = $$props.imageUrl);
+    		if ('height' in $$props) $$invalidate('height', height = $$props.height);
     	};
 
     	$$self.$$.update = ($$dirty = { imageUrl: 1 }) => {
     		if ($$dirty.imageUrl) { console.log('avatar', imageUrl); }
     	};
 
-    	return { imageUrl };
+    	return { imageUrl, height };
     }
 
     class Avatar extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$b, create_fragment$b, safe_not_equal, ["imageUrl"]);
+    		init(this, options, instance$b, create_fragment$b, safe_not_equal, ["imageUrl", "height"]);
     	}
 
     	get imageUrl() {
@@ -5068,6 +5074,14 @@ var app = (function () {
     	}
 
     	set imageUrl(value) {
+    		throw new Error("<Avatar>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get height() {
+    		throw new Error("<Avatar>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set height(value) {
     		throw new Error("<Avatar>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
@@ -5345,7 +5359,7 @@ var app = (function () {
 
     const file$9 = "src\\common\\NTKCard.svelte";
 
-    // (144:10) {#if ntkPerson.ntkDetails.age}
+    // (148:10) {#if ntkPerson.ntkDetails.age}
     function create_if_block_2(ctx) {
     	var h5, span0, t1, span1, t2_value = ctx.ntkPerson.ntkDetails.age + "", t2;
 
@@ -5357,10 +5371,10 @@ var app = (function () {
     			t1 = space();
     			span1 = element("span");
     			t2 = text(t2_value);
-    			add_location(span0, file$9, 145, 14, 7640);
-    			add_location(span1, file$9, 146, 14, 7673);
-    			attr(h5, "class", "ntk-age svelte-1q89y01");
-    			add_location(h5, file$9, 144, 12, 7604);
+    			add_location(span0, file$9, 149, 14, 7837);
+    			add_location(span1, file$9, 150, 14, 7870);
+    			attr(h5, "class", "ntk-age svelte-pksw81");
+    			add_location(h5, file$9, 148, 12, 7801);
     		},
 
     		m: function mount(target, anchor) {
@@ -5385,7 +5399,7 @@ var app = (function () {
     	};
     }
 
-    // (168:10) <Label>
+    // (172:10) <Label>
     function create_default_slot_8(ctx) {
     	var t;
 
@@ -5406,7 +5420,7 @@ var app = (function () {
     	};
     }
 
-    // (167:8) <Button on:click={() => clicked++} variant="raised" color="secondary">
+    // (171:8) <Button on:click={() => clicked++} variant="raised" color="secondary">
     function create_default_slot_7(ctx) {
     	var current;
 
@@ -5452,7 +5466,7 @@ var app = (function () {
     	};
     }
 
-    // (166:6) <ActionButtons>
+    // (170:6) <ActionButtons>
     function create_default_slot_6(ctx) {
     	var current;
 
@@ -5501,7 +5515,7 @@ var app = (function () {
     	};
     }
 
-    // (173:8) {#if !isApproval}
+    // (177:8) {#if !isApproval}
     function create_if_block_1(ctx) {
     	var current;
 
@@ -5550,7 +5564,7 @@ var app = (function () {
     	};
     }
 
-    // (181:8) {#if isApproval}
+    // (185:8) {#if isApproval}
     function create_if_block$1(ctx) {
     	var t, current;
 
@@ -5617,7 +5631,7 @@ var app = (function () {
     	};
     }
 
-    // (182:10) <IconButton              class="material-icons up"              on:click={() => setApproval(true)}              title="approve">
+    // (186:10) <IconButton              class="material-icons up"              on:click={() => setApproval(true)}              title="approve">
     function create_default_slot_5(ctx) {
     	var t;
 
@@ -5638,7 +5652,7 @@ var app = (function () {
     	};
     }
 
-    // (188:10) <IconButton              class="material-icons down"              on:click={() => setApproval(false)}              title="disapprove">
+    // (192:10) <IconButton              class="material-icons down"              on:click={() => setApproval(false)}              title="disapprove">
     function create_default_slot_4(ctx) {
     	var t;
 
@@ -5659,7 +5673,7 @@ var app = (function () {
     	};
     }
 
-    // (195:8) <IconButton            class="material-icons"            on:click={() => clicked++}            title="More options">
+    // (199:8) <IconButton            class="material-icons"            on:click={() => clicked++}            title="More options">
     function create_default_slot_3(ctx) {
     	var t;
 
@@ -5680,7 +5694,7 @@ var app = (function () {
     	};
     }
 
-    // (172:6) <ActionIcons>
+    // (176:6) <ActionIcons>
     function create_default_slot_2$1(ctx) {
     	var t0, t1, current;
 
@@ -5793,7 +5807,7 @@ var app = (function () {
     	};
     }
 
-    // (165:4) <Actions>
+    // (169:4) <Actions>
     function create_default_slot_1$1(ctx) {
     	var t, current;
 
@@ -5864,9 +5878,9 @@ var app = (function () {
     	};
     }
 
-    // (138:2) <Card class="card-theme {getApprovalClass()}">
+    // (140:2) <Card class="card-theme {getApprovalClass()}">
     function create_default_slot$4(ctx) {
-    	var div9, div1, t0, div0, h3, t1_value = ctx.ntkPerson.ntkDetails.name + "", t1, t2, t3, div8, div4, div2, t5, div3, t6_value = ctx.ntkPerson.ntkDetails.moreDetails.aboutMe + "", t6, t7, div7, div5, t9, div6, t10_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "", t10, t11, current, dispose;
+    	var div10, div2, div0, t0, div1, h3, t1_value = ctx.ntkPerson.ntkDetails.name + "", t1, t2, t3, div9, div5, div3, t5, div4, t6_value = ctx.ntkPerson.ntkDetails.moreDetails.aboutMe + "", t6, t7, div8, div6, t9, div7, t10_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "", t10, t11, current, dispose;
 
     	var avatar = new Avatar({
     		props: { imageUrl: ctx.ntkPerson.ntkDetails.imageUrl },
@@ -5885,80 +5899,84 @@ var app = (function () {
 
     	return {
     		c: function create() {
-    			div9 = element("div");
-    			div1 = element("div");
+    			div10 = element("div");
+    			div2 = element("div");
+    			div0 = element("div");
     			avatar.$$.fragment.c();
     			t0 = space();
-    			div0 = element("div");
+    			div1 = element("div");
     			h3 = element("h3");
     			t1 = text(t1_value);
     			t2 = space();
     			if (if_block) if_block.c();
     			t3 = space();
-    			div8 = element("div");
-    			div4 = element("div");
-    			div2 = element("div");
-    			div2.textContent = "About Me";
-    			t5 = space();
+    			div9 = element("div");
+    			div5 = element("div");
     			div3 = element("div");
+    			div3.textContent = "About Me";
+    			t5 = space();
+    			div4 = element("div");
     			t6 = text(t6_value);
     			t7 = space();
-    			div7 = element("div");
-    			div5 = element("div");
-    			div5.textContent = "Hobbies";
-    			t9 = space();
+    			div8 = element("div");
     			div6 = element("div");
+    			div6.textContent = "Hobbies";
+    			t9 = space();
+    			div7 = element("div");
     			t10 = text(t10_value);
     			t11 = space();
     			actions.$$.fragment.c();
-    			attr(h3, "class", "ntk-name svelte-1q89y01");
-    			add_location(h3, file$9, 142, 10, 7495);
-    			attr(div0, "class", "person-details svelte-1q89y01");
-    			add_location(div0, file$9, 141, 8, 7455);
-    			attr(div1, "class", "avatar-container svelte-1q89y01");
-    			add_location(div1, file$9, 139, 6, 7354);
-    			attr(div2, "class", "caption svelte-1q89y01");
-    			add_location(div2, file$9, 154, 10, 7879);
-    			attr(div3, "class", "details svelte-1q89y01");
-    			add_location(div3, file$9, 155, 10, 7926);
-    			attr(div4, "class", "ntk-details-row svelte-1q89y01");
-    			add_location(div4, file$9, 153, 8, 7838);
-    			attr(div5, "class", "caption svelte-1q89y01");
-    			add_location(div5, file$9, 158, 10, 8062);
-    			attr(div6, "class", "details svelte-1q89y01");
-    			add_location(div6, file$9, 159, 10, 8108);
-    			attr(div7, "class", "ntk-details-row svelte-1q89y01");
-    			add_location(div7, file$9, 157, 8, 8021);
-    			attr(div8, "class", "ntk-details-rows-container svelte-1q89y01");
-    			add_location(div8, file$9, 152, 6, 7788);
-    			attr(div9, "class", "card-details svelte-1q89y01");
-    			add_location(div9, file$9, 138, 4, 7291);
-    			dispose = listen(div9, "dblclick", ctx.onCardDblclick);
+    			attr(div0, "class", "inner svelte-pksw81");
+    			add_location(div0, file$9, 142, 8, 7544);
+    			attr(h3, "class", "ntk-name svelte-pksw81");
+    			add_location(h3, file$9, 146, 10, 7692);
+    			attr(div1, "class", "person-details svelte-pksw81");
+    			add_location(div1, file$9, 145, 8, 7652);
+    			attr(div2, "class", "avatar-container svelte-pksw81");
+    			add_location(div2, file$9, 141, 6, 7504);
+    			attr(div3, "class", "caption svelte-pksw81");
+    			add_location(div3, file$9, 158, 10, 8076);
+    			attr(div4, "class", "details svelte-pksw81");
+    			add_location(div4, file$9, 159, 10, 8123);
+    			attr(div5, "class", "ntk-details-row svelte-pksw81");
+    			add_location(div5, file$9, 157, 8, 8035);
+    			attr(div6, "class", "caption svelte-pksw81");
+    			add_location(div6, file$9, 162, 10, 8259);
+    			attr(div7, "class", "details svelte-pksw81");
+    			add_location(div7, file$9, 163, 10, 8305);
+    			attr(div8, "class", "ntk-details-row svelte-pksw81");
+    			add_location(div8, file$9, 161, 8, 8218);
+    			attr(div9, "class", "ntk-details-rows-container svelte-pksw81");
+    			add_location(div9, file$9, 156, 6, 7985);
+    			attr(div10, "class", "card-details svelte-pksw81");
+    			add_location(div10, file$9, 140, 4, 7441);
+    			dispose = listen(div10, "dblclick", ctx.onCardDblclick);
     		},
 
     		m: function mount(target, anchor) {
-    			insert(target, div9, anchor);
-    			append(div9, div1);
-    			mount_component(avatar, div1, null);
-    			append(div1, t0);
-    			append(div1, div0);
-    			append(div0, h3);
+    			insert(target, div10, anchor);
+    			append(div10, div2);
+    			append(div2, div0);
+    			mount_component(avatar, div0, null);
+    			append(div2, t0);
+    			append(div2, div1);
+    			append(div1, h3);
     			append(h3, t1);
-    			append(div0, t2);
-    			if (if_block) if_block.m(div0, null);
-    			append(div9, t3);
+    			append(div1, t2);
+    			if (if_block) if_block.m(div1, null);
+    			append(div10, t3);
+    			append(div10, div9);
+    			append(div9, div5);
+    			append(div5, div3);
+    			append(div5, t5);
+    			append(div5, div4);
+    			append(div4, t6);
+    			append(div9, t7);
     			append(div9, div8);
-    			append(div8, div4);
-    			append(div4, div2);
-    			append(div4, t5);
-    			append(div4, div3);
-    			append(div3, t6);
-    			append(div8, t7);
+    			append(div8, div6);
+    			append(div8, t9);
     			append(div8, div7);
-    			append(div7, div5);
-    			append(div7, t9);
-    			append(div7, div6);
-    			append(div6, t10);
+    			append(div7, t10);
     			insert(target, t11, anchor);
     			mount_component(actions, target, anchor);
     			current = true;
@@ -5979,7 +5997,7 @@ var app = (function () {
     				} else {
     					if_block = create_if_block_2(ctx);
     					if_block.c();
-    					if_block.m(div0, null);
+    					if_block.m(div1, null);
     				}
     			} else if (if_block) {
     				if_block.d(1);
@@ -6016,7 +6034,7 @@ var app = (function () {
 
     		d: function destroy(detaching) {
     			if (detaching) {
-    				detach(div9);
+    				detach(div10);
     			}
 
     			destroy_component(avatar);
@@ -6050,8 +6068,8 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			card.$$.fragment.c();
-    			attr(div, "class", "my-card svelte-1q89y01");
-    			add_location(div, file$9, 136, 0, 7214);
+    			attr(div, "class", "my-card svelte-pksw81");
+    			add_location(div, file$9, 138, 0, 7364);
     		},
 
     		l: function claim(nodes) {
@@ -6117,13 +6135,13 @@ var app = (function () {
         let approvalClass;
         switch (ntkPerson.approvalStatus) {
           case ApprovalStatus.approved:
-            approvalClass = 'is-approved';
+            approvalClass = "is-approved";
             break;
           case ApprovalStatus.disapproved:
-            approvalClass = 'is-disapproved';
+            approvalClass = "is-disapproved";
             break;
           case ApprovalStatus.pending:
-            approvalClass = '';
+            approvalClass = "";
             break;
         }
 
@@ -11260,6 +11278,13 @@ var app = (function () {
             loginStatus: loginDetails.status
           };
         });
+      },
+      onLogout: function onLogout() {
+        appStatusStore.update(function (state) {
+          return {
+            loginStatus: LoginStatus.Pending
+          };
+        });
       }
     };
 
@@ -11438,6 +11463,63 @@ var app = (function () {
 
           return login;
         }()
+      }, {
+        key: "getCurrentUser",
+        value: function getCurrentUser() {
+          try {
+            var state = get_store_value(customNtkStore);
+            var currentUser = state.ntkPersons.find(function (ntk) {
+              return ntk.ntkDetails.name === 'alon2';
+            });
+            return currentUser;
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      }, {
+        key: "register",
+        value: function register(newUser) {
+          var state = get_store_value(customNtkStore);
+          var ntks = state ? state.ntkPersons : [];
+          var newNTK = {
+            ntkDetails: _objectSpread2({}, newUser, {
+              id: uid$1()
+            }),
+            isMarked: false,
+            approvalStatus: ApprovalStatus.pending
+          };
+          ntks.push(newNTK);
+          console.log('register, ntks', ntks);
+          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function () {
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+              method: 'POST',
+              body: JSON.stringify(ntks),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(function () {
+              console.log('register themn, ntks', ntks);
+              customNtkStore.updateStore({
+                hasFetched: state.hasFetched,
+                ntkPersons: ntks
+              });
+              customAppStatusStore.onLogin({
+                status: LoginStatus.LoggedIn,
+                userName: newUser.name
+              });
+            });
+          });
+        }
+      }, {
+        key: "logout",
+        value: function logout() {
+          customAppStatusStore.onLogout();
+        }
       }]);
 
       return BLM;
@@ -11474,36 +11556,7 @@ var app = (function () {
                       ntkPersons: _toConsumableArray(ntks),
                       hasFetched: true
                     };
-                  }); // const res = await fetch('https://nice-to-know.firebaseio.com/ntkp.json');
-                  // if (res.ok) {
-                  //     const data = await res.json();
-                  //     let ntks: NTKPerson[];
-                  //     if (data) {
-                  //         const dataArray = Object.values(data);
-                  //         ntks = await dataArray[0] as NTKPerson[];
-                  //     } else {
-                  //         ntks = await getMockUsers(50);
-                  //         ntks.forEach((ntk, index)=> {
-                  //             ntk.ntkDetails.id = uid();
-                  //         })
-                  //         await fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-                  //             method: 'POST',
-                  //             body: JSON.stringify(ntks),
-                  //             headers: {
-                  //                 'Content-Type': 'application/json'
-                  //             }
-                  //         })
-                  //     }
-                  //     ntkStore.update(state => {
-                  //         return {
-                  //             ntkPersons: [...ntks, ...state.ntkPersons],
-                  //             hasFetched: true
-                  //         }
-                  //     })
-                  // } else {
-                  //     throw new Error("Server error");
-                  // } 
-
+                  });
                   _context.next = 11;
                   break;
 
@@ -11634,6 +11687,11 @@ var app = (function () {
           });
           return _objectSpread2({}, state);
         });
+      },
+      updateStore: function updateStore(newState) {
+        ntkStore.update(function () {
+          return newState;
+        });
       } // export function getMyNtks(): NTKPerson[] {
       //     const store = get(ntkStore);
       //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
@@ -11673,7 +11731,7 @@ var app = (function () {
     			div = element("div");
     			ntklist.$$.fragment.c();
     			attr(div, "class", "container svelte-1mbbivc");
-    			add_location(div, file$g, 49, 0, 2133);
+    			add_location(div, file$g, 48, 0, 2082);
     		},
 
     		l: function claim(nodes) {
@@ -11715,30 +11773,30 @@ var app = (function () {
     }
 
     function onMarkedChanged(event) {
-          customNtkStore.onMarkedChanged(event.detail.id); 
-      }
+      customNtkStore.onMarkedChanged(event.detail.id);
+    }
 
     function instance$k($$self, $$props, $$invalidate) {
     	
 
-        let ntkList;
+      let ntkList;
 
-        onMount( async () => {
-            $$invalidate('ntkList', ntkList = await BLM.getNtks());
-        });
+      onMount(async () => {
+        $$invalidate('ntkList', ntkList = await BLM.getNtks());
+      });
 
-        const unsubscribe=customNtkStore.subscribe(state => {
-            $$invalidate('ntkList', ntkList=state.ntkPersons);
-        });
+      const unsubscribe = customNtkStore.subscribe(state => {
+        $$invalidate('ntkList', ntkList = state.ntkPersons);
+      });
 
-        onDestroy(() => {
-            unsubscribe();
-        });
-        //
-        // function onPersonSelected(event) {
-        //     currentSelectedPerson = event.detail;
-        //     isNTKPersonDialogOpen = true;
-        // }
+      onDestroy(() => {
+        unsubscribe();
+      });
+      //
+      // function onPersonSelected(event) {
+      //     currentSelectedPerson = event.detail;
+      //     isNTKPersonDialogOpen = true;
+      // }
 
     	return { ntkList };
     }
@@ -12252,6 +12310,454 @@ var app = (function () {
       LOGIN: 'login',
       REGISTER: 'register'
     };
+
+    /* node_modules\@smui\paper\Paper.svelte generated by Svelte v3.9.1 */
+
+    const file$j = "node_modules\\@smui\\paper\\Paper.svelte";
+
+    function create_fragment$n(ctx) {
+    	var div, useActions_action, forwardEvents_action, current;
+
+    	const default_slot_template = ctx.$$slots.default;
+    	const default_slot = create_slot(default_slot_template, ctx, null);
+
+    	var div_levels = [
+    		{ class: "\n    smui-paper\n    " + ctx.className + "\n    " + (ctx.elevation !== 0 ? 'mdc-elevation--z' + ctx.elevation : '') + "\n    " + (!ctx.square ? 'smui-paper--rounded' : '') + "\n    " + (ctx.color === 'primary' ? 'smui-paper--color-primary' : '') + "\n    " + (ctx.color === 'secondary' ? 'smui-paper--color-secondary' : '') + "\n    " + (ctx.transition ? 'mdc-elevation-transition' : '') + "\n  " },
+    		exclude(ctx.$$props, ['use', 'class', 'square', 'color', 'transition'])
+    	];
+
+    	var div_data = {};
+    	for (var i = 0; i < div_levels.length; i += 1) {
+    		div_data = assign(div_data, div_levels[i]);
+    	}
+
+    	return {
+    		c: function create() {
+    			div = element("div");
+
+    			if (default_slot) default_slot.c();
+
+    			set_attributes(div, div_data);
+    			add_location(div, file$j, 0, 0, 0);
+    		},
+
+    		l: function claim(nodes) {
+    			if (default_slot) default_slot.l(div_nodes);
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, div, anchor);
+
+    			if (default_slot) {
+    				default_slot.m(div, null);
+    			}
+
+    			useActions_action = useActions.call(null, div, ctx.use) || {};
+    			forwardEvents_action = ctx.forwardEvents.call(null, div) || {};
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			if (default_slot && default_slot.p && changed.$$scope) {
+    				default_slot.p(
+    					get_slot_changes(default_slot_template, ctx, changed, null),
+    					get_slot_context(default_slot_template, ctx, null)
+    				);
+    			}
+
+    			set_attributes(div, get_spread_update(div_levels, [
+    				(changed.className || changed.elevation || changed.square || changed.color || changed.transition) && { class: "\n    smui-paper\n    " + ctx.className + "\n    " + (ctx.elevation !== 0 ? 'mdc-elevation--z' + ctx.elevation : '') + "\n    " + (!ctx.square ? 'smui-paper--rounded' : '') + "\n    " + (ctx.color === 'primary' ? 'smui-paper--color-primary' : '') + "\n    " + (ctx.color === 'secondary' ? 'smui-paper--color-secondary' : '') + "\n    " + (ctx.transition ? 'mdc-elevation-transition' : '') + "\n  " },
+    				(changed.exclude || changed.$$props) && exclude(ctx.$$props, ['use', 'class', 'square', 'color', 'transition'])
+    			]));
+
+    			if (typeof useActions_action.update === 'function' && changed.use) {
+    				useActions_action.update.call(null, ctx.use);
+    			}
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(div);
+    			}
+
+    			if (default_slot) default_slot.d(detaching);
+    			if (useActions_action && typeof useActions_action.destroy === 'function') useActions_action.destroy();
+    			if (forwardEvents_action && typeof forwardEvents_action.destroy === 'function') forwardEvents_action.destroy();
+    		}
+    	};
+    }
+
+    function instance$n($$self, $$props, $$invalidate) {
+    	
+
+      const forwardEvents = forwardEventsBuilder(current_component);
+
+      let { use = [], class: className = '', square = false, color = 'default', elevation = 1, transition = false } = $$props;
+
+    	let { $$slots = {}, $$scope } = $$props;
+
+    	$$self.$set = $$new_props => {
+    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
+    		if ('use' in $$new_props) $$invalidate('use', use = $$new_props.use);
+    		if ('class' in $$new_props) $$invalidate('className', className = $$new_props.class);
+    		if ('square' in $$new_props) $$invalidate('square', square = $$new_props.square);
+    		if ('color' in $$new_props) $$invalidate('color', color = $$new_props.color);
+    		if ('elevation' in $$new_props) $$invalidate('elevation', elevation = $$new_props.elevation);
+    		if ('transition' in $$new_props) $$invalidate('transition', transition = $$new_props.transition);
+    		if ('$$scope' in $$new_props) $$invalidate('$$scope', $$scope = $$new_props.$$scope);
+    	};
+
+    	return {
+    		forwardEvents,
+    		use,
+    		className,
+    		square,
+    		color,
+    		elevation,
+    		transition,
+    		$$props,
+    		$$props: $$props = exclude_internal_props($$props),
+    		$$slots,
+    		$$scope
+    	};
+    }
+
+    class Paper extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$n, create_fragment$n, safe_not_equal, ["use", "class", "square", "color", "elevation", "transition"]);
+    	}
+
+    	get use() {
+    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set use(value) {
+    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get class() {
+    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set class(value) {
+    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get square() {
+    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set square(value) {
+    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get color() {
+    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set color(value) {
+    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get elevation() {
+    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set elevation(value) {
+    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get transition() {
+    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set transition(value) {
+    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    classAdderBuilder({
+      class: 'smui-paper__content',
+      component: Div,
+      contexts: {}
+    });
+
+    /* node_modules\@smui\common\H5.svelte generated by Svelte v3.9.1 */
+
+    const file$k = "node_modules\\@smui\\common\\H5.svelte";
+
+    function create_fragment$o(ctx) {
+    	var h5, useActions_action, forwardEvents_action, current;
+
+    	const default_slot_template = ctx.$$slots.default;
+    	const default_slot = create_slot(default_slot_template, ctx, null);
+
+    	var h5_levels = [
+    		exclude(ctx.$$props, ['use'])
+    	];
+
+    	var h5_data = {};
+    	for (var i = 0; i < h5_levels.length; i += 1) {
+    		h5_data = assign(h5_data, h5_levels[i]);
+    	}
+
+    	return {
+    		c: function create() {
+    			h5 = element("h5");
+
+    			if (default_slot) default_slot.c();
+
+    			set_attributes(h5, h5_data);
+    			add_location(h5, file$k, 0, 0, 0);
+    		},
+
+    		l: function claim(nodes) {
+    			if (default_slot) default_slot.l(h5_nodes);
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, h5, anchor);
+
+    			if (default_slot) {
+    				default_slot.m(h5, null);
+    			}
+
+    			useActions_action = useActions.call(null, h5, ctx.use) || {};
+    			forwardEvents_action = ctx.forwardEvents.call(null, h5) || {};
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			if (default_slot && default_slot.p && changed.$$scope) {
+    				default_slot.p(
+    					get_slot_changes(default_slot_template, ctx, changed, null),
+    					get_slot_context(default_slot_template, ctx, null)
+    				);
+    			}
+
+    			set_attributes(h5, get_spread_update(h5_levels, [
+    				(changed.exclude || changed.$$props) && exclude(ctx.$$props, ['use'])
+    			]));
+
+    			if (typeof useActions_action.update === 'function' && changed.use) {
+    				useActions_action.update.call(null, ctx.use);
+    			}
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(h5);
+    			}
+
+    			if (default_slot) default_slot.d(detaching);
+    			if (useActions_action && typeof useActions_action.destroy === 'function') useActions_action.destroy();
+    			if (forwardEvents_action && typeof forwardEvents_action.destroy === 'function') forwardEvents_action.destroy();
+    		}
+    	};
+    }
+
+    function instance$o($$self, $$props, $$invalidate) {
+    	
+
+      const forwardEvents = forwardEventsBuilder(current_component);
+
+      let { use = [] } = $$props;
+
+    	let { $$slots = {}, $$scope } = $$props;
+
+    	$$self.$set = $$new_props => {
+    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
+    		if ('use' in $$new_props) $$invalidate('use', use = $$new_props.use);
+    		if ('$$scope' in $$new_props) $$invalidate('$$scope', $$scope = $$new_props.$$scope);
+    	};
+
+    	return {
+    		forwardEvents,
+    		use,
+    		$$props,
+    		$$props: $$props = exclude_internal_props($$props),
+    		$$slots,
+    		$$scope
+    	};
+    }
+
+    class H5 extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$o, create_fragment$o, safe_not_equal, ["use"]);
+    	}
+
+    	get use() {
+    		throw new Error("<H5>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set use(value) {
+    		throw new Error("<H5>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    classAdderBuilder({
+      class: 'smui-paper__title',
+      component: H5,
+      contexts: {}
+    });
+
+    /* node_modules\@smui\common\H6.svelte generated by Svelte v3.9.1 */
+
+    const file$l = "node_modules\\@smui\\common\\H6.svelte";
+
+    function create_fragment$p(ctx) {
+    	var h6, useActions_action, forwardEvents_action, current;
+
+    	const default_slot_template = ctx.$$slots.default;
+    	const default_slot = create_slot(default_slot_template, ctx, null);
+
+    	var h6_levels = [
+    		exclude(ctx.$$props, ['use'])
+    	];
+
+    	var h6_data = {};
+    	for (var i = 0; i < h6_levels.length; i += 1) {
+    		h6_data = assign(h6_data, h6_levels[i]);
+    	}
+
+    	return {
+    		c: function create() {
+    			h6 = element("h6");
+
+    			if (default_slot) default_slot.c();
+
+    			set_attributes(h6, h6_data);
+    			add_location(h6, file$l, 0, 0, 0);
+    		},
+
+    		l: function claim(nodes) {
+    			if (default_slot) default_slot.l(h6_nodes);
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, h6, anchor);
+
+    			if (default_slot) {
+    				default_slot.m(h6, null);
+    			}
+
+    			useActions_action = useActions.call(null, h6, ctx.use) || {};
+    			forwardEvents_action = ctx.forwardEvents.call(null, h6) || {};
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			if (default_slot && default_slot.p && changed.$$scope) {
+    				default_slot.p(
+    					get_slot_changes(default_slot_template, ctx, changed, null),
+    					get_slot_context(default_slot_template, ctx, null)
+    				);
+    			}
+
+    			set_attributes(h6, get_spread_update(h6_levels, [
+    				(changed.exclude || changed.$$props) && exclude(ctx.$$props, ['use'])
+    			]));
+
+    			if (typeof useActions_action.update === 'function' && changed.use) {
+    				useActions_action.update.call(null, ctx.use);
+    			}
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(h6);
+    			}
+
+    			if (default_slot) default_slot.d(detaching);
+    			if (useActions_action && typeof useActions_action.destroy === 'function') useActions_action.destroy();
+    			if (forwardEvents_action && typeof forwardEvents_action.destroy === 'function') forwardEvents_action.destroy();
+    		}
+    	};
+    }
+
+    function instance$p($$self, $$props, $$invalidate) {
+    	
+
+      const forwardEvents = forwardEventsBuilder(current_component);
+
+      let { use = [] } = $$props;
+
+    	let { $$slots = {}, $$scope } = $$props;
+
+    	$$self.$set = $$new_props => {
+    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
+    		if ('use' in $$new_props) $$invalidate('use', use = $$new_props.use);
+    		if ('$$scope' in $$new_props) $$invalidate('$$scope', $$scope = $$new_props.$$scope);
+    	};
+
+    	return {
+    		forwardEvents,
+    		use,
+    		$$props,
+    		$$props: $$props = exclude_internal_props($$props),
+    		$$slots,
+    		$$scope
+    	};
+    }
+
+    class H6 extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$p, create_fragment$p, safe_not_equal, ["use"]);
+    	}
+
+    	get use() {
+    		throw new Error("<H6>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set use(value) {
+    		throw new Error("<H6>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    classAdderBuilder({
+      class: 'smui-paper__subtitle',
+      component: H6,
+      contexts: {}
+    });
 
     /**
      * @license
@@ -14357,7 +14863,7 @@ var app = (function () {
 
     /* node_modules\@smui\floating-label\FloatingLabel.svelte generated by Svelte v3.9.1 */
 
-    const file$j = "node_modules\\@smui\\floating-label\\FloatingLabel.svelte";
+    const file$m = "node_modules\\@smui\\floating-label\\FloatingLabel.svelte";
 
     // (9:0) {:else}
     function create_else_block$3(ctx) {
@@ -14384,7 +14890,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			set_attributes(label, label_data);
-    			add_location(label, file$j, 9, 2, 225);
+    			add_location(label, file$m, 9, 2, 225);
     		},
 
     		l: function claim(nodes) {
@@ -14471,7 +14977,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			set_attributes(span, span_data);
-    			add_location(span, file$j, 1, 2, 16);
+    			add_location(span, file$m, 1, 2, 16);
     		},
 
     		l: function claim(nodes) {
@@ -14533,7 +15039,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$n(ctx) {
+    function create_fragment$q(ctx) {
     	var current_block_type_index, if_block, if_block_anchor, current;
 
     	var if_block_creators = [
@@ -14610,7 +15116,7 @@ var app = (function () {
     	};
     }
 
-    function instance$n($$self, $$props, $$invalidate) {
+    function instance$q($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -14687,7 +15193,7 @@ var app = (function () {
     class FloatingLabel extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$n, create_fragment$n, safe_not_equal, ["use", "class", "for", "wrapped", "shake", "float", "getWidth"]);
+    		init(this, options, instance$q, create_fragment$q, safe_not_equal, ["use", "class", "for", "wrapped", "shake", "float", "getWidth"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -14761,9 +15267,9 @@ var app = (function () {
 
     /* node_modules\@smui\line-ripple\LineRipple.svelte generated by Svelte v3.9.1 */
 
-    const file$k = "node_modules\\@smui\\line-ripple\\LineRipple.svelte";
+    const file$n = "node_modules\\@smui\\line-ripple\\LineRipple.svelte";
 
-    function create_fragment$o(ctx) {
+    function create_fragment$r(ctx) {
     	var div, useActions_action, forwardEvents_action;
 
     	var div_levels = [
@@ -14780,7 +15286,7 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			set_attributes(div, div_data);
-    			add_location(div, file$k, 0, 0, 0);
+    			add_location(div, file$n, 0, 0, 0);
     		},
 
     		l: function claim(nodes) {
@@ -14820,7 +15326,7 @@ var app = (function () {
     	};
     }
 
-    function instance$o($$self, $$props, $$invalidate) {
+    function instance$r($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -14881,7 +15387,7 @@ var app = (function () {
     class LineRipple extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$o, create_fragment$o, safe_not_equal, ["use", "class", "active", "activate", "deactivate", "setRippleCenter"]);
+    		init(this, options, instance$r, create_fragment$r, safe_not_equal, ["use", "class", "active", "activate", "deactivate", "setRippleCenter"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -14947,7 +15453,7 @@ var app = (function () {
 
     /* node_modules\@smui\notched-outline\NotchedOutline.svelte generated by Svelte v3.9.1 */
 
-    const file$l = "node_modules\\@smui\\notched-outline\\NotchedOutline.svelte";
+    const file$o = "node_modules\\@smui\\notched-outline\\NotchedOutline.svelte";
 
     // (14:2) {#if !noLabel}
     function create_if_block$6(ctx) {
@@ -14963,7 +15469,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			attr(div, "class", "mdc-notched-outline__notch");
-    			add_location(div, file$l, 14, 4, 367);
+    			add_location(div, file$o, 14, 4, 367);
     		},
 
     		l: function claim(nodes) {
@@ -15010,7 +15516,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$p(ctx) {
+    function create_fragment$s(ctx) {
     	var div2, div0, t0, t1, div1, useActions_action, forwardEvents_action, current;
 
     	var if_block = (!ctx.noLabel) && create_if_block$6(ctx);
@@ -15034,11 +15540,11 @@ var app = (function () {
     			t1 = space();
     			div1 = element("div");
     			attr(div0, "class", "mdc-notched-outline__leading");
-    			add_location(div0, file$l, 12, 2, 297);
+    			add_location(div0, file$o, 12, 2, 297);
     			attr(div1, "class", "mdc-notched-outline__trailing");
-    			add_location(div1, file$l, 16, 2, 437);
+    			add_location(div1, file$o, 16, 2, 437);
     			set_attributes(div2, div2_data);
-    			add_location(div2, file$l, 0, 0, 0);
+    			add_location(div2, file$o, 0, 0, 0);
     		},
 
     		l: function claim(nodes) {
@@ -15111,7 +15617,7 @@ var app = (function () {
     	};
     }
 
-    function instance$p($$self, $$props, $$invalidate) {
+    function instance$s($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -15174,7 +15680,7 @@ var app = (function () {
     class NotchedOutline extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$p, create_fragment$p, safe_not_equal, ["use", "class", "notched", "noLabel", "notch", "closeNotch"]);
+    		init(this, options, instance$s, create_fragment$s, safe_not_equal, ["use", "class", "notched", "noLabel", "notch", "closeNotch"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -15237,9 +15743,9 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\Input.svelte generated by Svelte v3.9.1 */
 
-    const file$m = "node_modules\\@smui\\textfield\\Input.svelte";
+    const file$p = "node_modules\\@smui\\textfield\\Input.svelte";
 
-    function create_fragment$q(ctx) {
+    function create_fragment$t(ctx) {
     	var input, useActions_action, forwardEvents_action, dispose;
 
     	var input_levels = [
@@ -15258,7 +15764,7 @@ var app = (function () {
     		c: function create() {
     			input = element("input");
     			set_attributes(input, input_data);
-    			add_location(input, file$m, 0, 0, 0);
+    			add_location(input, file$p, 0, 0, 0);
 
     			dispose = [
     				listen(input, "change", ctx.change_handler),
@@ -15316,7 +15822,7 @@ var app = (function () {
       return +value;
     }
 
-    function instance$q($$self, $$props, $$invalidate) {
+    function instance$t($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component, ['change', 'input']);
@@ -15413,7 +15919,7 @@ var app = (function () {
     class Input extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$q, create_fragment$q, safe_not_equal, ["use", "class", "type", "value", "files", "dirty", "invalid", "updateInvalid"]);
+    		init(this, options, instance$t, create_fragment$t, safe_not_equal, ["use", "class", "type", "value", "files", "dirty", "invalid", "updateInvalid"]);
     	}
 
     	get use() {
@@ -15483,9 +15989,9 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\Textarea.svelte generated by Svelte v3.9.1 */
 
-    const file$n = "node_modules\\@smui\\textfield\\Textarea.svelte";
+    const file$q = "node_modules\\@smui\\textfield\\Textarea.svelte";
 
-    function create_fragment$r(ctx) {
+    function create_fragment$u(ctx) {
     	var textarea, useActions_action, forwardEvents_action, dispose;
 
     	var textarea_levels = [
@@ -15502,7 +16008,7 @@ var app = (function () {
     		c: function create() {
     			textarea = element("textarea");
     			set_attributes(textarea, textarea_data);
-    			add_location(textarea, file$n, 0, 0, 0);
+    			add_location(textarea, file$q, 0, 0, 0);
 
     			dispose = [
     				listen(textarea, "input", ctx.textarea_input_handler),
@@ -15553,7 +16059,7 @@ var app = (function () {
     	};
     }
 
-    function instance$r($$self, $$props, $$invalidate) {
+    function instance$u($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component, ['change', 'input']);
@@ -15616,7 +16122,7 @@ var app = (function () {
     class Textarea extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$r, create_fragment$r, safe_not_equal, ["use", "class", "value", "dirty", "invalid", "updateInvalid"]);
+    		init(this, options, instance$u, create_fragment$u, safe_not_equal, ["use", "class", "value", "dirty", "invalid", "updateInvalid"]);
     	}
 
     	get use() {
@@ -15670,7 +16176,7 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\Textfield.svelte generated by Svelte v3.9.1 */
 
-    const file$o = "node_modules\\@smui\\textfield\\Textfield.svelte";
+    const file$r = "node_modules\\@smui\\textfield\\Textfield.svelte";
 
     const get_label_slot_changes_1 = () => ({});
     const get_label_slot_context_1 = () => ({});
@@ -15702,7 +16208,7 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			set_attributes(div, div_data);
-    			add_location(div, file$o, 65, 2, 2082);
+    			add_location(div, file$r, 65, 2, 2082);
     		},
 
     		l: function claim(nodes) {
@@ -15813,7 +16319,7 @@ var app = (function () {
     			if (if_block2) if_block2.c();
 
     			set_attributes(label_1, label_1_data);
-    			add_location(label_1, file$o, 1, 2, 15);
+    			add_location(label_1, file$r, 1, 2, 15);
     		},
 
     		l: function claim(nodes) {
@@ -16650,7 +17156,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$s(ctx) {
+    function create_fragment$v(ctx) {
     	var current_block_type_index, if_block, if_block_anchor, current;
 
     	var if_block_creators = [
@@ -16727,7 +17233,7 @@ var app = (function () {
     	};
     }
 
-    function instance$s($$self, $$props, $$invalidate) {
+    function instance$v($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -16929,7 +17435,7 @@ var app = (function () {
     class Textfield extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$s, create_fragment$s, safe_not_equal, ["use", "class", "ripple", "disabled", "fullwidth", "textarea", "variant", "dense", "withLeadingIcon", "withTrailingIcon", "noLabel", "label", "type", "value", "files", "dirty", "invalid", "updateInvalid", "useNativeValidation", "focus", "layout"]);
+    		init(this, options, instance$v, create_fragment$v, safe_not_equal, ["use", "class", "ripple", "disabled", "fullwidth", "textarea", "variant", "dense", "withLeadingIcon", "withTrailingIcon", "noLabel", "label", "type", "value", "files", "dirty", "invalid", "updateInvalid", "useNativeValidation", "focus", "layout"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -17112,12 +17618,12 @@ var app = (function () {
 
     /* node_modules\@smui\textfield\helper-text\HelperText.svelte generated by Svelte v3.9.1 */
 
-    const file$p = "node_modules\\@smui\\textfield\\helper-text\\HelperText.svelte";
+    const file$s = "node_modules\\@smui\\textfield\\helper-text\\HelperText.svelte";
 
     const get_character_counter_slot_changes = () => ({});
     const get_character_counter_slot_context = () => ({});
 
-    function create_fragment$t(ctx) {
+    function create_fragment$w(ctx) {
     	var div1, div0, useActions_action, forwardEvents_action, t, useActions_action_1, current;
 
     	const default_slot_template = ctx.$$slots.default;
@@ -17158,10 +17664,10 @@ var app = (function () {
     			if (character_counter_slot) character_counter_slot.c();
 
     			set_attributes(div0, div0_data);
-    			add_location(div0, file$p, 5, 2, 152);
+    			add_location(div0, file$s, 5, 2, 152);
 
     			set_attributes(div1, div1_data);
-    			add_location(div1, file$p, 0, 0, 0);
+    			add_location(div1, file$s, 0, 0, 0);
     		},
 
     		l: function claim(nodes) {
@@ -17256,7 +17762,7 @@ var app = (function () {
     	};
     }
 
-    function instance$t($$self, $$props, $$invalidate) {
+    function instance$w($$self, $$props, $$invalidate) {
     	
 
       const forwardEvents = forwardEventsBuilder(current_component);
@@ -17313,7 +17819,7 @@ var app = (function () {
     class HelperText extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$t, create_fragment$t, safe_not_equal, ["use", "class", "persistent", "validationMsg", "line$use", "line$class"]);
+    		init(this, options, instance$w, create_fragment$w, safe_not_equal, ["use", "class", "persistent", "validationMsg", "line$use", "line$class"]);
     	}
 
     	get use() {
@@ -17590,7 +18096,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$u(ctx) {
+    function create_fragment$x(ctx) {
     	var current_block_type_index, if_block, if_block_anchor, current;
 
     	var if_block_creators = [
@@ -17667,7 +18173,7 @@ var app = (function () {
     	};
     }
 
-    function instance$u($$self, $$props, $$invalidate) {
+    function instance$x($$self, $$props, $$invalidate) {
     	
 
         let { errorMessage='', label = '', minWidth, type, value='', dirty=false, invalid=false, isTextArea = false } = $$props;
@@ -17729,7 +18235,7 @@ var app = (function () {
     class TextBox extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$u, create_fragment$u, safe_not_equal, ["errorMessage", "label", "minWidth", "type", "value", "dirty", "invalid", "isTextArea"]);
+    		init(this, options, instance$x, create_fragment$x, safe_not_equal, ["errorMessage", "label", "minWidth", "type", "value", "dirty", "invalid", "isTextArea"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -17805,454 +18311,6 @@ var app = (function () {
     		throw new Error("<TextBox>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
-
-    /* node_modules\@smui\paper\Paper.svelte generated by Svelte v3.9.1 */
-
-    const file$q = "node_modules\\@smui\\paper\\Paper.svelte";
-
-    function create_fragment$v(ctx) {
-    	var div, useActions_action, forwardEvents_action, current;
-
-    	const default_slot_template = ctx.$$slots.default;
-    	const default_slot = create_slot(default_slot_template, ctx, null);
-
-    	var div_levels = [
-    		{ class: "\n    smui-paper\n    " + ctx.className + "\n    " + (ctx.elevation !== 0 ? 'mdc-elevation--z' + ctx.elevation : '') + "\n    " + (!ctx.square ? 'smui-paper--rounded' : '') + "\n    " + (ctx.color === 'primary' ? 'smui-paper--color-primary' : '') + "\n    " + (ctx.color === 'secondary' ? 'smui-paper--color-secondary' : '') + "\n    " + (ctx.transition ? 'mdc-elevation-transition' : '') + "\n  " },
-    		exclude(ctx.$$props, ['use', 'class', 'square', 'color', 'transition'])
-    	];
-
-    	var div_data = {};
-    	for (var i = 0; i < div_levels.length; i += 1) {
-    		div_data = assign(div_data, div_levels[i]);
-    	}
-
-    	return {
-    		c: function create() {
-    			div = element("div");
-
-    			if (default_slot) default_slot.c();
-
-    			set_attributes(div, div_data);
-    			add_location(div, file$q, 0, 0, 0);
-    		},
-
-    		l: function claim(nodes) {
-    			if (default_slot) default_slot.l(div_nodes);
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, div, anchor);
-
-    			if (default_slot) {
-    				default_slot.m(div, null);
-    			}
-
-    			useActions_action = useActions.call(null, div, ctx.use) || {};
-    			forwardEvents_action = ctx.forwardEvents.call(null, div) || {};
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			if (default_slot && default_slot.p && changed.$$scope) {
-    				default_slot.p(
-    					get_slot_changes(default_slot_template, ctx, changed, null),
-    					get_slot_context(default_slot_template, ctx, null)
-    				);
-    			}
-
-    			set_attributes(div, get_spread_update(div_levels, [
-    				(changed.className || changed.elevation || changed.square || changed.color || changed.transition) && { class: "\n    smui-paper\n    " + ctx.className + "\n    " + (ctx.elevation !== 0 ? 'mdc-elevation--z' + ctx.elevation : '') + "\n    " + (!ctx.square ? 'smui-paper--rounded' : '') + "\n    " + (ctx.color === 'primary' ? 'smui-paper--color-primary' : '') + "\n    " + (ctx.color === 'secondary' ? 'smui-paper--color-secondary' : '') + "\n    " + (ctx.transition ? 'mdc-elevation-transition' : '') + "\n  " },
-    				(changed.exclude || changed.$$props) && exclude(ctx.$$props, ['use', 'class', 'square', 'color', 'transition'])
-    			]));
-
-    			if (typeof useActions_action.update === 'function' && changed.use) {
-    				useActions_action.update.call(null, ctx.use);
-    			}
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(default_slot, local);
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(default_slot, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(div);
-    			}
-
-    			if (default_slot) default_slot.d(detaching);
-    			if (useActions_action && typeof useActions_action.destroy === 'function') useActions_action.destroy();
-    			if (forwardEvents_action && typeof forwardEvents_action.destroy === 'function') forwardEvents_action.destroy();
-    		}
-    	};
-    }
-
-    function instance$v($$self, $$props, $$invalidate) {
-    	
-
-      const forwardEvents = forwardEventsBuilder(current_component);
-
-      let { use = [], class: className = '', square = false, color = 'default', elevation = 1, transition = false } = $$props;
-
-    	let { $$slots = {}, $$scope } = $$props;
-
-    	$$self.$set = $$new_props => {
-    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
-    		if ('use' in $$new_props) $$invalidate('use', use = $$new_props.use);
-    		if ('class' in $$new_props) $$invalidate('className', className = $$new_props.class);
-    		if ('square' in $$new_props) $$invalidate('square', square = $$new_props.square);
-    		if ('color' in $$new_props) $$invalidate('color', color = $$new_props.color);
-    		if ('elevation' in $$new_props) $$invalidate('elevation', elevation = $$new_props.elevation);
-    		if ('transition' in $$new_props) $$invalidate('transition', transition = $$new_props.transition);
-    		if ('$$scope' in $$new_props) $$invalidate('$$scope', $$scope = $$new_props.$$scope);
-    	};
-
-    	return {
-    		forwardEvents,
-    		use,
-    		className,
-    		square,
-    		color,
-    		elevation,
-    		transition,
-    		$$props,
-    		$$props: $$props = exclude_internal_props($$props),
-    		$$slots,
-    		$$scope
-    	};
-    }
-
-    class Paper extends SvelteComponentDev {
-    	constructor(options) {
-    		super(options);
-    		init(this, options, instance$v, create_fragment$v, safe_not_equal, ["use", "class", "square", "color", "elevation", "transition"]);
-    	}
-
-    	get use() {
-    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set use(value) {
-    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	get class() {
-    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set class(value) {
-    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	get square() {
-    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set square(value) {
-    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	get color() {
-    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set color(value) {
-    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	get elevation() {
-    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set elevation(value) {
-    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	get transition() {
-    		throw new Error("<Paper>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set transition(value) {
-    		throw new Error("<Paper>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-    }
-
-    classAdderBuilder({
-      class: 'smui-paper__content',
-      component: Div,
-      contexts: {}
-    });
-
-    /* node_modules\@smui\common\H5.svelte generated by Svelte v3.9.1 */
-
-    const file$r = "node_modules\\@smui\\common\\H5.svelte";
-
-    function create_fragment$w(ctx) {
-    	var h5, useActions_action, forwardEvents_action, current;
-
-    	const default_slot_template = ctx.$$slots.default;
-    	const default_slot = create_slot(default_slot_template, ctx, null);
-
-    	var h5_levels = [
-    		exclude(ctx.$$props, ['use'])
-    	];
-
-    	var h5_data = {};
-    	for (var i = 0; i < h5_levels.length; i += 1) {
-    		h5_data = assign(h5_data, h5_levels[i]);
-    	}
-
-    	return {
-    		c: function create() {
-    			h5 = element("h5");
-
-    			if (default_slot) default_slot.c();
-
-    			set_attributes(h5, h5_data);
-    			add_location(h5, file$r, 0, 0, 0);
-    		},
-
-    		l: function claim(nodes) {
-    			if (default_slot) default_slot.l(h5_nodes);
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, h5, anchor);
-
-    			if (default_slot) {
-    				default_slot.m(h5, null);
-    			}
-
-    			useActions_action = useActions.call(null, h5, ctx.use) || {};
-    			forwardEvents_action = ctx.forwardEvents.call(null, h5) || {};
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			if (default_slot && default_slot.p && changed.$$scope) {
-    				default_slot.p(
-    					get_slot_changes(default_slot_template, ctx, changed, null),
-    					get_slot_context(default_slot_template, ctx, null)
-    				);
-    			}
-
-    			set_attributes(h5, get_spread_update(h5_levels, [
-    				(changed.exclude || changed.$$props) && exclude(ctx.$$props, ['use'])
-    			]));
-
-    			if (typeof useActions_action.update === 'function' && changed.use) {
-    				useActions_action.update.call(null, ctx.use);
-    			}
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(default_slot, local);
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(default_slot, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(h5);
-    			}
-
-    			if (default_slot) default_slot.d(detaching);
-    			if (useActions_action && typeof useActions_action.destroy === 'function') useActions_action.destroy();
-    			if (forwardEvents_action && typeof forwardEvents_action.destroy === 'function') forwardEvents_action.destroy();
-    		}
-    	};
-    }
-
-    function instance$w($$self, $$props, $$invalidate) {
-    	
-
-      const forwardEvents = forwardEventsBuilder(current_component);
-
-      let { use = [] } = $$props;
-
-    	let { $$slots = {}, $$scope } = $$props;
-
-    	$$self.$set = $$new_props => {
-    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
-    		if ('use' in $$new_props) $$invalidate('use', use = $$new_props.use);
-    		if ('$$scope' in $$new_props) $$invalidate('$$scope', $$scope = $$new_props.$$scope);
-    	};
-
-    	return {
-    		forwardEvents,
-    		use,
-    		$$props,
-    		$$props: $$props = exclude_internal_props($$props),
-    		$$slots,
-    		$$scope
-    	};
-    }
-
-    class H5 extends SvelteComponentDev {
-    	constructor(options) {
-    		super(options);
-    		init(this, options, instance$w, create_fragment$w, safe_not_equal, ["use"]);
-    	}
-
-    	get use() {
-    		throw new Error("<H5>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set use(value) {
-    		throw new Error("<H5>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-    }
-
-    classAdderBuilder({
-      class: 'smui-paper__title',
-      component: H5,
-      contexts: {}
-    });
-
-    /* node_modules\@smui\common\H6.svelte generated by Svelte v3.9.1 */
-
-    const file$s = "node_modules\\@smui\\common\\H6.svelte";
-
-    function create_fragment$x(ctx) {
-    	var h6, useActions_action, forwardEvents_action, current;
-
-    	const default_slot_template = ctx.$$slots.default;
-    	const default_slot = create_slot(default_slot_template, ctx, null);
-
-    	var h6_levels = [
-    		exclude(ctx.$$props, ['use'])
-    	];
-
-    	var h6_data = {};
-    	for (var i = 0; i < h6_levels.length; i += 1) {
-    		h6_data = assign(h6_data, h6_levels[i]);
-    	}
-
-    	return {
-    		c: function create() {
-    			h6 = element("h6");
-
-    			if (default_slot) default_slot.c();
-
-    			set_attributes(h6, h6_data);
-    			add_location(h6, file$s, 0, 0, 0);
-    		},
-
-    		l: function claim(nodes) {
-    			if (default_slot) default_slot.l(h6_nodes);
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, h6, anchor);
-
-    			if (default_slot) {
-    				default_slot.m(h6, null);
-    			}
-
-    			useActions_action = useActions.call(null, h6, ctx.use) || {};
-    			forwardEvents_action = ctx.forwardEvents.call(null, h6) || {};
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			if (default_slot && default_slot.p && changed.$$scope) {
-    				default_slot.p(
-    					get_slot_changes(default_slot_template, ctx, changed, null),
-    					get_slot_context(default_slot_template, ctx, null)
-    				);
-    			}
-
-    			set_attributes(h6, get_spread_update(h6_levels, [
-    				(changed.exclude || changed.$$props) && exclude(ctx.$$props, ['use'])
-    			]));
-
-    			if (typeof useActions_action.update === 'function' && changed.use) {
-    				useActions_action.update.call(null, ctx.use);
-    			}
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(default_slot, local);
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(default_slot, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(h6);
-    			}
-
-    			if (default_slot) default_slot.d(detaching);
-    			if (useActions_action && typeof useActions_action.destroy === 'function') useActions_action.destroy();
-    			if (forwardEvents_action && typeof forwardEvents_action.destroy === 'function') forwardEvents_action.destroy();
-    		}
-    	};
-    }
-
-    function instance$x($$self, $$props, $$invalidate) {
-    	
-
-      const forwardEvents = forwardEventsBuilder(current_component);
-
-      let { use = [] } = $$props;
-
-    	let { $$slots = {}, $$scope } = $$props;
-
-    	$$self.$set = $$new_props => {
-    		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
-    		if ('use' in $$new_props) $$invalidate('use', use = $$new_props.use);
-    		if ('$$scope' in $$new_props) $$invalidate('$$scope', $$scope = $$new_props.$$scope);
-    	};
-
-    	return {
-    		forwardEvents,
-    		use,
-    		$$props,
-    		$$props: $$props = exclude_internal_props($$props),
-    		$$slots,
-    		$$scope
-    	};
-    }
-
-    class H6 extends SvelteComponentDev {
-    	constructor(options) {
-    		super(options);
-    		init(this, options, instance$x, create_fragment$x, safe_not_equal, ["use"]);
-    	}
-
-    	get use() {
-    		throw new Error("<H6>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-
-    	set use(value) {
-    		throw new Error("<H6>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-    	}
-    }
-
-    classAdderBuilder({
-      class: 'smui-paper__subtitle',
-      component: H6,
-      contexts: {}
-    });
 
     function getFilesFromDropEvent({ dataTransfer: { files, items } }) {
       return files.length
@@ -18440,11 +18498,54 @@ var app = (function () {
     	}
     }
 
-    /* src\components\Login.svelte generated by Svelte v3.9.1 */
+    /* src\components\Register.svelte generated by Svelte v3.9.1 */
 
-    const file$u = "src\\components\\Login.svelte";
+    const file$u = "src\\components\\Register.svelte";
 
-    // (131:8) <Label>
+    // (156:8) <FileUpload on:input={gotFiles}>
+    function create_default_slot_4$1(ctx) {
+    	var current;
+
+    	var avatar = new Avatar({
+    		props: { imageUrl: ctx.imageUrl, height: "100px" },
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			avatar.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(avatar, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var avatar_changes = {};
+    			if (changed.imageUrl) avatar_changes.imageUrl = ctx.imageUrl;
+    			avatar.$set(avatar_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(avatar.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(avatar.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(avatar, detaching);
+    		}
+    	};
+    }
+
+    // (194:8) <Label>
     function create_default_slot_3$2(ctx) {
     	var t;
 
@@ -18465,7 +18566,7 @@ var app = (function () {
     	};
     }
 
-    // (130:6) <Button variant="raised" on:click={submit}>
+    // (193:6) <Button variant="raised" on:click={submit}>
     function create_default_slot_2$4(ctx) {
     	var current;
 
@@ -18511,7 +18612,7 @@ var app = (function () {
     	};
     }
 
-    // (129:4) <Actions class="actions">
+    // (192:4) <Actions class="actions">
     function create_default_slot_1$5(ctx) {
     	var current;
 
@@ -18559,358 +18660,8 @@ var app = (function () {
     	};
     }
 
-    // (119:2) <Paper class="paper">
+    // (152:2) <Paper aria-labelledby="simple-title" aria-describedby="simple-content">
     function create_default_slot$b(ctx) {
-    	var header, t1, div1, div0, updating_value, t2, current;
-
-    	function textbox_value_binding(value) {
-    		ctx.textbox_value_binding.call(null, value);
-    		updating_value = true;
-    		add_flush_callback(() => updating_value = false);
-    	}
-
-    	let textbox_props = {
-    		label: "Please Enter your user name",
-    		minWidth: 350
-    	};
-    	if (ctx.userName !== void 0) {
-    		textbox_props.value = ctx.userName;
-    	}
-    	var textbox = new TextBox({ props: textbox_props, $$inline: true });
-
-    	binding_callbacks.push(() => bind(textbox, 'value', textbox_value_binding));
-
-    	var actions = new Actions$1({
-    		props: {
-    		class: "actions",
-    		$$slots: { default: [create_default_slot_1$5] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-
-    	return {
-    		c: function create() {
-    			header = element("header");
-    			header.textContent = "Login";
-    			t1 = space();
-    			div1 = element("div");
-    			div0 = element("div");
-    			textbox.$$.fragment.c();
-    			t2 = space();
-    			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-7nvxho");
-    			add_location(header, file$u, 119, 4, 6618);
-    			attr(div0, "class", "form-details svelte-7nvxho");
-    			add_location(div0, file$u, 121, 6, 6695);
-    			attr(div1, "class", "card-details svelte-7nvxho");
-    			add_location(div1, file$u, 120, 4, 6661);
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, header, anchor);
-    			insert(target, t1, anchor);
-    			insert(target, div1, anchor);
-    			append(div1, div0);
-    			mount_component(textbox, div0, null);
-    			insert(target, t2, anchor);
-    			mount_component(actions, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var textbox_changes = {};
-    			if (!updating_value && changed.userName) {
-    				textbox_changes.value = ctx.userName;
-    			}
-    			textbox.$set(textbox_changes);
-
-    			var actions_changes = {};
-    			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
-    			actions.$set(actions_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(textbox.$$.fragment, local);
-
-    			transition_in(actions.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(textbox.$$.fragment, local);
-    			transition_out(actions.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(header);
-    				detach(t1);
-    				detach(div1);
-    			}
-
-    			destroy_component(textbox);
-
-    			if (detaching) {
-    				detach(t2);
-    			}
-
-    			destroy_component(actions, detaching);
-    		}
-    	};
-    }
-
-    function create_fragment$z(ctx) {
-    	var div, current;
-
-    	var paper = new Paper({
-    		props: {
-    		class: "paper",
-    		$$slots: { default: [create_default_slot$b] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-
-    	return {
-    		c: function create() {
-    			div = element("div");
-    			paper.$$.fragment.c();
-    			attr(div, "class", "paper-wrap svelte-7nvxho");
-    			add_location(div, file$u, 117, 0, 6563);
-    		},
-
-    		l: function claim(nodes) {
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, div, anchor);
-    			mount_component(paper, div, null);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var paper_changes = {};
-    			if (changed.$$scope || changed.userName) paper_changes.$$scope = { changed, ctx };
-    			paper.$set(paper_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(paper.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(paper.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(div);
-    			}
-
-    			destroy_component(paper);
-    		}
-    	};
-    }
-
-    function instance$z($$self, $$props, $$invalidate) {
-    	
-
-      let userName;
-
-      onMount(() => {});
-
-      function submit(e) {
-        BLM.login(userName);
-      }
-
-    	function textbox_value_binding(value) {
-    		userName = value;
-    		$$invalidate('userName', userName);
-    	}
-
-    	return { userName, submit, textbox_value_binding };
-    }
-
-    class Login extends SvelteComponentDev {
-    	constructor(options) {
-    		super(options);
-    		init(this, options, instance$z, create_fragment$z, safe_not_equal, []);
-    	}
-    }
-
-    /* src\components\Register.svelte generated by Svelte v3.9.1 */
-
-    const file$v = "src\\components\\Register.svelte";
-
-    // (148:6) <FileUpload on:input={gotFiles}>
-    function create_default_slot_4$1(ctx) {
-    	var current;
-
-    	var avatar = new Avatar({
-    		props: { imageUrl: ctx.imageUrl },
-    		$$inline: true
-    	});
-
-    	return {
-    		c: function create() {
-    			avatar.$$.fragment.c();
-    		},
-
-    		m: function mount(target, anchor) {
-    			mount_component(avatar, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var avatar_changes = {};
-    			if (changed.imageUrl) avatar_changes.imageUrl = ctx.imageUrl;
-    			avatar.$set(avatar_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(avatar.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(avatar.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			destroy_component(avatar, detaching);
-    		}
-    	};
-    }
-
-    // (186:6) <Label>
-    function create_default_slot_3$3(ctx) {
-    	var t;
-
-    	return {
-    		c: function create() {
-    			t = text("Submit");
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, t, anchor);
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(t);
-    			}
-    		}
-    	};
-    }
-
-    // (185:4) <Button variant="raised" on:click={submit}>
-    function create_default_slot_2$5(ctx) {
-    	var current;
-
-    	var label = new Label({
-    		props: {
-    		$$slots: { default: [create_default_slot_3$3] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-
-    	return {
-    		c: function create() {
-    			label.$$.fragment.c();
-    		},
-
-    		m: function mount(target, anchor) {
-    			mount_component(label, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var label_changes = {};
-    			if (changed.$$scope) label_changes.$$scope = { changed, ctx };
-    			label.$set(label_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(label.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(label.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			destroy_component(label, detaching);
-    		}
-    	};
-    }
-
-    // (184:2) <Actions class="actions">
-    function create_default_slot_1$6(ctx) {
-    	var current;
-
-    	var button = new Button_1({
-    		props: {
-    		variant: "raised",
-    		$$slots: { default: [create_default_slot_2$5] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-    	button.$on("click", ctx.submit);
-
-    	return {
-    		c: function create() {
-    			button.$$.fragment.c();
-    		},
-
-    		m: function mount(target, anchor) {
-    			mount_component(button, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var button_changes = {};
-    			if (changed.$$scope) button_changes.$$scope = { changed, ctx };
-    			button.$set(button_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(button.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(button.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			destroy_component(button, detaching);
-    		}
-    	};
-    }
-
-    // (140:0) <Paper    aria-labelledby="simple-title"    aria-describedby="simple-content"    on:MDCDialog:closed={closeHandler}    on:MDCDialog:closing={onClosing}>
-    function create_default_slot$c(ctx) {
     	var header, t1, div3, div1, t2, div0, updating_value, t3, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, current;
 
     	var fileupload = new Index({
@@ -19016,7 +18767,7 @@ var app = (function () {
     	var actions = new Actions$1({
     		props: {
     		class: "actions",
-    		$$slots: { default: [create_default_slot_1$6] },
+    		$$slots: { default: [create_default_slot_1$5] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19044,16 +18795,16 @@ var app = (function () {
     			textbox4.$$.fragment.c();
     			t7 = space();
     			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-ik8dha");
-    			add_location(header, file$v, 144, 2, 6598);
+    			attr(header, "class", "header svelte-uydks0");
+    			add_location(header, file$u, 152, 4, 7458);
     			attr(div0, "class", "name-tb");
-    			add_location(div0, file$v, 151, 6, 6806);
-    			attr(div1, "class", "avatar-container svelte-ik8dha");
-    			add_location(div1, file$v, 146, 4, 6674);
+    			add_location(div0, file$u, 159, 8, 7701);
+    			attr(div1, "class", "avatar-container svelte-uydks0");
+    			add_location(div1, file$u, 154, 6, 7538);
     			attr(div2, "class", "form-details");
-    			add_location(div2, file$v, 159, 4, 7008);
-    			attr(div3, "class", "card-details svelte-ik8dha");
-    			add_location(div3, file$v, 145, 2, 6642);
+    			add_location(div2, file$u, 167, 6, 7919);
+    			attr(div3, "class", "card-details svelte-uydks0");
+    			add_location(div3, file$u, 153, 4, 7504);
     		},
 
     		m: function mount(target, anchor) {
@@ -19177,24 +18928,25 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$A(ctx) {
-    	var current;
+    function create_fragment$z(ctx) {
+    	var div, current;
 
     	var paper = new Paper({
     		props: {
     		"aria-labelledby": "simple-title",
     		"aria-describedby": "simple-content",
-    		$$slots: { default: [create_default_slot$c] },
+    		$$slots: { default: [create_default_slot$b] },
     		$$scope: { ctx }
     	},
     		$$inline: true
     	});
-    	paper.$on("MDCDialog:closed", closeHandler);
-    	paper.$on("MDCDialog:closing", onClosing$1);
 
     	return {
     		c: function create() {
+    			div = element("div");
     			paper.$$.fragment.c();
+    			attr(div, "class", "paper-wrap svelte-uydks0");
+    			add_location(div, file$u, 150, 0, 7352);
     		},
 
     		l: function claim(nodes) {
@@ -19202,7 +18954,8 @@ var app = (function () {
     		},
 
     		m: function mount(target, anchor) {
-    			mount_component(paper, target, anchor);
+    			insert(target, div, anchor);
+    			mount_component(paper, div, null);
     			current = true;
     		},
 
@@ -19225,23 +18978,13 @@ var app = (function () {
     		},
 
     		d: function destroy(detaching) {
-    			destroy_component(paper, detaching);
+    			if (detaching) {
+    				detach(div);
+    			}
+
+    			destroy_component(paper);
     		}
     	};
-    }
-
-    function closeHandler(e) {
-      // dispatch('popupClosed', {
-      //     value : {
-      //         name,
-      //         age,
-      //         email,
-      //         moreDetails : {
-      //             hobbies,
-      //             aboutMe
-      //         }
-      //     }
-      // });
     }
 
     function getBase64(file) {
@@ -19253,12 +18996,7 @@ var app = (function () {
       });
     }
 
-    function onClosing$1(e) {
-      console.log("onClosing", e);
-      e.stopPropagation();
-    }
-
-    function instance$A($$self, $$props, $$invalidate) {
+    function instance$z($$self, $$props, $$invalidate) {
     	
 
       let name;
@@ -19268,11 +19006,7 @@ var app = (function () {
       let aboutMe;
       let imageUrl;
 
-      const dispatch = createEventDispatcher();
-
-      onMount(() => {
-        
-      });
+      onMount(() => {});
 
       async function gotFiles(event) {
         const data = await getBase64(event.detail.files[0]);
@@ -19281,8 +19015,7 @@ var app = (function () {
       }
 
       function submit(e) {
-        dispatch("submit", {
-          value: {
+         BLM.register({
             name,
             age,
             email,
@@ -19291,8 +19024,7 @@ var app = (function () {
               hobbies,
               aboutMe
             }
-          }
-        });
+          });
       }
 
     	function textbox0_value_binding(value) {
@@ -19338,6 +19070,413 @@ var app = (function () {
     }
 
     class Register extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$z, create_fragment$z, safe_not_equal, []);
+    	}
+    }
+
+    /* src\components\Login.svelte generated by Svelte v3.9.1 */
+
+    const file$v = "src\\components\\Login.svelte";
+
+    // (151:8) <Label>
+    function create_default_slot_5$1(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text("Not Registered");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
+    	};
+    }
+
+    // (150:6) <Button on:click={showRegisterView} class="myClass">
+    function create_default_slot_4$2(ctx) {
+    	var current;
+
+    	var label = new Label({
+    		props: {
+    		$$slots: { default: [create_default_slot_5$1] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			label.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(label, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var label_changes = {};
+    			if (changed.$$scope) label_changes.$$scope = { changed, ctx };
+    			label.$set(label_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(label.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(label.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(label, detaching);
+    		}
+    	};
+    }
+
+    // (154:8) <Label>
+    function create_default_slot_3$3(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text("Submit");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
+    	};
+    }
+
+    // (153:6) <Button variant="raised" on:click={submit}>
+    function create_default_slot_2$5(ctx) {
+    	var current;
+
+    	var label = new Label({
+    		props: {
+    		$$slots: { default: [create_default_slot_3$3] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			label.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(label, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var label_changes = {};
+    			if (changed.$$scope) label_changes.$$scope = { changed, ctx };
+    			label.$set(label_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(label.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(label.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(label, detaching);
+    		}
+    	};
+    }
+
+    // (149:4) <Actions class="actions">
+    function create_default_slot_1$6(ctx) {
+    	var t, current;
+
+    	var button0 = new Button_1({
+    		props: {
+    		class: "myClass",
+    		$$slots: { default: [create_default_slot_4$2] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	button0.$on("click", showRegisterView);
+
+    	var button1 = new Button_1({
+    		props: {
+    		variant: "raised",
+    		$$slots: { default: [create_default_slot_2$5] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	button1.$on("click", ctx.submit);
+
+    	return {
+    		c: function create() {
+    			button0.$$.fragment.c();
+    			t = space();
+    			button1.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(button0, target, anchor);
+    			insert(target, t, anchor);
+    			mount_component(button1, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var button0_changes = {};
+    			if (changed.$$scope) button0_changes.$$scope = { changed, ctx };
+    			button0.$set(button0_changes);
+
+    			var button1_changes = {};
+    			if (changed.$$scope) button1_changes.$$scope = { changed, ctx };
+    			button1.$set(button1_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(button0.$$.fragment, local);
+
+    			transition_in(button1.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(button0.$$.fragment, local);
+    			transition_out(button1.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(button0, detaching);
+
+    			if (detaching) {
+    				detach(t);
+    			}
+
+    			destroy_component(button1, detaching);
+    		}
+    	};
+    }
+
+    // (139:2) <Paper class="paper">
+    function create_default_slot$c(ctx) {
+    	var header, t1, div1, div0, updating_value, t2, current;
+
+    	function textbox_value_binding(value) {
+    		ctx.textbox_value_binding.call(null, value);
+    		updating_value = true;
+    		add_flush_callback(() => updating_value = false);
+    	}
+
+    	let textbox_props = {
+    		label: "Please Enter your user name",
+    		minWidth: 350
+    	};
+    	if (ctx.userName !== void 0) {
+    		textbox_props.value = ctx.userName;
+    	}
+    	var textbox = new TextBox({ props: textbox_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox, 'value', textbox_value_binding));
+
+    	var actions = new Actions$1({
+    		props: {
+    		class: "actions",
+    		$$slots: { default: [create_default_slot_1$6] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			header = element("header");
+    			header.textContent = "Login";
+    			t1 = space();
+    			div1 = element("div");
+    			div0 = element("div");
+    			textbox.$$.fragment.c();
+    			t2 = space();
+    			actions.$$.fragment.c();
+    			attr(header, "class", "header svelte-1rpb5w6");
+    			add_location(header, file$v, 139, 4, 7630);
+    			attr(div0, "class", "form-details svelte-1rpb5w6");
+    			add_location(div0, file$v, 141, 6, 7707);
+    			attr(div1, "class", "card-details svelte-1rpb5w6");
+    			add_location(div1, file$v, 140, 4, 7673);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, header, anchor);
+    			insert(target, t1, anchor);
+    			insert(target, div1, anchor);
+    			append(div1, div0);
+    			mount_component(textbox, div0, null);
+    			insert(target, t2, anchor);
+    			mount_component(actions, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var textbox_changes = {};
+    			if (!updating_value && changed.userName) {
+    				textbox_changes.value = ctx.userName;
+    			}
+    			textbox.$set(textbox_changes);
+
+    			var actions_changes = {};
+    			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
+    			actions.$set(actions_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(textbox.$$.fragment, local);
+
+    			transition_in(actions.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(textbox.$$.fragment, local);
+    			transition_out(actions.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(header);
+    				detach(t1);
+    				detach(div1);
+    			}
+
+    			destroy_component(textbox);
+
+    			if (detaching) {
+    				detach(t2);
+    			}
+
+    			destroy_component(actions, detaching);
+    		}
+    	};
+    }
+
+    function create_fragment$A(ctx) {
+    	var div, current;
+
+    	var paper = new Paper({
+    		props: {
+    		class: "paper",
+    		$$slots: { default: [create_default_slot$c] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			div = element("div");
+    			paper.$$.fragment.c();
+    			attr(div, "class", "paper-wrap svelte-1rpb5w6");
+    			add_location(div, file$v, 137, 0, 7575);
+    		},
+
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, div, anchor);
+    			mount_component(paper, div, null);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var paper_changes = {};
+    			if (changed.$$scope || changed.userName) paper_changes.$$scope = { changed, ctx };
+    			paper.$set(paper_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(paper.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(paper.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(div);
+    			}
+
+    			destroy_component(paper);
+    		}
+    	};
+    }
+
+    function showRegisterView() {
+      customViewStore.setView(viewKeys.REGISTER);
+    }
+
+    function instance$A($$self, $$props, $$invalidate) {
+    	
+      
+
+      let userName;
+      const setViewToRegister = getContext("setViewToRegister");
+
+      onMount(() => {});
+
+      function submit(e) {
+        BLM.login(userName);
+      }
+
+    	function textbox_value_binding(value) {
+    		userName = value;
+    		$$invalidate('userName', userName);
+    	}
+
+    	return { userName, submit, textbox_value_binding };
+    }
+
+    class Login extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
     		init(this, options, instance$A, create_fragment$A, safe_not_equal, []);
@@ -19387,60 +19526,101 @@ var app = (function () {
       }
     };
 
-    /* src\components\RegistrationPopup.svelte generated by Svelte v3.9.1 */
+    /* src\components\Header.svelte generated by Svelte v3.9.1 */
+    const { console: console_1$4 } = globals;
 
-    const file$w = "src\\components\\RegistrationPopup.svelte";
+    const file$w = "src\\components\\Header.svelte";
 
-    // (149:6) <FileUpload on:input={gotFiles}>
-    function create_default_slot_4$2(ctx) {
-    	var current;
-
-    	var avatar = new Avatar({
-    		props: { imageUrl: ctx.imageUrl },
-    		$$inline: true
-    	});
+    // (125:6) <Button on:click={()=>isLogoutShowing = true} class="myClass">
+    function create_default_slot_2$6(ctx) {
+    	var span0, t1, span1, t2_value = ctx.currentUser ? ctx.currentUser.ntkDetails.name : '' + "", t2;
 
     	return {
     		c: function create() {
-    			avatar.$$.fragment.c();
+    			span0 = element("span");
+    			span0.textContent = "Hi";
+    			t1 = space();
+    			span1 = element("span");
+    			t2 = text(t2_value);
+    			attr(span0, "class", "hi-span svelte-6n12fq");
+    			add_location(span0, file$w, 125, 8, 6328);
+    			attr(span1, "class", "userName-span");
+    			add_location(span1, file$w, 126, 8, 6369);
     		},
 
     		m: function mount(target, anchor) {
-    			mount_component(avatar, target, anchor);
-    			current = true;
+    			insert(target, span0, anchor);
+    			insert(target, t1, anchor);
+    			insert(target, span1, anchor);
+    			append(span1, t2);
     		},
 
     		p: function update(changed, ctx) {
-    			var avatar_changes = {};
-    			if (changed.imageUrl) avatar_changes.imageUrl = ctx.imageUrl;
-    			avatar.$set(avatar_changes);
+    			if ((changed.currentUser) && t2_value !== (t2_value = ctx.currentUser ? ctx.currentUser.ntkDetails.name : '' + "")) {
+    				set_data(t2, t2_value);
+    			}
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(span0);
+    				detach(t1);
+    				detach(span1);
+    			}
+    		}
+    	};
+    }
+
+    // (137:2) {#if isLogoutShowing}
+    function create_if_block$9(ctx) {
+    	var current;
+
+    	var card = new Card({
+    		props: {
+    		class: "logout-card",
+    		padded: true,
+    		$$slots: { default: [create_default_slot$d] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	card.$on("click", ctx.click_handler_1);
+
+    	return {
+    		c: function create() {
+    			card.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(card, target, anchor);
+    			current = true;
     		},
 
     		i: function intro(local) {
     			if (current) return;
-    			transition_in(avatar.$$.fragment, local);
+    			transition_in(card.$$.fragment, local);
 
     			current = true;
     		},
 
     		o: function outro(local) {
-    			transition_out(avatar.$$.fragment, local);
+    			transition_out(card.$$.fragment, local);
     			current = false;
     		},
 
     		d: function destroy(detaching) {
-    			destroy_component(avatar, detaching);
+    			destroy_component(card, detaching);
     		}
     	};
     }
 
-    // (185:6) <Label>
-    function create_default_slot_3$4(ctx) {
+    // (139:6) <Label on:click={logout}>
+    function create_default_slot_1$7(ctx) {
     	var t;
 
     	return {
     		c: function create() {
-    			t = text("Submit");
+    			t = text("Log out");
     		},
 
     		m: function mount(target, anchor) {
@@ -19455,17 +19635,18 @@ var app = (function () {
     	};
     }
 
-    // (184:4) <Button variant="raised" on:click={submit}>
-    function create_default_slot_2$6(ctx) {
+    // (138:4) <Card class="logout-card" padded on:click={()=>isLogoutShowing = false}>
+    function create_default_slot$d(ctx) {
     	var current;
 
     	var label = new Label({
     		props: {
-    		$$slots: { default: [create_default_slot_3$4] },
+    		$$slots: { default: [create_default_slot_1$7] },
     		$$scope: { ctx }
     	},
     		$$inline: true
     	});
+    	label.$on("click", logout);
 
     	return {
     		c: function create() {
@@ -19501,541 +19682,8 @@ var app = (function () {
     	};
     }
 
-    // (183:2) <Actions class="actions">
-    function create_default_slot_1$7(ctx) {
-    	var current;
-
-    	var button = new Button_1({
-    		props: {
-    		variant: "raised",
-    		$$slots: { default: [create_default_slot_2$6] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-    	button.$on("click", ctx.submit);
-
-    	return {
-    		c: function create() {
-    			button.$$.fragment.c();
-    		},
-
-    		m: function mount(target, anchor) {
-    			mount_component(button, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var button_changes = {};
-    			if (changed.$$scope) button_changes.$$scope = { changed, ctx };
-    			button.$set(button_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(button.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(button.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			destroy_component(button, detaching);
-    		}
-    	};
-    }
-
-    // (140:0) <Dialog    bind:this={simpleDialog}    aria-labelledby="simple-title"    aria-describedby="simple-content"    on:MDCDialog:closed={closeHandler}    on:MDCDialog:closing={onClosing}>
-    function create_default_slot$d(ctx) {
-    	var header, t1, div3, div1, t2, div0, updating_value, t3, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, current;
-
-    	var fileupload = new Index({
-    		props: {
-    		$$slots: { default: [create_default_slot_4$2] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-    	fileupload.$on("input", ctx.gotFiles);
-
-    	function textbox0_value_binding(value) {
-    		ctx.textbox0_value_binding.call(null, value);
-    		updating_value = true;
-    		add_flush_callback(() => updating_value = false);
-    	}
-
-    	let textbox0_props = {
-    		label: "Name",
-    		minWidth: 250,
-    		errorMessage: "This field is required"
-    	};
-    	if (ctx.name !== void 0) {
-    		textbox0_props.value = ctx.name;
-    	}
-    	var textbox0 = new TextBox({ props: textbox0_props, $$inline: true });
-
-    	binding_callbacks.push(() => bind(textbox0, 'value', textbox0_value_binding));
-
-    	function textbox1_value_binding(value_1) {
-    		ctx.textbox1_value_binding.call(null, value_1);
-    		updating_value_1 = true;
-    		add_flush_callback(() => updating_value_1 = false);
-    	}
-
-    	let textbox1_props = {
-    		type: "number",
-    		label: "Age",
-    		minWidth: 150,
-    		errorMessage: "Please enter a number for your age"
-    	};
-    	if (ctx.age !== void 0) {
-    		textbox1_props.value = ctx.age;
-    	}
-    	var textbox1 = new TextBox({ props: textbox1_props, $$inline: true });
-
-    	binding_callbacks.push(() => bind(textbox1, 'value', textbox1_value_binding));
-
-    	function textbox2_value_binding(value_2) {
-    		ctx.textbox2_value_binding.call(null, value_2);
-    		updating_value_2 = true;
-    		add_flush_callback(() => updating_value_2 = false);
-    	}
-
-    	let textbox2_props = {
-    		type: "email",
-    		label: "Email",
-    		minWidth: 350,
-    		errorMessage: "Please enter a valid email address"
-    	};
-    	if (ctx.email !== void 0) {
-    		textbox2_props.value = ctx.email;
-    	}
-    	var textbox2 = new TextBox({ props: textbox2_props, $$inline: true });
-
-    	binding_callbacks.push(() => bind(textbox2, 'value', textbox2_value_binding));
-
-    	function textbox3_value_binding(value_3) {
-    		ctx.textbox3_value_binding.call(null, value_3);
-    		updating_value_3 = true;
-    		add_flush_callback(() => updating_value_3 = false);
-    	}
-
-    	let textbox3_props = {
-    		class: "about-me",
-    		isTextArea: true,
-    		label: "About Me"
-    	};
-    	if (ctx.aboutMe !== void 0) {
-    		textbox3_props.value = ctx.aboutMe;
-    	}
-    	var textbox3 = new TextBox({ props: textbox3_props, $$inline: true });
-
-    	binding_callbacks.push(() => bind(textbox3, 'value', textbox3_value_binding));
-
-    	function textbox4_value_binding(value_4) {
-    		ctx.textbox4_value_binding.call(null, value_4);
-    		updating_value_4 = true;
-    		add_flush_callback(() => updating_value_4 = false);
-    	}
-
-    	let textbox4_props = {
-    		label: "Hobbies (seperated with commas)",
-    		minWidth: 350
-    	};
-    	if (ctx.hobbies !== void 0) {
-    		textbox4_props.value = ctx.hobbies;
-    	}
-    	var textbox4 = new TextBox({ props: textbox4_props, $$inline: true });
-
-    	binding_callbacks.push(() => bind(textbox4, 'value', textbox4_value_binding));
-
-    	var actions = new Actions$1({
-    		props: {
-    		class: "actions",
-    		$$slots: { default: [create_default_slot_1$7] },
-    		$$scope: { ctx }
-    	},
-    		$$inline: true
-    	});
-
-    	return {
-    		c: function create() {
-    			header = element("header");
-    			header.textContent = "register";
-    			t1 = space();
-    			div3 = element("div");
-    			div1 = element("div");
-    			fileupload.$$.fragment.c();
-    			t2 = space();
-    			div0 = element("div");
-    			textbox0.$$.fragment.c();
-    			t3 = space();
-    			div2 = element("div");
-    			textbox1.$$.fragment.c();
-    			t4 = space();
-    			textbox2.$$.fragment.c();
-    			t5 = space();
-    			textbox3.$$.fragment.c();
-    			t6 = space();
-    			textbox4.$$.fragment.c();
-    			t7 = space();
-    			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-6jp5ds");
-    			add_location(header, file$w, 145, 2, 6667);
-    			attr(div0, "class", "name-tb");
-    			add_location(div0, file$w, 150, 6, 6871);
-    			attr(div1, "class", "avatar-container svelte-6jp5ds");
-    			add_location(div1, file$w, 147, 4, 6743);
-    			attr(div2, "class", "form-details");
-    			add_location(div2, file$w, 158, 4, 7073);
-    			attr(div3, "class", "card-details svelte-6jp5ds");
-    			add_location(div3, file$w, 146, 2, 6711);
-    		},
-
-    		m: function mount(target, anchor) {
-    			insert(target, header, anchor);
-    			insert(target, t1, anchor);
-    			insert(target, div3, anchor);
-    			append(div3, div1);
-    			mount_component(fileupload, div1, null);
-    			append(div1, t2);
-    			append(div1, div0);
-    			mount_component(textbox0, div0, null);
-    			append(div3, t3);
-    			append(div3, div2);
-    			mount_component(textbox1, div2, null);
-    			append(div2, t4);
-    			mount_component(textbox2, div2, null);
-    			append(div2, t5);
-    			mount_component(textbox3, div2, null);
-    			append(div2, t6);
-    			mount_component(textbox4, div2, null);
-    			insert(target, t7, anchor);
-    			mount_component(actions, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var fileupload_changes = {};
-    			if (changed.$$scope || changed.imageUrl) fileupload_changes.$$scope = { changed, ctx };
-    			fileupload.$set(fileupload_changes);
-
-    			var textbox0_changes = {};
-    			if (!updating_value && changed.name) {
-    				textbox0_changes.value = ctx.name;
-    			}
-    			textbox0.$set(textbox0_changes);
-
-    			var textbox1_changes = {};
-    			if (!updating_value_1 && changed.age) {
-    				textbox1_changes.value = ctx.age;
-    			}
-    			textbox1.$set(textbox1_changes);
-
-    			var textbox2_changes = {};
-    			if (!updating_value_2 && changed.email) {
-    				textbox2_changes.value = ctx.email;
-    			}
-    			textbox2.$set(textbox2_changes);
-
-    			var textbox3_changes = {};
-    			if (!updating_value_3 && changed.aboutMe) {
-    				textbox3_changes.value = ctx.aboutMe;
-    			}
-    			textbox3.$set(textbox3_changes);
-
-    			var textbox4_changes = {};
-    			if (!updating_value_4 && changed.hobbies) {
-    				textbox4_changes.value = ctx.hobbies;
-    			}
-    			textbox4.$set(textbox4_changes);
-
-    			var actions_changes = {};
-    			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
-    			actions.$set(actions_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(fileupload.$$.fragment, local);
-
-    			transition_in(textbox0.$$.fragment, local);
-
-    			transition_in(textbox1.$$.fragment, local);
-
-    			transition_in(textbox2.$$.fragment, local);
-
-    			transition_in(textbox3.$$.fragment, local);
-
-    			transition_in(textbox4.$$.fragment, local);
-
-    			transition_in(actions.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(fileupload.$$.fragment, local);
-    			transition_out(textbox0.$$.fragment, local);
-    			transition_out(textbox1.$$.fragment, local);
-    			transition_out(textbox2.$$.fragment, local);
-    			transition_out(textbox3.$$.fragment, local);
-    			transition_out(textbox4.$$.fragment, local);
-    			transition_out(actions.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			if (detaching) {
-    				detach(header);
-    				detach(t1);
-    				detach(div3);
-    			}
-
-    			destroy_component(fileupload);
-
-    			destroy_component(textbox0);
-
-    			destroy_component(textbox1);
-
-    			destroy_component(textbox2);
-
-    			destroy_component(textbox3);
-
-    			destroy_component(textbox4);
-
-    			if (detaching) {
-    				detach(t7);
-    			}
-
-    			destroy_component(actions, detaching);
-    		}
-    	};
-    }
-
     function create_fragment$B(ctx) {
-    	var current;
-
-    	let dialog_props = {
-    		"aria-labelledby": "simple-title",
-    		"aria-describedby": "simple-content",
-    		$$slots: { default: [create_default_slot$d] },
-    		$$scope: { ctx }
-    	};
-    	var dialog = new Dialog({ props: dialog_props, $$inline: true });
-
-    	ctx.dialog_binding(dialog);
-    	dialog.$on("MDCDialog:closed", closeHandler$1);
-    	dialog.$on("MDCDialog:closing", onClosing$2);
-
-    	return {
-    		c: function create() {
-    			dialog.$$.fragment.c();
-    		},
-
-    		l: function claim(nodes) {
-    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-    		},
-
-    		m: function mount(target, anchor) {
-    			mount_component(dialog, target, anchor);
-    			current = true;
-    		},
-
-    		p: function update(changed, ctx) {
-    			var dialog_changes = {};
-    			if (changed.$$scope || changed.hobbies || changed.aboutMe || changed.email || changed.age || changed.name || changed.imageUrl) dialog_changes.$$scope = { changed, ctx };
-    			dialog.$set(dialog_changes);
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(dialog.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(dialog.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			ctx.dialog_binding(null);
-
-    			destroy_component(dialog, detaching);
-    		}
-    	};
-    }
-
-    function closeHandler$1(e) {
-      // dispatch('popupClosed', {
-      //     value : {
-      //         name,
-      //         age,
-      //         email,
-      //         moreDetails : {
-      //             hobbies,
-      //             aboutMe
-      //         }
-      //     }
-      // });
-    }
-
-    function getBase64$1(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
-    }
-
-    function onClosing$2(e) {
-      console.log("onClosing", e);
-      e.stopPropagation();
-    }
-
-    function instance$B($$self, $$props, $$invalidate) {
-    	
-
-      let simpleDialog;
-      let name;
-      let email;
-      let hobbies;
-      let age;
-      let aboutMe;
-      let imageUrl;
-
-      const dispatch = createEventDispatcher();
-
-      onMount(() => {
-        simpleDialog.open();
-      });
-
-      async function gotFiles(event) {
-        const data = await getBase64$1(event.detail.files[0]);
-        console.log('vase84', data);
-        $$invalidate('imageUrl', imageUrl = data);
-      }
-
-      function submit(e) {
-        dispatch("submit", {
-          value: {
-            name,
-            age,
-            email,
-            imageUrl,
-            moreDetails: {
-              hobbies,
-              aboutMe
-            }
-          }
-        });
-      }
-
-    	function textbox0_value_binding(value) {
-    		name = value;
-    		$$invalidate('name', name);
-    	}
-
-    	function textbox1_value_binding(value_1) {
-    		age = value_1;
-    		$$invalidate('age', age);
-    	}
-
-    	function textbox2_value_binding(value_2) {
-    		email = value_2;
-    		$$invalidate('email', email);
-    	}
-
-    	function textbox3_value_binding(value_3) {
-    		aboutMe = value_3;
-    		$$invalidate('aboutMe', aboutMe);
-    	}
-
-    	function textbox4_value_binding(value_4) {
-    		hobbies = value_4;
-    		$$invalidate('hobbies', hobbies);
-    	}
-
-    	function dialog_binding($$value) {
-    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
-    			$$invalidate('simpleDialog', simpleDialog = $$value);
-    		});
-    	}
-
-    	return {
-    		simpleDialog,
-    		name,
-    		email,
-    		hobbies,
-    		age,
-    		aboutMe,
-    		imageUrl,
-    		gotFiles,
-    		submit,
-    		textbox0_value_binding,
-    		textbox1_value_binding,
-    		textbox2_value_binding,
-    		textbox3_value_binding,
-    		textbox4_value_binding,
-    		dialog_binding
-    	};
-    }
-
-    class RegistrationPopup extends SvelteComponentDev {
-    	constructor(options) {
-    		super(options);
-    		init(this, options, instance$B, create_fragment$B, safe_not_equal, []);
-    	}
-    }
-
-    /* src\components\Header.svelte generated by Svelte v3.9.1 */
-
-    const file$x = "src\\components\\Header.svelte";
-
-    // (78:0) {#if isRegistrationPopupOpen}
-    function create_if_block$9(ctx) {
-    	var current;
-
-    	var registrationpopup = new RegistrationPopup({ $$inline: true });
-    	registrationpopup.$on("submit", ctx.registrationSubmitted);
-
-    	return {
-    		c: function create() {
-    			registrationpopup.$$.fragment.c();
-    		},
-
-    		m: function mount(target, anchor) {
-    			mount_component(registrationpopup, target, anchor);
-    			current = true;
-    		},
-
-    		i: function intro(local) {
-    			if (current) return;
-    			transition_in(registrationpopup.$$.fragment, local);
-
-    			current = true;
-    		},
-
-    		o: function outro(local) {
-    			transition_out(registrationpopup.$$.fragment, local);
-    			current = false;
-    		},
-
-    		d: function destroy(detaching) {
-    			destroy_component(registrationpopup, detaching);
-    		}
-    	};
-    }
-
-    function create_fragment$C(ctx) {
-    	var header, div0, span, t1, div1, t2, t3, t4, header_class_value, t5, if_block_anchor, current;
+    	var header, div0, span, t1, div2, t2, t3, t4, div1, t5, t6, header_class_value, current;
 
     	var myiconbutton0 = new MyIconButton({
     		props: {
@@ -20061,13 +19709,22 @@ var app = (function () {
     	});
     	myiconbutton2.$on("click", onShowMoreClicked);
 
-    	var myiconbutton3 = new MyIconButton({
-    		props: { icon: "how_to_reg", title: "Show more" },
+    	var button = new Button_1({
+    		props: {
+    		class: "myClass",
+    		$$slots: { default: [create_default_slot_2$6] },
+    		$$scope: { ctx }
+    	},
     		$$inline: true
     	});
-    	myiconbutton3.$on("click", ctx.showRegistrationForm);
+    	button.$on("click", ctx.click_handler);
 
-    	var if_block = (ctx.isRegistrationPopupOpen) && create_if_block$9(ctx);
+    	var avatar = new Avatar({
+    		props: { imageUrl: ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : 'https://randomuser.me/api/portraits/men/63.jpg' },
+    		$$inline: true
+    	});
+
+    	var if_block = (ctx.isLogoutShowing) && create_if_block$9(ctx);
 
     	return {
     		c: function create() {
@@ -20076,25 +19733,29 @@ var app = (function () {
     			span = element("span");
     			span.textContent = "Nice to know";
     			t1 = space();
-    			div1 = element("div");
+    			div2 = element("div");
     			myiconbutton0.$$.fragment.c();
     			t2 = space();
     			myiconbutton1.$$.fragment.c();
     			t3 = space();
     			myiconbutton2.$$.fragment.c();
     			t4 = space();
-    			myiconbutton3.$$.fragment.c();
+    			div1 = element("div");
+    			button.$$.fragment.c();
     			t5 = space();
+    			avatar.$$.fragment.c();
+    			t6 = space();
     			if (if_block) if_block.c();
-    			if_block_anchor = empty();
-    			attr(span, "class", "logo-inner svelte-ubxtv7");
-    			add_location(span, file$x, 67, 8, 3293);
-    			attr(div0, "class", "logo svelte-ubxtv7");
-    			add_location(div0, file$x, 66, 4, 3265);
-    			attr(div1, "class", "controls svelte-ubxtv7");
-    			add_location(div1, file$x, 69, 4, 3355);
-    			attr(header, "class", header_class_value = "container " + (ctx.isHidden? 'is-hidden': '') + " svelte-ubxtv7");
-    			add_location(header, file$x, 65, 0, 3205);
+    			attr(span, "class", "logo-inner svelte-6n12fq");
+    			add_location(span, file$w, 111, 4, 5814);
+    			attr(div0, "class", "logo svelte-6n12fq");
+    			add_location(div0, file$w, 110, 2, 5790);
+    			attr(div1, "class", "userWrap svelte-6n12fq");
+    			add_location(div1, file$w, 123, 4, 6226);
+    			attr(div2, "class", "controls svelte-6n12fq");
+    			add_location(div2, file$w, 113, 2, 5872);
+    			attr(header, "class", header_class_value = "container " + (ctx.isHidden ? 'is-hidden' : '') + " svelte-6n12fq");
+    			add_location(header, file$w, 109, 0, 5730);
     		},
 
     		l: function claim(nodes) {
@@ -20106,31 +19767,37 @@ var app = (function () {
     			append(header, div0);
     			append(div0, span);
     			append(header, t1);
-    			append(header, div1);
-    			mount_component(myiconbutton0, div1, null);
-    			append(div1, t2);
-    			mount_component(myiconbutton1, div1, null);
-    			append(div1, t3);
-    			mount_component(myiconbutton2, div1, null);
-    			append(div1, t4);
-    			mount_component(myiconbutton3, div1, null);
-    			insert(target, t5, anchor);
-    			if (if_block) if_block.m(target, anchor);
-    			insert(target, if_block_anchor, anchor);
+    			append(header, div2);
+    			mount_component(myiconbutton0, div2, null);
+    			append(div2, t2);
+    			mount_component(myiconbutton1, div2, null);
+    			append(div2, t3);
+    			mount_component(myiconbutton2, div2, null);
+    			append(div2, t4);
+    			append(div2, div1);
+    			mount_component(button, div1, null);
+    			append(div1, t5);
+    			mount_component(avatar, div1, null);
+    			append(header, t6);
+    			if (if_block) if_block.m(header, null);
     			current = true;
     		},
 
     		p: function update(changed, ctx) {
-    			if ((!current || changed.isHidden) && header_class_value !== (header_class_value = "container " + (ctx.isHidden? 'is-hidden': '') + " svelte-ubxtv7")) {
-    				attr(header, "class", header_class_value);
-    			}
+    			var button_changes = {};
+    			if (changed.$$scope || changed.currentUser) button_changes.$$scope = { changed, ctx };
+    			button.$set(button_changes);
 
-    			if (ctx.isRegistrationPopupOpen) {
+    			var avatar_changes = {};
+    			if (changed.currentUser) avatar_changes.imageUrl = ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : 'https://randomuser.me/api/portraits/men/63.jpg';
+    			avatar.$set(avatar_changes);
+
+    			if (ctx.isLogoutShowing) {
     				if (!if_block) {
     					if_block = create_if_block$9(ctx);
     					if_block.c();
     					transition_in(if_block, 1);
-    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    					if_block.m(header, null);
     				} else {
     									transition_in(if_block, 1);
     				}
@@ -20140,6 +19807,10 @@ var app = (function () {
     					if_block = null;
     				});
     				check_outros();
+    			}
+
+    			if ((!current || changed.isHidden) && header_class_value !== (header_class_value = "container " + (ctx.isHidden ? 'is-hidden' : '') + " svelte-6n12fq")) {
+    				attr(header, "class", header_class_value);
     			}
     		},
 
@@ -20151,7 +19822,9 @@ var app = (function () {
 
     			transition_in(myiconbutton2.$$.fragment, local);
 
-    			transition_in(myiconbutton3.$$.fragment, local);
+    			transition_in(button.$$.fragment, local);
+
+    			transition_in(avatar.$$.fragment, local);
 
     			transition_in(if_block);
     			current = true;
@@ -20161,7 +19834,8 @@ var app = (function () {
     			transition_out(myiconbutton0.$$.fragment, local);
     			transition_out(myiconbutton1.$$.fragment, local);
     			transition_out(myiconbutton2.$$.fragment, local);
-    			transition_out(myiconbutton3.$$.fragment, local);
+    			transition_out(button.$$.fragment, local);
+    			transition_out(avatar.$$.fragment, local);
     			transition_out(if_block);
     			current = false;
     		},
@@ -20177,69 +19851,92 @@ var app = (function () {
 
     			destroy_component(myiconbutton2);
 
-    			destroy_component(myiconbutton3);
+    			destroy_component(button);
 
-    			if (detaching) {
-    				detach(t5);
-    			}
+    			destroy_component(avatar);
 
-    			if (if_block) if_block.d(detaching);
-
-    			if (detaching) {
-    				detach(if_block_anchor);
-    			}
+    			if (if_block) if_block.d();
     		}
     	};
     }
 
     function onMyNtksClicked() {
-          customViewStore.setView(viewKeys.MY_NTKS);
-      }
+      customViewStore.setView(viewKeys.MY_NTKS);
+    }
 
     function onShowMoreClicked() {
-          customViewStore.setView(viewKeys.ALL_NTKS);
-      }
+      customViewStore.setView(viewKeys.ALL_NTKS);
+    }
 
     function onNtksApprovalClicked() {
-          customViewStore.setView(viewKeys.NTKS_APPROVAL);
-      }
+      customViewStore.setView(viewKeys.NTKS_APPROVAL);
+    }
 
-    function instance$C($$self, $$props, $$invalidate) {
-    	
+    function logout() {
+     BLM.logout();
+    }
 
-        let isRegistrationPopupOpen = false;
-        let { isHidden = false } = $$props;
+    function instance$B($$self, $$props, $$invalidate) {
+      let { currentUser, isHidden = false } = $$props;
+      let isLogoutShowing = false;
 
-        function showRegistrationForm() {
-            $$invalidate('isRegistrationPopupOpen', isRegistrationPopupOpen = true);
-        }
+      setContext("setViewToRegister", {
+        setViewToRegister: () => customViewStore.setView(viewKeys.REGISTER)
+      });
 
-        function registrationSubmitted(e){
-            $$invalidate('isRegistrationPopupOpen', isRegistrationPopupOpen = false);
-            customNtkStore.registerUser(e.detail.value);
-        }
-
-    	const writable_props = ['isHidden'];
+    	const writable_props = ['currentUser', 'isHidden'];
     	Object.keys($$props).forEach(key => {
-    		if (!writable_props.includes(key) && !key.startsWith('$$')) console.warn(`<Header> was created with unknown prop '${key}'`);
+    		if (!writable_props.includes(key) && !key.startsWith('$$')) console_1$4.warn(`<Header> was created with unknown prop '${key}'`);
     	});
 
+    	function click_handler() {
+    		const $$result = isLogoutShowing = true;
+    		$$invalidate('isLogoutShowing', isLogoutShowing);
+    		return $$result;
+    	}
+
+    	function click_handler_1() {
+    		const $$result = isLogoutShowing = false;
+    		$$invalidate('isLogoutShowing', isLogoutShowing);
+    		return $$result;
+    	}
+
     	$$self.$set = $$props => {
+    		if ('currentUser' in $$props) $$invalidate('currentUser', currentUser = $$props.currentUser);
     		if ('isHidden' in $$props) $$invalidate('isHidden', isHidden = $$props.isHidden);
     	};
 
+    	$$self.$$.update = ($$dirty = { currentUser: 1 }) => {
+    		if ($$dirty.currentUser) { console.log("hjeader currentUser", currentUser); }
+    	};
+
     	return {
-    		isRegistrationPopupOpen,
+    		currentUser,
     		isHidden,
-    		showRegistrationForm,
-    		registrationSubmitted
+    		isLogoutShowing,
+    		click_handler,
+    		click_handler_1
     	};
     }
 
     class Header extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$C, create_fragment$C, safe_not_equal, ["isHidden"]);
+    		init(this, options, instance$B, create_fragment$B, safe_not_equal, ["currentUser", "isHidden"]);
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+    		if (ctx.currentUser === undefined && !('currentUser' in props)) {
+    			console_1$4.warn("<Header> was created without expected prop 'currentUser'");
+    		}
+    	}
+
+    	get currentUser() {
+    		throw new Error("<Header>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set currentUser(value) {
+    		throw new Error("<Header>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	get isHidden() {
@@ -20253,16 +19950,16 @@ var app = (function () {
 
     /* src\components\Loading.svelte generated by Svelte v3.9.1 */
 
-    const file$y = "src\\components\\Loading.svelte";
+    const file$x = "src\\components\\Loading.svelte";
 
-    function create_fragment$D(ctx) {
+    function create_fragment$C(ctx) {
     	var div;
 
     	return {
     		c: function create() {
     			div = element("div");
     			div.textContent = "LOADING APP...";
-    			add_location(div, file$y, 7, 0, 235);
+    			add_location(div, file$x, 7, 0, 235);
     		},
 
     		l: function claim(nodes) {
@@ -20288,19 +19985,22 @@ var app = (function () {
     class Loading extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, null, create_fragment$D, safe_not_equal, []);
+    		init(this, options, null, create_fragment$C, safe_not_equal, []);
     	}
     }
 
     /* src\AppDesktop.svelte generated by Svelte v3.9.1 */
 
-    const file$z = "src\\AppDesktop.svelte";
+    const file$y = "src\\AppDesktop.svelte";
 
-    function create_fragment$E(ctx) {
+    function create_fragment$D(ctx) {
     	var div, t, current;
 
     	var header = new Header({
-    		props: { isHidden: !ctx.showHeader },
+    		props: {
+    		isHidden: !ctx.showHeader,
+    		currentUser: ctx.currentUser
+    	},
     		$$inline: true
     	});
 
@@ -20321,7 +20021,7 @@ var app = (function () {
     			t = space();
     			if (switch_instance) switch_instance.$$.fragment.c();
     			attr(div, "class", "container-flex svelte-nskwby");
-    			add_location(div, file$z, 52, 0, 1970);
+    			add_location(div, file$y, 59, 0, 2192);
     		},
 
     		l: function claim(nodes) {
@@ -20343,6 +20043,7 @@ var app = (function () {
     		p: function update(changed, ctx) {
     			var header_changes = {};
     			if (changed.showHeader) header_changes.isHidden = !ctx.showHeader;
+    			if (changed.currentUser) header_changes.currentUser = ctx.currentUser;
     			header.$set(header_changes);
 
     			if (switch_value !== (switch_value = ctx.currentView ? ctx.currentView.view : Loading)) {
@@ -20394,10 +20095,11 @@ var app = (function () {
     	};
     }
 
-    function instance$D($$self, $$props, $$invalidate) {
+    function instance$C($$self, $$props, $$invalidate) {
     	
 
       let currentView;
+      let currentUser;
       let showHeader;
 
       let viewStoreUnsubscriber;
@@ -20413,15 +20115,21 @@ var app = (function () {
               $$invalidate('showHeader', showHeader = false);
               break;
             case 2: // LogedIn
-            case 3: // LoginFailed
               $$invalidate('currentView', currentView = getView(viewKeys.ALL_NTKS));
               customNtkStore.setStoreAsync();
+              $$invalidate('currentUser', currentUser = BLM.getCurrentUser());
               $$invalidate('showHeader', showHeader = true);
+              break;
+              case 3: // LoginFailed
+              alert('failed');
               break;
           }
         });
 
-        viewStoreUnsubscriber = customViewStore.subscribe(state => {});
+        viewStoreUnsubscriber = customViewStore.subscribe(state => {
+            console.log('state.currentView',state.currentView);
+            $$invalidate('currentView', currentView = state.currentView);
+        });
       });
 
       onDestroy(() => {
@@ -20429,21 +20137,21 @@ var app = (function () {
         appStateUnsubscriber();
       });
 
-    	return { currentView, showHeader };
+    	return { currentView, currentUser, showHeader };
     }
 
     class AppDesktop extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$D, create_fragment$E, safe_not_equal, []);
+    		init(this, options, instance$C, create_fragment$D, safe_not_equal, []);
     	}
     }
 
     /* src\App.svelte generated by Svelte v3.9.1 */
 
-    const file$A = "src\\App.svelte";
+    const file$z = "src\\App.svelte";
 
-    function create_fragment$F(ctx) {
+    function create_fragment$E(ctx) {
     	var main, current;
 
     	var desktop = new AppDesktop({ $$inline: true });
@@ -20453,7 +20161,7 @@ var app = (function () {
     			main = element("main");
     			desktop.$$.fragment.c();
     			attr(main, "class", "container");
-    			add_location(main, file$A, 8, 0, 261);
+    			add_location(main, file$z, 8, 0, 261);
     		},
 
     		l: function claim(nodes) {
@@ -20493,7 +20201,7 @@ var app = (function () {
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, null, create_fragment$F, safe_not_equal, []);
+    		init(this, options, null, create_fragment$E, safe_not_equal, []);
     	}
     }
 
