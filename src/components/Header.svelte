@@ -132,7 +132,7 @@
 
       </Button>
       <Avatar
-        imageUrl={currentUser ? currentUser.ntkDetails.imageUrl : 'https://randomuser.me/api/portraits/men/63.jpg'} />
+        imageUrl={currentUser ? currentUser.ntkDetails.imageUrl : null} />
     </div>
 
   </div>

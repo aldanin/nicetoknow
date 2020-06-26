@@ -1,18 +1,16 @@
 import { NTKPerson, NTKStore, NTKPersonDetails, ApprovalStatus } from "../state/ntk/ntk.model";
 import { getMockUsers } from "../state/ntk/mock";
 import uid from "uid";
-import { LoginStatus } from "../state/app/appStatus.model";
+import { LoginStatus, CustomAppStatusStore } from "../state/app/appStatus.model";
 import dataStore from "../state/ntk/nktStore";
-import viewStore from "../state/view/viewStore";
 import customAppStatusStore from "../state/app/appStatusStore";
 import { get } from 'svelte/store';
-import viewKeys from "../state/view/viewKeys";
 
 export class BLM {
     static async setAppData(): Promise<void> {
         dataStore.setStoreAsync();
     }
-    static async getNtks(): Promise<NTKPerson[]> {
+    static async fetchNtks(): Promise<NTKPerson[]> {
         try {
             const res = await fetch('https://nice-to-know.firebaseio.com/ntkp.json');
             if (res.ok) {
@@ -54,20 +52,19 @@ export class BLM {
 
     static async login(userName: string) {
         try {
-            const state: NTKStore = get(dataStore);
-            let ntks: NTKPerson[] = state ? state.ntkPersons : [];
+            let ntks = BLM.getNtks();
 
             const foundNtk = ntks.find(ntk => ntk.ntkDetails.name === userName);
 
             if (foundNtk) {
                 customAppStatusStore.onLogin({
                     status: LoginStatus.LoggedIn,
-                    userName
+                    currentUser: foundNtk
                 })
             } else {
                 customAppStatusStore.onLogin({
                     status: LoginStatus.LoginFailed,
-                    userName
+                    currentUser: null
                 })
             }
         }
@@ -79,9 +76,8 @@ export class BLM {
 
     static getCurrentUser(): NTKPerson {
         try {
-            const state: NTKStore = get(dataStore);
-            const currentUser = state.ntkPersons.find(ntk => ntk.ntkDetails.name === 'alon2');
-
+            const currentUser = customAppStatusStore.getCurrentUser();
+            console.log('==>currentUser', currentUser)
             return currentUser;
         } catch (err) {
             console.error(err)
@@ -123,7 +119,7 @@ export class BLM {
                 });
                 customAppStatusStore.onLogin({
                     status: LoginStatus.LoggedIn,
-                    userName: newUser.name
+                    currentUser: newNTK
                 })
 
             });
@@ -132,6 +128,29 @@ export class BLM {
 
     static logout() {
         customAppStatusStore.onLogout()
+    }
+
+    static getNtks() : NTKPerson[] {
+        const state: NTKStore = get(dataStore);
+        return state.ntkPersons || [];
+    }
+
+    static getMyNtks(): NTKPerson[] {
+        const currentUser = BLM.getCurrentUser();
+        const allNkts  = BLM.getNtks();
+
+        const myNtks = allNkts.filter(ntk => ntk.ntkDetails.id !== currentUser.ntkDetails.id && ntk.isMarked);
+
+        return myNtks;
+    }
+
+    static getNtksToApprove(): NTKPerson[] {
+        const currentUser = BLM.getCurrentUser();
+        const allNkts  = BLM.getNtks();
+
+        const myNtks = allNkts.filter(ntk => ntk.ntkDetails.id !== currentUser.ntkDetails.id && ntk.isMarked);
+
+        return allNkts;
     }
 }
 

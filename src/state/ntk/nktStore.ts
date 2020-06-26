@@ -19,7 +19,7 @@ const customNtkStore: CustomNTKStore = {
     setStoreAsync: async () => {
         try {
             console.log('setStoreAsync')
-            const ntks = await BLM.getNtks();
+            const ntks = await BLM.fetchNtks();
 
             ntkStore.update(state => {
                 return {

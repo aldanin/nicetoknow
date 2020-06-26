@@ -1,8 +1,9 @@
 import { Unsubscriber } from "../state.model"
+import { NTKPerson } from "../ntk/ntk.model"
 
 export type LoginDetails = {
     status: LoginStatus,
-    userName?: string
+    currentUser?: NTKPerson
 }
 
 export enum LoginStatus  {
@@ -18,4 +19,6 @@ export type AppStatusStore = {
 export interface CustomAppStatusStore {
     subscribe: (state: AppStatusStore) => Unsubscriber,
     onLogin: (loginDetails: LoginDetails) => void;
+    onLogout: () => void;
+    getCurrentUser: () => NTKPerson;
 }

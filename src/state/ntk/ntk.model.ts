@@ -14,6 +14,7 @@ export type NTKPersonDetails = {
 
 export type NTKPerson = {
     ntkDetails: Partial<NTKPersonDetails>,
+    
     isMarked: boolean,
     approvalStatus?: ApprovalStatus,
 }

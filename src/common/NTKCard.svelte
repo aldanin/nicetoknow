@@ -112,7 +112,7 @@
     display: flex;
     height: 120px;
     width: 100%;
-    justify-content: left;
+    justify-content: left; 
     align-items: center;
     border-bottom: solid 1px #ececec;
     cursor: pointer;
@@ -122,7 +122,7 @@
     }
 
     .person-details {
-      margin-left: 30px;
+      margin-left: 30px; 
       width: 200px;
 
       h3,

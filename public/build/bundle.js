@@ -10671,6 +10671,18 @@ var app = (function () {
     	return str;
     }
 
+    var $filter = arrayIteration.filter;
+
+
+    // `Array.prototype.filter` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+    // with adding support of @@species
+    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('filter') }, {
+      filter: function filter(callbackfn /* , thisArg */) {
+        return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+      }
+    });
+
     var sloppyArrayMethod = function (METHOD_NAME, argument) {
       var method = [][METHOD_NAME];
       return !method || !fails(function () {
@@ -11268,23 +11280,30 @@ var app = (function () {
     })(LoginStatus || (LoginStatus = {}));
 
     var appStatusStore = writable({
-      loginStatus: LoginStatus.Pending
+      loginStatus: LoginStatus.Pending,
+      currentUser: null
     });
     var customAppStatusStore = {
       subscribe: appStatusStore.subscribe,
       onLogin: function onLogin(loginDetails) {
         appStatusStore.update(function (state) {
           return {
-            loginStatus: loginDetails.status
+            loginStatus: loginDetails.status,
+            currentUser: loginDetails.currentUser
           };
         });
       },
       onLogout: function onLogout() {
         appStatusStore.update(function (state) {
           return {
-            loginStatus: LoginStatus.Pending
+            loginStatus: LoginStatus.Pending,
+            currentUser: null
           };
         });
+      },
+      getCurrentUser: function getCurrentUser() {
+        var store = get_store_value(appStatusStore);
+        return store.currentUser;
       }
     };
 
@@ -11322,9 +11341,9 @@ var app = (function () {
           return setAppData;
         }()
       }, {
-        key: "getNtks",
+        key: "fetchNtks",
         value: function () {
-          var _getNtks = _asyncToGenerator(
+          var _fetchNtks = _asyncToGenerator(
           /*#__PURE__*/
           regeneratorRuntime.mark(function _callee2() {
             var res, data, ntks, dataArray;
@@ -11405,11 +11424,11 @@ var app = (function () {
             }, _callee2, null, [[0, 27]]);
           }));
 
-          function getNtks() {
-            return _getNtks.apply(this, arguments);
+          function fetchNtks() {
+            return _fetchNtks.apply(this, arguments);
           }
 
-          return getNtks;
+          return fetchNtks;
         }()
       }, {
         key: "login",
@@ -11417,14 +11436,13 @@ var app = (function () {
           var _login = _asyncToGenerator(
           /*#__PURE__*/
           regeneratorRuntime.mark(function _callee3(userName) {
-            var state, ntks, foundNtk;
+            var ntks, foundNtk;
             return regeneratorRuntime.wrap(function _callee3$(_context3) {
               while (1) {
                 switch (_context3.prev = _context3.next) {
                   case 0:
                     _context3.prev = 0;
-                    state = get_store_value(customNtkStore);
-                    ntks = state ? state.ntkPersons : [];
+                    ntks = BLM.getNtks();
                     foundNtk = ntks.find(function (ntk) {
                       return ntk.ntkDetails.name === userName;
                     });
@@ -11432,29 +11450,29 @@ var app = (function () {
                     if (foundNtk) {
                       customAppStatusStore.onLogin({
                         status: LoginStatus.LoggedIn,
-                        userName: userName
+                        currentUser: foundNtk
                       });
                     } else {
                       customAppStatusStore.onLogin({
                         status: LoginStatus.LoginFailed,
-                        userName: userName
+                        currentUser: null
                       });
                     }
 
-                    _context3.next = 10;
+                    _context3.next = 9;
                     break;
 
-                  case 7:
-                    _context3.prev = 7;
+                  case 6:
+                    _context3.prev = 6;
                     _context3.t0 = _context3["catch"](0);
                     throw new Error("server error: " + _context3.t0.message);
 
-                  case 10:
+                  case 9:
                   case "end":
                     return _context3.stop();
                 }
               }
-            }, _callee3, null, [[0, 7]]);
+            }, _callee3, null, [[0, 6]]);
           }));
 
           function login(_x) {
@@ -11467,10 +11485,8 @@ var app = (function () {
         key: "getCurrentUser",
         value: function getCurrentUser() {
           try {
-            var state = get_store_value(customNtkStore);
-            var currentUser = state.ntkPersons.find(function (ntk) {
-              return ntk.ntkDetails.name === 'alon2';
-            });
+            var currentUser = customAppStatusStore.getCurrentUser();
+            console.log('==>currentUser', currentUser);
             return currentUser;
           } catch (err) {
             console.error(err);
@@ -11510,7 +11526,7 @@ var app = (function () {
               });
               customAppStatusStore.onLogin({
                 status: LoginStatus.LoggedIn,
-                userName: newUser.name
+                currentUser: newNTK
               });
             });
           });
@@ -11519,6 +11535,32 @@ var app = (function () {
         key: "logout",
         value: function logout() {
           customAppStatusStore.onLogout();
+        }
+      }, {
+        key: "getNtks",
+        value: function getNtks() {
+          var state = get_store_value(customNtkStore);
+          return state.ntkPersons || [];
+        }
+      }, {
+        key: "getMyNtks",
+        value: function getMyNtks() {
+          var currentUser = BLM.getCurrentUser();
+          var allNkts = BLM.getNtks();
+          var myNtks = allNkts.filter(function (ntk) {
+            return ntk.ntkDetails.id !== currentUser.ntkDetails.id && ntk.isMarked;
+          });
+          return myNtks;
+        }
+      }, {
+        key: "getNtksToApprove",
+        value: function getNtksToApprove() {
+          var currentUser = BLM.getCurrentUser();
+          var allNkts = BLM.getNtks();
+          var myNtks = allNkts.filter(function (ntk) {
+            return ntk.ntkDetails.id !== currentUser.ntkDetails.id && ntk.isMarked;
+          });
+          return allNkts;
         }
       }]);
 
@@ -11547,7 +11589,7 @@ var app = (function () {
                   _context.prev = 0;
                   console.log('setStoreAsync');
                   _context.next = 4;
-                  return BLM.getNtks();
+                  return BLM.fetchNtks();
 
                 case 4:
                   ntks = _context.sent;
@@ -11731,7 +11773,7 @@ var app = (function () {
     			div = element("div");
     			ntklist.$$.fragment.c();
     			attr(div, "class", "container svelte-1mbbivc");
-    			add_location(div, file$g, 48, 0, 2082);
+    			add_location(div, file$g, 48, 0, 2070);
     		},
 
     		l: function claim(nodes) {
@@ -11781,8 +11823,8 @@ var app = (function () {
 
       let ntkList;
 
-      onMount(async () => {
-        $$invalidate('ntkList', ntkList = await BLM.getNtks());
+      onMount(() => {
+        $$invalidate('ntkList', ntkList = BLM.getNtks());
       });
 
       const unsubscribe = customNtkStore.subscribe(state => {
@@ -11812,7 +11854,7 @@ var app = (function () {
 
     const file$h = "src\\components\\MyNTKs.svelte";
 
-    // (76:8) {:else}
+    // (71:2) {:else}
     function create_else_block$1(ctx) {
     	var div, t, h2, current;
 
@@ -11833,9 +11875,9 @@ var app = (function () {
     			h2 = element("h2");
     			h2.textContent = "You havn't selected any Nice-to-Knows";
     			attr(h2, "class", "svelte-10qzlp5");
-    			add_location(h2, file$h, 78, 12, 3716);
+    			add_location(h2, file$h, 73, 6, 3516);
     			attr(div, "class", "no-ntks svelte-10qzlp5");
-    			add_location(div, file$h, 76, 8, 3616);
+    			add_location(div, file$h, 71, 4, 3428);
     		},
 
     		m: function mount(target, anchor) {
@@ -11874,7 +11916,7 @@ var app = (function () {
     	};
     }
 
-    // (70:4) {#if ntkList.length > 0}
+    // (69:2) {#if ntkList.length > 0}
     function create_if_block$3(ctx) {
     	var current;
 
@@ -11921,7 +11963,7 @@ var app = (function () {
     	};
     }
 
-    // (78:12) <Icon class="material-icons">
+    // (73:6) <Icon class="material-icons">
     function create_default_slot$7(ctx) {
     	var t;
 
@@ -11965,7 +12007,7 @@ var app = (function () {
     			div = element("div");
     			if_block.c();
     			attr(div, "class", "container svelte-10qzlp5");
-    			add_location(div, file$h, 68, 0, 3381);
+    			add_location(div, file$h, 67, 0, 3279);
     		},
 
     		l: function claim(nodes) {
@@ -12022,26 +12064,25 @@ var app = (function () {
     }
 
     function onMarkedChanged$1(event) {
-          customNtkStore.onMarkedChanged(event.detail.id);
-      }
+      customNtkStore.onMarkedChanged(event.detail.id);
+    }
 
     function instance$l($$self, $$props, $$invalidate) {
     	
 
-        let ntkList=[];
+      let ntkList = [];
 
-        const unsubscribe=customNtkStore.subscribe(state => {
-            $$invalidate('ntkList', ntkList=state.ntkPersons.filter(ntkp => ntkp.isMarked));
-        });
+      const unsubscribe = customNtkStore.subscribe(state => {
+        //ntkList = BLM.getMyNtks();
+      });
 
-        onDestroy(() => {
-            unsubscribe();
-        });
-        //
-        // function onPersonSelected(event) {
-        //     currentSelectedPerson = event.detail;
-        //     isNTKPersonDialogOpen = true;
-        // }
+      onMount(() => {
+        $$invalidate('ntkList', ntkList = BLM.getMyNtks());
+      });
+
+      onDestroy(() => {
+        unsubscribe();
+      });
 
     	return { ntkList };
     }
@@ -12057,7 +12098,7 @@ var app = (function () {
 
     const file$i = "src\\components\\NTKsApproval.svelte";
 
-    // (81:8) {:else}
+    // (86:8) {:else}
     function create_else_block$2(ctx) {
     	var div, t, h2, current;
 
@@ -12078,9 +12119,9 @@ var app = (function () {
     			h2 = element("h2");
     			h2.textContent = "No nice-to-knows to approve";
     			attr(h2, "class", "svelte-r70l8g");
-    			add_location(h2, file$i, 83, 12, 3929);
+    			add_location(h2, file$i, 88, 12, 4046);
     			attr(div, "class", "no-ntks svelte-r70l8g");
-    			add_location(div, file$i, 81, 8, 3829);
+    			add_location(div, file$i, 86, 8, 3946);
     		},
 
     		m: function mount(target, anchor) {
@@ -12119,7 +12160,7 @@ var app = (function () {
     	};
     }
 
-    // (74:4) {#if ntkList.length > 0}
+    // (79:4) {#if ntkList.length > 0}
     function create_if_block$4(ctx) {
     	var current;
 
@@ -12167,7 +12208,7 @@ var app = (function () {
     	};
     }
 
-    // (83:12) <Icon class="material-icons">
+    // (88:12) <Icon class="material-icons">
     function create_default_slot$8(ctx) {
     	var t;
 
@@ -12211,7 +12252,7 @@ var app = (function () {
     			div = element("div");
     			if_block.c();
     			attr(div, "class", "container svelte-r70l8g");
-    			add_location(div, file$i, 72, 0, 3539);
+    			add_location(div, file$i, 77, 0, 3656);
     		},
 
     		l: function claim(nodes) {
@@ -12283,6 +12324,10 @@ var app = (function () {
         const unsubscribe=customNtkStore.subscribe(state => {
             $$invalidate('ntkList', ntkList=state.ntkPersons.filter(ntkp => ntkp.isMarked));
         });
+
+        onMount(() => {
+        $$invalidate('ntkList', ntkList = BLM.getNtksToApprove());
+      });
 
         onDestroy(() => {
             unsubscribe();
@@ -19720,7 +19765,7 @@ var app = (function () {
     	button.$on("click", ctx.click_handler);
 
     	var avatar = new Avatar({
-    		props: { imageUrl: ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : 'https://randomuser.me/api/portraits/men/63.jpg' },
+    		props: { imageUrl: ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : null },
     		$$inline: true
     	});
 
@@ -19789,7 +19834,7 @@ var app = (function () {
     			button.$set(button_changes);
 
     			var avatar_changes = {};
-    			if (changed.currentUser) avatar_changes.imageUrl = ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : 'https://randomuser.me/api/portraits/men/63.jpg';
+    			if (changed.currentUser) avatar_changes.imageUrl = ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : null;
     			avatar.$set(avatar_changes);
 
     			if (ctx.isLogoutShowing) {

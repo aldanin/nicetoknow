@@ -10,8 +10,8 @@
 
   let isNTKPersonDialogOpen = false;
 
-  onMount(async () => {
-    ntkList = await BLM.getNtks();
+  onMount(() => {
+    ntkList = BLM.getNtks();
   });
 
   const unsubscribe = customNtkStore.subscribe(state => {
