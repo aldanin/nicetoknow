@@ -15,6 +15,7 @@
   });
 
   const unsubscribe = customNtkStore.subscribe(state => {
+    console.log('all=>', state.ntkPersons)
     ntkList = state.ntkPersons;
   });
 

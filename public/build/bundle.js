@@ -3542,13 +3542,2862 @@ var app = (function () {
     // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
     addToUnscopables(FIND);
 
-    var ApprovalStatus;
+    // For Card UI purposes only:
+    var ConnectionStatus;
 
-    (function (ApprovalStatus) {
-      ApprovalStatus[ApprovalStatus["pending"] = 1] = "pending";
-      ApprovalStatus[ApprovalStatus["disapproved"] = 2] = "disapproved";
-      ApprovalStatus[ApprovalStatus["approved"] = 3] = "approved";
-    })(ApprovalStatus || (ApprovalStatus = {}));
+    (function (ConnectionStatus) {
+      ConnectionStatus[ConnectionStatus["pending"] = 1] = "pending";
+      ConnectionStatus[ConnectionStatus["rejected"] = 2] = "rejected";
+      ConnectionStatus[ConnectionStatus["resolved"] = 3] = "resolved";
+    })(ConnectionStatus || (ConnectionStatus = {}));
+
+    var SPECIES$1 = wellKnownSymbol('species');
+
+    var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
+      return !fails(function () {
+        var array = [];
+        var constructor = array.constructor = {};
+        constructor[SPECIES$1] = function () {
+          return { foo: 1 };
+        };
+        return array[METHOD_NAME](Boolean).foo !== 1;
+      });
+    };
+
+    var $filter = arrayIteration.filter;
+
+
+    // `Array.prototype.filter` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+    // with adding support of @@species
+    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('filter') }, {
+      filter: function filter(callbackfn /* , thisArg */) {
+        return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+      }
+    });
+
+    var sloppyArrayMethod = function (METHOD_NAME, argument) {
+      var method = [][METHOD_NAME];
+      return !method || !fails(function () {
+        // eslint-disable-next-line no-useless-call,no-throw-literal
+        method.call(null, argument || function () { throw 1; }, 1);
+      });
+    };
+
+    var $forEach = arrayIteration.forEach;
+
+
+    // `Array.prototype.forEach` method implementation
+    // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+    var arrayForEach = sloppyArrayMethod('forEach') ? function forEach(callbackfn /* , thisArg */) {
+      return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+    } : [].forEach;
+
+    // `Array.prototype.forEach` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+    _export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
+      forEach: arrayForEach
+    });
+
+    var defineProperty = objectDefineProperty.f;
+
+    var FunctionPrototype = Function.prototype;
+    var FunctionPrototypeToString = FunctionPrototype.toString;
+    var nameRE = /^\s*function ([^ (]*)/;
+    var NAME = 'name';
+
+    // Function instances `.name` property
+    // https://tc39.github.io/ecma262/#sec-function-instances-name
+    if (descriptors && !(NAME in FunctionPrototype)) {
+      defineProperty(FunctionPrototype, NAME, {
+        configurable: true,
+        get: function () {
+          try {
+            return FunctionPrototypeToString.call(this).match(nameRE)[1];
+          } catch (error) {
+            return '';
+          }
+        }
+      });
+    }
+
+    var TO_STRING_TAG = wellKnownSymbol('toStringTag');
+    // ES3 wrong here
+    var CORRECT_ARGUMENTS = classofRaw(function () { return arguments; }()) == 'Arguments';
+
+    // fallback for IE11 Script Access Denied error
+    var tryGet = function (it, key) {
+      try {
+        return it[key];
+      } catch (error) { /* empty */ }
+    };
+
+    // getting tag from ES6+ `Object.prototype.toString`
+    var classof = function (it) {
+      var O, tag, result;
+      return it === undefined ? 'Undefined' : it === null ? 'Null'
+        // @@toStringTag case
+        : typeof (tag = tryGet(O = Object(it), TO_STRING_TAG)) == 'string' ? tag
+        // builtinTag case
+        : CORRECT_ARGUMENTS ? classofRaw(O)
+        // ES3 arguments fallback
+        : (result = classofRaw(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
+    };
+
+    var TO_STRING_TAG$1 = wellKnownSymbol('toStringTag');
+    var test = {};
+
+    test[TO_STRING_TAG$1] = 'z';
+
+    // `Object.prototype.toString` method implementation
+    // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+    var objectToString = String(test) !== '[object z]' ? function toString() {
+      return '[object ' + classof(this) + ']';
+    } : test.toString;
+
+    var ObjectPrototype = Object.prototype;
+
+    // `Object.prototype.toString` method
+    // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+    if (objectToString !== ObjectPrototype.toString) {
+      redefine(ObjectPrototype, 'toString', objectToString, { unsafe: true });
+    }
+
+    var propertyIsEnumerable = objectPropertyIsEnumerable.f;
+
+    // `Object.{ entries, values }` methods implementation
+    var createMethod$2 = function (TO_ENTRIES) {
+      return function (it) {
+        var O = toIndexedObject(it);
+        var keys = objectKeys(O);
+        var length = keys.length;
+        var i = 0;
+        var result = [];
+        var key;
+        while (length > i) {
+          key = keys[i++];
+          if (!descriptors || propertyIsEnumerable.call(O, key)) {
+            result.push(TO_ENTRIES ? [key, O[key]] : O[key]);
+          }
+        }
+        return result;
+      };
+    };
+
+    var objectToArray = {
+      // `Object.entries` method
+      // https://tc39.github.io/ecma262/#sec-object.entries
+      entries: createMethod$2(true),
+      // `Object.values` method
+      // https://tc39.github.io/ecma262/#sec-object.values
+      values: createMethod$2(false)
+    };
+
+    var $values = objectToArray.values;
+
+    // `Object.values` method
+    // https://tc39.github.io/ecma262/#sec-object.values
+    _export({ target: 'Object', stat: true }, {
+      values: function values(O) {
+        return $values(O);
+      }
+    });
+
+    var nativePromiseConstructor = global_1.Promise;
+
+    var redefineAll = function (target, src, options) {
+      for (var key in src) redefine(target, key, src[key], options);
+      return target;
+    };
+
+    var defineProperty$1 = objectDefineProperty.f;
+
+
+
+    var TO_STRING_TAG$2 = wellKnownSymbol('toStringTag');
+
+    var setToStringTag = function (it, TAG, STATIC) {
+      if (it && !has(it = STATIC ? it : it.prototype, TO_STRING_TAG$2)) {
+        defineProperty$1(it, TO_STRING_TAG$2, { configurable: true, value: TAG });
+      }
+    };
+
+    var SPECIES$2 = wellKnownSymbol('species');
+
+    var setSpecies = function (CONSTRUCTOR_NAME) {
+      var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
+      var defineProperty = objectDefineProperty.f;
+
+      if (descriptors && Constructor && !Constructor[SPECIES$2]) {
+        defineProperty(Constructor, SPECIES$2, {
+          configurable: true,
+          get: function () { return this; }
+        });
+      }
+    };
+
+    var anInstance = function (it, Constructor, name) {
+      if (!(it instanceof Constructor)) {
+        throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
+      } return it;
+    };
+
+    var iterators = {};
+
+    var ITERATOR = wellKnownSymbol('iterator');
+    var ArrayPrototype$1 = Array.prototype;
+
+    // check on default Array iterator
+    var isArrayIteratorMethod = function (it) {
+      return it !== undefined && (iterators.Array === it || ArrayPrototype$1[ITERATOR] === it);
+    };
+
+    var ITERATOR$1 = wellKnownSymbol('iterator');
+
+    var getIteratorMethod = function (it) {
+      if (it != undefined) return it[ITERATOR$1]
+        || it['@@iterator']
+        || iterators[classof(it)];
+    };
+
+    // call something on iterator step with safe closing on error
+    var callWithSafeIterationClosing = function (iterator, fn, value, ENTRIES) {
+      try {
+        return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
+      // 7.4.6 IteratorClose(iterator, completion)
+      } catch (error) {
+        var returnMethod = iterator['return'];
+        if (returnMethod !== undefined) anObject(returnMethod.call(iterator));
+        throw error;
+      }
+    };
+
+    var iterate_1 = createCommonjsModule(function (module) {
+    var Result = function (stopped, result) {
+      this.stopped = stopped;
+      this.result = result;
+    };
+
+    var iterate = module.exports = function (iterable, fn, that, AS_ENTRIES, IS_ITERATOR) {
+      var boundFunction = bindContext(fn, that, AS_ENTRIES ? 2 : 1);
+      var iterator, iterFn, index, length, result, step;
+
+      if (IS_ITERATOR) {
+        iterator = iterable;
+      } else {
+        iterFn = getIteratorMethod(iterable);
+        if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
+        // optimisation for array iterators
+        if (isArrayIteratorMethod(iterFn)) {
+          for (index = 0, length = toLength(iterable.length); length > index; index++) {
+            result = AS_ENTRIES
+              ? boundFunction(anObject(step = iterable[index])[0], step[1])
+              : boundFunction(iterable[index]);
+            if (result && result instanceof Result) return result;
+          } return new Result(false);
+        }
+        iterator = iterFn.call(iterable);
+      }
+
+      while (!(step = iterator.next()).done) {
+        result = callWithSafeIterationClosing(iterator, boundFunction, step.value, AS_ENTRIES);
+        if (result && result instanceof Result) return result;
+      } return new Result(false);
+    };
+
+    iterate.stop = function (result) {
+      return new Result(true, result);
+    };
+    });
+
+    var ITERATOR$2 = wellKnownSymbol('iterator');
+    var SAFE_CLOSING = false;
+
+    try {
+      var called = 0;
+      var iteratorWithReturn = {
+        next: function () {
+          return { done: !!called++ };
+        },
+        'return': function () {
+          SAFE_CLOSING = true;
+        }
+      };
+      iteratorWithReturn[ITERATOR$2] = function () {
+        return this;
+      };
+      // eslint-disable-next-line no-throw-literal
+      Array.from(iteratorWithReturn, function () { throw 2; });
+    } catch (error) { /* empty */ }
+
+    var checkCorrectnessOfIteration = function (exec, SKIP_CLOSING) {
+      if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
+      var ITERATION_SUPPORT = false;
+      try {
+        var object = {};
+        object[ITERATOR$2] = function () {
+          return {
+            next: function () {
+              return { done: ITERATION_SUPPORT = true };
+            }
+          };
+        };
+        exec(object);
+      } catch (error) { /* empty */ }
+      return ITERATION_SUPPORT;
+    };
+
+    var SPECIES$3 = wellKnownSymbol('species');
+
+    // `SpeciesConstructor` abstract operation
+    // https://tc39.github.io/ecma262/#sec-speciesconstructor
+    var speciesConstructor = function (O, defaultConstructor) {
+      var C = anObject(O).constructor;
+      var S;
+      return C === undefined || (S = anObject(C)[SPECIES$3]) == undefined ? defaultConstructor : aFunction$1(S);
+    };
+
+    var location = global_1.location;
+    var set$1 = global_1.setImmediate;
+    var clear = global_1.clearImmediate;
+    var process = global_1.process;
+    var MessageChannel = global_1.MessageChannel;
+    var Dispatch = global_1.Dispatch;
+    var counter = 0;
+    var queue = {};
+    var ONREADYSTATECHANGE = 'onreadystatechange';
+    var defer, channel, port;
+
+    var run$1 = function (id) {
+      // eslint-disable-next-line no-prototype-builtins
+      if (queue.hasOwnProperty(id)) {
+        var fn = queue[id];
+        delete queue[id];
+        fn();
+      }
+    };
+
+    var runner = function (id) {
+      return function () {
+        run$1(id);
+      };
+    };
+
+    var listener = function (event) {
+      run$1(event.data);
+    };
+
+    var post = function (id) {
+      // old engines have not location.origin
+      global_1.postMessage(id + '', location.protocol + '//' + location.host);
+    };
+
+    // Node.js 0.9+ & IE10+ has setImmediate, otherwise:
+    if (!set$1 || !clear) {
+      set$1 = function setImmediate(fn) {
+        var args = [];
+        var i = 1;
+        while (arguments.length > i) args.push(arguments[i++]);
+        queue[++counter] = function () {
+          // eslint-disable-next-line no-new-func
+          (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
+        };
+        defer(counter);
+        return counter;
+      };
+      clear = function clearImmediate(id) {
+        delete queue[id];
+      };
+      // Node.js 0.8-
+      if (classofRaw(process) == 'process') {
+        defer = function (id) {
+          process.nextTick(runner(id));
+        };
+      // Sphere (JS game engine) Dispatch API
+      } else if (Dispatch && Dispatch.now) {
+        defer = function (id) {
+          Dispatch.now(runner(id));
+        };
+      // Browsers with MessageChannel, includes WebWorkers
+      } else if (MessageChannel) {
+        channel = new MessageChannel();
+        port = channel.port2;
+        channel.port1.onmessage = listener;
+        defer = bindContext(port.postMessage, port, 1);
+      // Browsers with postMessage, skip WebWorkers
+      // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
+      } else if (global_1.addEventListener && typeof postMessage == 'function' && !global_1.importScripts && !fails(post)) {
+        defer = post;
+        global_1.addEventListener('message', listener, false);
+      // IE8-
+      } else if (ONREADYSTATECHANGE in documentCreateElement('script')) {
+        defer = function (id) {
+          html.appendChild(documentCreateElement('script'))[ONREADYSTATECHANGE] = function () {
+            html.removeChild(this);
+            run$1(id);
+          };
+        };
+      // Rest old browsers
+      } else {
+        defer = function (id) {
+          setTimeout(runner(id), 0);
+        };
+      }
+    }
+
+    var task = {
+      set: set$1,
+      clear: clear
+    };
+
+    var userAgent = getBuiltIn('navigator', 'userAgent') || '';
+
+    var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
+
+    var macrotask = task.set;
+
+
+    var MutationObserver$1 = global_1.MutationObserver || global_1.WebKitMutationObserver;
+    var process$1 = global_1.process;
+    var Promise$1 = global_1.Promise;
+    var IS_NODE = classofRaw(process$1) == 'process';
+    // Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
+    var queueMicrotaskDescriptor = getOwnPropertyDescriptor$2(global_1, 'queueMicrotask');
+    var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
+
+    var flush$1, head, last, notify, toggle, node, promise, then;
+
+    // modern engines have queueMicrotask method
+    if (!queueMicrotask) {
+      flush$1 = function () {
+        var parent, fn;
+        if (IS_NODE && (parent = process$1.domain)) parent.exit();
+        while (head) {
+          fn = head.fn;
+          head = head.next;
+          try {
+            fn();
+          } catch (error) {
+            if (head) notify();
+            else last = undefined;
+            throw error;
+          }
+        } last = undefined;
+        if (parent) parent.enter();
+      };
+
+      // Node.js
+      if (IS_NODE) {
+        notify = function () {
+          process$1.nextTick(flush$1);
+        };
+      // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+      } else if (MutationObserver$1 && !/(iphone|ipod|ipad).*applewebkit/i.test(userAgent)) {
+        toggle = true;
+        node = document.createTextNode('');
+        new MutationObserver$1(flush$1).observe(node, { characterData: true }); // eslint-disable-line no-new
+        notify = function () {
+          node.data = toggle = !toggle;
+        };
+      // environments with maybe non-completely correct, but existent Promise
+      } else if (Promise$1 && Promise$1.resolve) {
+        // Promise.resolve without an argument throws an error in LG WebOS 2
+        promise = Promise$1.resolve(undefined);
+        then = promise.then;
+        notify = function () {
+          then.call(promise, flush$1);
+        };
+      // for other environments - macrotask based on:
+      // - setImmediate
+      // - MessageChannel
+      // - window.postMessag
+      // - onreadystatechange
+      // - setTimeout
+      } else {
+        notify = function () {
+          // strange IE + webpack dev server bug - use .call(global)
+          macrotask.call(global_1, flush$1);
+        };
+      }
+    }
+
+    var microtask = queueMicrotask || function (fn) {
+      var task = { fn: fn, next: undefined };
+      if (last) last.next = task;
+      if (!head) {
+        head = task;
+        notify();
+      } last = task;
+    };
+
+    var PromiseCapability = function (C) {
+      var resolve, reject;
+      this.promise = new C(function ($$resolve, $$reject) {
+        if (resolve !== undefined || reject !== undefined) throw TypeError('Bad Promise constructor');
+        resolve = $$resolve;
+        reject = $$reject;
+      });
+      this.resolve = aFunction$1(resolve);
+      this.reject = aFunction$1(reject);
+    };
+
+    // 25.4.1.5 NewPromiseCapability(C)
+    var f$5 = function (C) {
+      return new PromiseCapability(C);
+    };
+
+    var newPromiseCapability = {
+    	f: f$5
+    };
+
+    var promiseResolve = function (C, x) {
+      anObject(C);
+      if (isObject(x) && x.constructor === C) return x;
+      var promiseCapability = newPromiseCapability.f(C);
+      var resolve = promiseCapability.resolve;
+      resolve(x);
+      return promiseCapability.promise;
+    };
+
+    var hostReportErrors = function (a, b) {
+      var console = global_1.console;
+      if (console && console.error) {
+        arguments.length === 1 ? console.error(a) : console.error(a, b);
+      }
+    };
+
+    var perform = function (exec) {
+      try {
+        return { error: false, value: exec() };
+      } catch (error) {
+        return { error: true, value: error };
+      }
+    };
+
+    var task$1 = task.set;
+
+
+
+
+
+
+
+
+
+
+    var SPECIES$4 = wellKnownSymbol('species');
+    var PROMISE = 'Promise';
+    var getInternalState = internalState.get;
+    var setInternalState = internalState.set;
+    var getInternalPromiseState = internalState.getterFor(PROMISE);
+    var PromiseConstructor = nativePromiseConstructor;
+    var TypeError$1 = global_1.TypeError;
+    var document$2 = global_1.document;
+    var process$2 = global_1.process;
+    var $fetch = global_1.fetch;
+    var versions = process$2 && process$2.versions;
+    var v8 = versions && versions.v8 || '';
+    var newPromiseCapability$1 = newPromiseCapability.f;
+    var newGenericPromiseCapability = newPromiseCapability$1;
+    var IS_NODE$1 = classofRaw(process$2) == 'process';
+    var DISPATCH_EVENT = !!(document$2 && document$2.createEvent && global_1.dispatchEvent);
+    var UNHANDLED_REJECTION = 'unhandledrejection';
+    var REJECTION_HANDLED = 'rejectionhandled';
+    var PENDING = 0;
+    var FULFILLED = 1;
+    var REJECTED = 2;
+    var HANDLED = 1;
+    var UNHANDLED = 2;
+    var Internal, OwnPromiseCapability, PromiseWrapper, nativeThen;
+
+    var FORCED = isForced_1(PROMISE, function () {
+      // correct subclassing with @@species support
+      var promise = PromiseConstructor.resolve(1);
+      var empty = function () { /* empty */ };
+      var FakePromise = (promise.constructor = {})[SPECIES$4] = function (exec) {
+        exec(empty, empty);
+      };
+      // unhandled rejections tracking support, NodeJS Promise without it fails @@species test
+      return !((IS_NODE$1 || typeof PromiseRejectionEvent == 'function')
+        && (!isPure || promise['finally'])
+        && promise.then(empty) instanceof FakePromise
+        // v8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
+        // we can't detect it synchronously, so just check versions
+        && v8.indexOf('6.6') !== 0
+        && userAgent.indexOf('Chrome/66') === -1);
+    });
+
+    var INCORRECT_ITERATION = FORCED || !checkCorrectnessOfIteration(function (iterable) {
+      PromiseConstructor.all(iterable)['catch'](function () { /* empty */ });
+    });
+
+    // helpers
+    var isThenable = function (it) {
+      var then;
+      return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
+    };
+
+    var notify$1 = function (promise, state, isReject) {
+      if (state.notified) return;
+      state.notified = true;
+      var chain = state.reactions;
+      microtask(function () {
+        var value = state.value;
+        var ok = state.state == FULFILLED;
+        var index = 0;
+        // variable length - can't use forEach
+        while (chain.length > index) {
+          var reaction = chain[index++];
+          var handler = ok ? reaction.ok : reaction.fail;
+          var resolve = reaction.resolve;
+          var reject = reaction.reject;
+          var domain = reaction.domain;
+          var result, then, exited;
+          try {
+            if (handler) {
+              if (!ok) {
+                if (state.rejection === UNHANDLED) onHandleUnhandled(promise, state);
+                state.rejection = HANDLED;
+              }
+              if (handler === true) result = value;
+              else {
+                if (domain) domain.enter();
+                result = handler(value); // can throw
+                if (domain) {
+                  domain.exit();
+                  exited = true;
+                }
+              }
+              if (result === reaction.promise) {
+                reject(TypeError$1('Promise-chain cycle'));
+              } else if (then = isThenable(result)) {
+                then.call(result, resolve, reject);
+              } else resolve(result);
+            } else reject(value);
+          } catch (error) {
+            if (domain && !exited) domain.exit();
+            reject(error);
+          }
+        }
+        state.reactions = [];
+        state.notified = false;
+        if (isReject && !state.rejection) onUnhandled(promise, state);
+      });
+    };
+
+    var dispatchEvent = function (name, promise, reason) {
+      var event, handler;
+      if (DISPATCH_EVENT) {
+        event = document$2.createEvent('Event');
+        event.promise = promise;
+        event.reason = reason;
+        event.initEvent(name, false, true);
+        global_1.dispatchEvent(event);
+      } else event = { promise: promise, reason: reason };
+      if (handler = global_1['on' + name]) handler(event);
+      else if (name === UNHANDLED_REJECTION) hostReportErrors('Unhandled promise rejection', reason);
+    };
+
+    var onUnhandled = function (promise, state) {
+      task$1.call(global_1, function () {
+        var value = state.value;
+        var IS_UNHANDLED = isUnhandled(state);
+        var result;
+        if (IS_UNHANDLED) {
+          result = perform(function () {
+            if (IS_NODE$1) {
+              process$2.emit('unhandledRejection', value, promise);
+            } else dispatchEvent(UNHANDLED_REJECTION, promise, value);
+          });
+          // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
+          state.rejection = IS_NODE$1 || isUnhandled(state) ? UNHANDLED : HANDLED;
+          if (result.error) throw result.value;
+        }
+      });
+    };
+
+    var isUnhandled = function (state) {
+      return state.rejection !== HANDLED && !state.parent;
+    };
+
+    var onHandleUnhandled = function (promise, state) {
+      task$1.call(global_1, function () {
+        if (IS_NODE$1) {
+          process$2.emit('rejectionHandled', promise);
+        } else dispatchEvent(REJECTION_HANDLED, promise, state.value);
+      });
+    };
+
+    var bind$1 = function (fn, promise, state, unwrap) {
+      return function (value) {
+        fn(promise, state, value, unwrap);
+      };
+    };
+
+    var internalReject = function (promise, state, value, unwrap) {
+      if (state.done) return;
+      state.done = true;
+      if (unwrap) state = unwrap;
+      state.value = value;
+      state.state = REJECTED;
+      notify$1(promise, state, true);
+    };
+
+    var internalResolve = function (promise, state, value, unwrap) {
+      if (state.done) return;
+      state.done = true;
+      if (unwrap) state = unwrap;
+      try {
+        if (promise === value) throw TypeError$1("Promise can't be resolved itself");
+        var then = isThenable(value);
+        if (then) {
+          microtask(function () {
+            var wrapper = { done: false };
+            try {
+              then.call(value,
+                bind$1(internalResolve, promise, wrapper, state),
+                bind$1(internalReject, promise, wrapper, state)
+              );
+            } catch (error) {
+              internalReject(promise, wrapper, error, state);
+            }
+          });
+        } else {
+          state.value = value;
+          state.state = FULFILLED;
+          notify$1(promise, state, false);
+        }
+      } catch (error) {
+        internalReject(promise, { done: false }, error, state);
+      }
+    };
+
+    // constructor polyfill
+    if (FORCED) {
+      // 25.4.3.1 Promise(executor)
+      PromiseConstructor = function Promise(executor) {
+        anInstance(this, PromiseConstructor, PROMISE);
+        aFunction$1(executor);
+        Internal.call(this);
+        var state = getInternalState(this);
+        try {
+          executor(bind$1(internalResolve, this, state), bind$1(internalReject, this, state));
+        } catch (error) {
+          internalReject(this, state, error);
+        }
+      };
+      // eslint-disable-next-line no-unused-vars
+      Internal = function Promise(executor) {
+        setInternalState(this, {
+          type: PROMISE,
+          done: false,
+          notified: false,
+          parent: false,
+          reactions: [],
+          rejection: false,
+          state: PENDING,
+          value: undefined
+        });
+      };
+      Internal.prototype = redefineAll(PromiseConstructor.prototype, {
+        // `Promise.prototype.then` method
+        // https://tc39.github.io/ecma262/#sec-promise.prototype.then
+        then: function then(onFulfilled, onRejected) {
+          var state = getInternalPromiseState(this);
+          var reaction = newPromiseCapability$1(speciesConstructor(this, PromiseConstructor));
+          reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
+          reaction.fail = typeof onRejected == 'function' && onRejected;
+          reaction.domain = IS_NODE$1 ? process$2.domain : undefined;
+          state.parent = true;
+          state.reactions.push(reaction);
+          if (state.state != PENDING) notify$1(this, state, false);
+          return reaction.promise;
+        },
+        // `Promise.prototype.catch` method
+        // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
+        'catch': function (onRejected) {
+          return this.then(undefined, onRejected);
+        }
+      });
+      OwnPromiseCapability = function () {
+        var promise = new Internal();
+        var state = getInternalState(promise);
+        this.promise = promise;
+        this.resolve = bind$1(internalResolve, promise, state);
+        this.reject = bind$1(internalReject, promise, state);
+      };
+      newPromiseCapability.f = newPromiseCapability$1 = function (C) {
+        return C === PromiseConstructor || C === PromiseWrapper
+          ? new OwnPromiseCapability(C)
+          : newGenericPromiseCapability(C);
+      };
+
+      if ( typeof nativePromiseConstructor == 'function') {
+        nativeThen = nativePromiseConstructor.prototype.then;
+
+        // wrap native Promise#then for native async functions
+        redefine(nativePromiseConstructor.prototype, 'then', function then(onFulfilled, onRejected) {
+          var that = this;
+          return new PromiseConstructor(function (resolve, reject) {
+            nativeThen.call(that, resolve, reject);
+          }).then(onFulfilled, onRejected);
+        });
+
+        // wrap fetch result
+        if (typeof $fetch == 'function') _export({ global: true, enumerable: true, forced: true }, {
+          // eslint-disable-next-line no-unused-vars
+          fetch: function fetch(input) {
+            return promiseResolve(PromiseConstructor, $fetch.apply(global_1, arguments));
+          }
+        });
+      }
+    }
+
+    _export({ global: true, wrap: true, forced: FORCED }, {
+      Promise: PromiseConstructor
+    });
+
+    setToStringTag(PromiseConstructor, PROMISE, false);
+    setSpecies(PROMISE);
+
+    PromiseWrapper = path[PROMISE];
+
+    // statics
+    _export({ target: PROMISE, stat: true, forced: FORCED }, {
+      // `Promise.reject` method
+      // https://tc39.github.io/ecma262/#sec-promise.reject
+      reject: function reject(r) {
+        var capability = newPromiseCapability$1(this);
+        capability.reject.call(undefined, r);
+        return capability.promise;
+      }
+    });
+
+    _export({ target: PROMISE, stat: true, forced:  FORCED }, {
+      // `Promise.resolve` method
+      // https://tc39.github.io/ecma262/#sec-promise.resolve
+      resolve: function resolve(x) {
+        return promiseResolve( this, x);
+      }
+    });
+
+    _export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
+      // `Promise.all` method
+      // https://tc39.github.io/ecma262/#sec-promise.all
+      all: function all(iterable) {
+        var C = this;
+        var capability = newPromiseCapability$1(C);
+        var resolve = capability.resolve;
+        var reject = capability.reject;
+        var result = perform(function () {
+          var $promiseResolve = aFunction$1(C.resolve);
+          var values = [];
+          var counter = 0;
+          var remaining = 1;
+          iterate_1(iterable, function (promise) {
+            var index = counter++;
+            var alreadyCalled = false;
+            values.push(undefined);
+            remaining++;
+            $promiseResolve.call(C, promise).then(function (value) {
+              if (alreadyCalled) return;
+              alreadyCalled = true;
+              values[index] = value;
+              --remaining || resolve(values);
+            }, reject);
+          });
+          --remaining || resolve(values);
+        });
+        if (result.error) reject(result.value);
+        return capability.promise;
+      },
+      // `Promise.race` method
+      // https://tc39.github.io/ecma262/#sec-promise.race
+      race: function race(iterable) {
+        var C = this;
+        var capability = newPromiseCapability$1(C);
+        var reject = capability.reject;
+        var result = perform(function () {
+          var $promiseResolve = aFunction$1(C.resolve);
+          iterate_1(iterable, function (promise) {
+            $promiseResolve.call(C, promise).then(capability.resolve, reject);
+          });
+        });
+        if (result.error) reject(result.value);
+        return capability.promise;
+      }
+    });
+
+    // a string of all valid unicode whitespaces
+    // eslint-disable-next-line max-len
+    var whitespaces = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
+
+    var whitespace = '[' + whitespaces + ']';
+    var ltrim = RegExp('^' + whitespace + whitespace + '*');
+    var rtrim = RegExp(whitespace + whitespace + '*$');
+
+    // `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
+    var createMethod$3 = function (TYPE) {
+      return function ($this) {
+        var string = String(requireObjectCoercible($this));
+        if (TYPE & 1) string = string.replace(ltrim, '');
+        if (TYPE & 2) string = string.replace(rtrim, '');
+        return string;
+      };
+    };
+
+    var stringTrim = {
+      // `String.prototype.{ trimLeft, trimStart }` methods
+      // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
+      start: createMethod$3(1),
+      // `String.prototype.{ trimRight, trimEnd }` methods
+      // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
+      end: createMethod$3(2),
+      // `String.prototype.trim` method
+      // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+      trim: createMethod$3(3)
+    };
+
+    var non = '\u200B\u0085\u180E';
+
+    // check that a method works with the correct list
+    // of whitespaces and has a correct name
+    var forcedStringTrimMethod = function (METHOD_NAME) {
+      return fails(function () {
+        return !!whitespaces[METHOD_NAME]() || non[METHOD_NAME]() != non || whitespaces[METHOD_NAME].name !== METHOD_NAME;
+      });
+    };
+
+    var $trim = stringTrim.trim;
+
+
+    // `String.prototype.trim` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+    _export({ target: 'String', proto: true, forced: forcedStringTrimMethod('trim') }, {
+      trim: function trim() {
+        return $trim(this);
+      }
+    });
+
+    // iterable DOM collections
+    // flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
+    var domIterables = {
+      CSSRuleList: 0,
+      CSSStyleDeclaration: 0,
+      CSSValueList: 0,
+      ClientRectList: 0,
+      DOMRectList: 0,
+      DOMStringList: 0,
+      DOMTokenList: 1,
+      DataTransferItemList: 0,
+      FileList: 0,
+      HTMLAllCollection: 0,
+      HTMLCollection: 0,
+      HTMLFormElement: 0,
+      HTMLSelectElement: 0,
+      MediaList: 0,
+      MimeTypeArray: 0,
+      NamedNodeMap: 0,
+      NodeList: 1,
+      PaintRequestList: 0,
+      Plugin: 0,
+      PluginArray: 0,
+      SVGLengthList: 0,
+      SVGNumberList: 0,
+      SVGPathSegList: 0,
+      SVGPointList: 0,
+      SVGStringList: 0,
+      SVGTransformList: 0,
+      SourceBufferList: 0,
+      StyleSheetList: 0,
+      TextTrackCueList: 0,
+      TextTrackList: 0,
+      TouchList: 0
+    };
+
+    for (var COLLECTION_NAME in domIterables) {
+      var Collection = global_1[COLLECTION_NAME];
+      var CollectionPrototype = Collection && Collection.prototype;
+      // some Chrome versions have non-configurable methods on DOMTokenList
+      if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) try {
+        hide(CollectionPrototype, 'forEach', arrayForEach);
+      } catch (error) {
+        CollectionPrototype.forEach = arrayForEach;
+      }
+    }
+
+    function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+      try {
+        var info = gen[key](arg);
+        var value = info.value;
+      } catch (error) {
+        reject(error);
+        return;
+      }
+
+      if (info.done) {
+        resolve(value);
+      } else {
+        Promise.resolve(value).then(_next, _throw);
+      }
+    }
+
+    function _asyncToGenerator(fn) {
+      return function () {
+        var self = this,
+            args = arguments;
+        return new Promise(function (resolve, reject) {
+          var gen = fn.apply(self, args);
+
+          function _next(value) {
+            asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+          }
+
+          function _throw(err) {
+            asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+          }
+
+          _next(undefined);
+        });
+      };
+    }
+
+    function _classCallCheck(instance, Constructor) {
+      if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
+      }
+    }
+
+    function _defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    function _createClass(Constructor, protoProps, staticProps) {
+      if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) _defineProperties(Constructor, staticProps);
+      return Constructor;
+    }
+
+    function _defineProperty(obj, key, value) {
+      if (key in obj) {
+        Object.defineProperty(obj, key, {
+          value: value,
+          enumerable: true,
+          configurable: true,
+          writable: true
+        });
+      } else {
+        obj[key] = value;
+      }
+
+      return obj;
+    }
+
+    function ownKeys$1(object, enumerableOnly) {
+      var keys = Object.keys(object);
+
+      if (Object.getOwnPropertySymbols) {
+        var symbols = Object.getOwnPropertySymbols(object);
+        if (enumerableOnly) symbols = symbols.filter(function (sym) {
+          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+        });
+        keys.push.apply(keys, symbols);
+      }
+
+      return keys;
+    }
+
+    function _objectSpread2(target) {
+      for (var i = 1; i < arguments.length; i++) {
+        var source = arguments[i] != null ? arguments[i] : {};
+
+        if (i % 2) {
+          ownKeys$1(source, true).forEach(function (key) {
+            _defineProperty(target, key, source[key]);
+          });
+        } else if (Object.getOwnPropertyDescriptors) {
+          Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+        } else {
+          ownKeys$1(source).forEach(function (key) {
+            Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+          });
+        }
+      }
+
+      return target;
+    }
+
+    function _toConsumableArray(arr) {
+      return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    }
+
+    function _arrayWithoutHoles(arr) {
+      if (Array.isArray(arr)) {
+        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+        return arr2;
+      }
+    }
+
+    function _iterableToArray(iter) {
+      if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    }
+
+    function _nonIterableSpread() {
+      throw new TypeError("Invalid attempt to spread non-iterable instance");
+    }
+
+    var runtime_1 = createCommonjsModule(function (module) {
+    /**
+     * Copyright (c) 2014-present, Facebook, Inc.
+     *
+     * This source code is licensed under the MIT license found in the
+     * LICENSE file in the root directory of this source tree.
+     */
+
+    var runtime = (function (exports) {
+
+      var Op = Object.prototype;
+      var hasOwn = Op.hasOwnProperty;
+      var undefined$1; // More compressible than void 0.
+      var $Symbol = typeof Symbol === "function" ? Symbol : {};
+      var iteratorSymbol = $Symbol.iterator || "@@iterator";
+      var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+      var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+
+      function wrap(innerFn, outerFn, self, tryLocsList) {
+        // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+        var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+        var generator = Object.create(protoGenerator.prototype);
+        var context = new Context(tryLocsList || []);
+
+        // The ._invoke method unifies the implementations of the .next,
+        // .throw, and .return methods.
+        generator._invoke = makeInvokeMethod(innerFn, self, context);
+
+        return generator;
+      }
+      exports.wrap = wrap;
+
+      // Try/catch helper to minimize deoptimizations. Returns a completion
+      // record like context.tryEntries[i].completion. This interface could
+      // have been (and was previously) designed to take a closure to be
+      // invoked without arguments, but in all the cases we care about we
+      // already have an existing method we want to call, so there's no need
+      // to create a new function object. We can even get away with assuming
+      // the method takes exactly one argument, since that happens to be true
+      // in every case, so we don't have to touch the arguments object. The
+      // only additional allocation required is the completion record, which
+      // has a stable shape and so hopefully should be cheap to allocate.
+      function tryCatch(fn, obj, arg) {
+        try {
+          return { type: "normal", arg: fn.call(obj, arg) };
+        } catch (err) {
+          return { type: "throw", arg: err };
+        }
+      }
+
+      var GenStateSuspendedStart = "suspendedStart";
+      var GenStateSuspendedYield = "suspendedYield";
+      var GenStateExecuting = "executing";
+      var GenStateCompleted = "completed";
+
+      // Returning this object from the innerFn has the same effect as
+      // breaking out of the dispatch switch statement.
+      var ContinueSentinel = {};
+
+      // Dummy constructor functions that we use as the .constructor and
+      // .constructor.prototype properties for functions that return Generator
+      // objects. For full spec compliance, you may wish to configure your
+      // minifier not to mangle the names of these two functions.
+      function Generator() {}
+      function GeneratorFunction() {}
+      function GeneratorFunctionPrototype() {}
+
+      // This is a polyfill for %IteratorPrototype% for environments that
+      // don't natively support it.
+      var IteratorPrototype = {};
+      IteratorPrototype[iteratorSymbol] = function () {
+        return this;
+      };
+
+      var getProto = Object.getPrototypeOf;
+      var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
+      if (NativeIteratorPrototype &&
+          NativeIteratorPrototype !== Op &&
+          hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
+        // This environment has a native %IteratorPrototype%; use it instead
+        // of the polyfill.
+        IteratorPrototype = NativeIteratorPrototype;
+      }
+
+      var Gp = GeneratorFunctionPrototype.prototype =
+        Generator.prototype = Object.create(IteratorPrototype);
+      GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
+      GeneratorFunctionPrototype.constructor = GeneratorFunction;
+      GeneratorFunctionPrototype[toStringTagSymbol] =
+        GeneratorFunction.displayName = "GeneratorFunction";
+
+      // Helper for defining the .next, .throw, and .return methods of the
+      // Iterator interface in terms of a single ._invoke method.
+      function defineIteratorMethods(prototype) {
+        ["next", "throw", "return"].forEach(function(method) {
+          prototype[method] = function(arg) {
+            return this._invoke(method, arg);
+          };
+        });
+      }
+
+      exports.isGeneratorFunction = function(genFun) {
+        var ctor = typeof genFun === "function" && genFun.constructor;
+        return ctor
+          ? ctor === GeneratorFunction ||
+            // For the native GeneratorFunction constructor, the best we can
+            // do is to check its .name property.
+            (ctor.displayName || ctor.name) === "GeneratorFunction"
+          : false;
+      };
+
+      exports.mark = function(genFun) {
+        if (Object.setPrototypeOf) {
+          Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
+        } else {
+          genFun.__proto__ = GeneratorFunctionPrototype;
+          if (!(toStringTagSymbol in genFun)) {
+            genFun[toStringTagSymbol] = "GeneratorFunction";
+          }
+        }
+        genFun.prototype = Object.create(Gp);
+        return genFun;
+      };
+
+      // Within the body of any async function, `await x` is transformed to
+      // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
+      // `hasOwn.call(value, "__await")` to determine if the yielded value is
+      // meant to be awaited.
+      exports.awrap = function(arg) {
+        return { __await: arg };
+      };
+
+      function AsyncIterator(generator) {
+        function invoke(method, arg, resolve, reject) {
+          var record = tryCatch(generator[method], generator, arg);
+          if (record.type === "throw") {
+            reject(record.arg);
+          } else {
+            var result = record.arg;
+            var value = result.value;
+            if (value &&
+                typeof value === "object" &&
+                hasOwn.call(value, "__await")) {
+              return Promise.resolve(value.__await).then(function(value) {
+                invoke("next", value, resolve, reject);
+              }, function(err) {
+                invoke("throw", err, resolve, reject);
+              });
+            }
+
+            return Promise.resolve(value).then(function(unwrapped) {
+              // When a yielded Promise is resolved, its final value becomes
+              // the .value of the Promise<{value,done}> result for the
+              // current iteration.
+              result.value = unwrapped;
+              resolve(result);
+            }, function(error) {
+              // If a rejected Promise was yielded, throw the rejection back
+              // into the async generator function so it can be handled there.
+              return invoke("throw", error, resolve, reject);
+            });
+          }
+        }
+
+        var previousPromise;
+
+        function enqueue(method, arg) {
+          function callInvokeWithMethodAndArg() {
+            return new Promise(function(resolve, reject) {
+              invoke(method, arg, resolve, reject);
+            });
+          }
+
+          return previousPromise =
+            // If enqueue has been called before, then we want to wait until
+            // all previous Promises have been resolved before calling invoke,
+            // so that results are always delivered in the correct order. If
+            // enqueue has not been called before, then it is important to
+            // call invoke immediately, without waiting on a callback to fire,
+            // so that the async generator function has the opportunity to do
+            // any necessary setup in a predictable way. This predictability
+            // is why the Promise constructor synchronously invokes its
+            // executor callback, and why async functions synchronously
+            // execute code before the first await. Since we implement simple
+            // async functions in terms of async generators, it is especially
+            // important to get this right, even though it requires care.
+            previousPromise ? previousPromise.then(
+              callInvokeWithMethodAndArg,
+              // Avoid propagating failures to Promises returned by later
+              // invocations of the iterator.
+              callInvokeWithMethodAndArg
+            ) : callInvokeWithMethodAndArg();
+        }
+
+        // Define the unified helper method that is used to implement .next,
+        // .throw, and .return (see defineIteratorMethods).
+        this._invoke = enqueue;
+      }
+
+      defineIteratorMethods(AsyncIterator.prototype);
+      AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+        return this;
+      };
+      exports.AsyncIterator = AsyncIterator;
+
+      // Note that simple async functions are implemented on top of
+      // AsyncIterator objects; they just return a Promise for the value of
+      // the final result produced by the iterator.
+      exports.async = function(innerFn, outerFn, self, tryLocsList) {
+        var iter = new AsyncIterator(
+          wrap(innerFn, outerFn, self, tryLocsList)
+        );
+
+        return exports.isGeneratorFunction(outerFn)
+          ? iter // If outerFn is a generator, return the full iterator.
+          : iter.next().then(function(result) {
+              return result.done ? result.value : iter.next();
+            });
+      };
+
+      function makeInvokeMethod(innerFn, self, context) {
+        var state = GenStateSuspendedStart;
+
+        return function invoke(method, arg) {
+          if (state === GenStateExecuting) {
+            throw new Error("Generator is already running");
+          }
+
+          if (state === GenStateCompleted) {
+            if (method === "throw") {
+              throw arg;
+            }
+
+            // Be forgiving, per 25.3.3.3.3 of the spec:
+            // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
+            return doneResult();
+          }
+
+          context.method = method;
+          context.arg = arg;
+
+          while (true) {
+            var delegate = context.delegate;
+            if (delegate) {
+              var delegateResult = maybeInvokeDelegate(delegate, context);
+              if (delegateResult) {
+                if (delegateResult === ContinueSentinel) continue;
+                return delegateResult;
+              }
+            }
+
+            if (context.method === "next") {
+              // Setting context._sent for legacy support of Babel's
+              // function.sent implementation.
+              context.sent = context._sent = context.arg;
+
+            } else if (context.method === "throw") {
+              if (state === GenStateSuspendedStart) {
+                state = GenStateCompleted;
+                throw context.arg;
+              }
+
+              context.dispatchException(context.arg);
+
+            } else if (context.method === "return") {
+              context.abrupt("return", context.arg);
+            }
+
+            state = GenStateExecuting;
+
+            var record = tryCatch(innerFn, self, context);
+            if (record.type === "normal") {
+              // If an exception is thrown from innerFn, we leave state ===
+              // GenStateExecuting and loop back for another invocation.
+              state = context.done
+                ? GenStateCompleted
+                : GenStateSuspendedYield;
+
+              if (record.arg === ContinueSentinel) {
+                continue;
+              }
+
+              return {
+                value: record.arg,
+                done: context.done
+              };
+
+            } else if (record.type === "throw") {
+              state = GenStateCompleted;
+              // Dispatch the exception by looping back around to the
+              // context.dispatchException(context.arg) call above.
+              context.method = "throw";
+              context.arg = record.arg;
+            }
+          }
+        };
+      }
+
+      // Call delegate.iterator[context.method](context.arg) and handle the
+      // result, either by returning a { value, done } result from the
+      // delegate iterator, or by modifying context.method and context.arg,
+      // setting context.delegate to null, and returning the ContinueSentinel.
+      function maybeInvokeDelegate(delegate, context) {
+        var method = delegate.iterator[context.method];
+        if (method === undefined$1) {
+          // A .throw or .return when the delegate iterator has no .throw
+          // method always terminates the yield* loop.
+          context.delegate = null;
+
+          if (context.method === "throw") {
+            // Note: ["return"] must be used for ES3 parsing compatibility.
+            if (delegate.iterator["return"]) {
+              // If the delegate iterator has a return method, give it a
+              // chance to clean up.
+              context.method = "return";
+              context.arg = undefined$1;
+              maybeInvokeDelegate(delegate, context);
+
+              if (context.method === "throw") {
+                // If maybeInvokeDelegate(context) changed context.method from
+                // "return" to "throw", let that override the TypeError below.
+                return ContinueSentinel;
+              }
+            }
+
+            context.method = "throw";
+            context.arg = new TypeError(
+              "The iterator does not provide a 'throw' method");
+          }
+
+          return ContinueSentinel;
+        }
+
+        var record = tryCatch(method, delegate.iterator, context.arg);
+
+        if (record.type === "throw") {
+          context.method = "throw";
+          context.arg = record.arg;
+          context.delegate = null;
+          return ContinueSentinel;
+        }
+
+        var info = record.arg;
+
+        if (! info) {
+          context.method = "throw";
+          context.arg = new TypeError("iterator result is not an object");
+          context.delegate = null;
+          return ContinueSentinel;
+        }
+
+        if (info.done) {
+          // Assign the result of the finished delegate to the temporary
+          // variable specified by delegate.resultName (see delegateYield).
+          context[delegate.resultName] = info.value;
+
+          // Resume execution at the desired location (see delegateYield).
+          context.next = delegate.nextLoc;
+
+          // If context.method was "throw" but the delegate handled the
+          // exception, let the outer generator proceed normally. If
+          // context.method was "next", forget context.arg since it has been
+          // "consumed" by the delegate iterator. If context.method was
+          // "return", allow the original .return call to continue in the
+          // outer generator.
+          if (context.method !== "return") {
+            context.method = "next";
+            context.arg = undefined$1;
+          }
+
+        } else {
+          // Re-yield the result returned by the delegate method.
+          return info;
+        }
+
+        // The delegate iterator is finished, so forget it and continue with
+        // the outer generator.
+        context.delegate = null;
+        return ContinueSentinel;
+      }
+
+      // Define Generator.prototype.{next,throw,return} in terms of the
+      // unified ._invoke helper method.
+      defineIteratorMethods(Gp);
+
+      Gp[toStringTagSymbol] = "Generator";
+
+      // A Generator should always return itself as the iterator object when the
+      // @@iterator function is called on it. Some browsers' implementations of the
+      // iterator prototype chain incorrectly implement this, causing the Generator
+      // object to not be returned from this call. This ensures that doesn't happen.
+      // See https://github.com/facebook/regenerator/issues/274 for more details.
+      Gp[iteratorSymbol] = function() {
+        return this;
+      };
+
+      Gp.toString = function() {
+        return "[object Generator]";
+      };
+
+      function pushTryEntry(locs) {
+        var entry = { tryLoc: locs[0] };
+
+        if (1 in locs) {
+          entry.catchLoc = locs[1];
+        }
+
+        if (2 in locs) {
+          entry.finallyLoc = locs[2];
+          entry.afterLoc = locs[3];
+        }
+
+        this.tryEntries.push(entry);
+      }
+
+      function resetTryEntry(entry) {
+        var record = entry.completion || {};
+        record.type = "normal";
+        delete record.arg;
+        entry.completion = record;
+      }
+
+      function Context(tryLocsList) {
+        // The root entry object (effectively a try statement without a catch
+        // or a finally block) gives us a place to store values thrown from
+        // locations where there is no enclosing try statement.
+        this.tryEntries = [{ tryLoc: "root" }];
+        tryLocsList.forEach(pushTryEntry, this);
+        this.reset(true);
+      }
+
+      exports.keys = function(object) {
+        var keys = [];
+        for (var key in object) {
+          keys.push(key);
+        }
+        keys.reverse();
+
+        // Rather than returning an object with a next method, we keep
+        // things simple and return the next function itself.
+        return function next() {
+          while (keys.length) {
+            var key = keys.pop();
+            if (key in object) {
+              next.value = key;
+              next.done = false;
+              return next;
+            }
+          }
+
+          // To avoid creating an additional object, we just hang the .value
+          // and .done properties off the next function object itself. This
+          // also ensures that the minifier will not anonymize the function.
+          next.done = true;
+          return next;
+        };
+      };
+
+      function values(iterable) {
+        if (iterable) {
+          var iteratorMethod = iterable[iteratorSymbol];
+          if (iteratorMethod) {
+            return iteratorMethod.call(iterable);
+          }
+
+          if (typeof iterable.next === "function") {
+            return iterable;
+          }
+
+          if (!isNaN(iterable.length)) {
+            var i = -1, next = function next() {
+              while (++i < iterable.length) {
+                if (hasOwn.call(iterable, i)) {
+                  next.value = iterable[i];
+                  next.done = false;
+                  return next;
+                }
+              }
+
+              next.value = undefined$1;
+              next.done = true;
+
+              return next;
+            };
+
+            return next.next = next;
+          }
+        }
+
+        // Return an iterator with no values.
+        return { next: doneResult };
+      }
+      exports.values = values;
+
+      function doneResult() {
+        return { value: undefined$1, done: true };
+      }
+
+      Context.prototype = {
+        constructor: Context,
+
+        reset: function(skipTempReset) {
+          this.prev = 0;
+          this.next = 0;
+          // Resetting context._sent for legacy support of Babel's
+          // function.sent implementation.
+          this.sent = this._sent = undefined$1;
+          this.done = false;
+          this.delegate = null;
+
+          this.method = "next";
+          this.arg = undefined$1;
+
+          this.tryEntries.forEach(resetTryEntry);
+
+          if (!skipTempReset) {
+            for (var name in this) {
+              // Not sure about the optimal order of these conditions:
+              if (name.charAt(0) === "t" &&
+                  hasOwn.call(this, name) &&
+                  !isNaN(+name.slice(1))) {
+                this[name] = undefined$1;
+              }
+            }
+          }
+        },
+
+        stop: function() {
+          this.done = true;
+
+          var rootEntry = this.tryEntries[0];
+          var rootRecord = rootEntry.completion;
+          if (rootRecord.type === "throw") {
+            throw rootRecord.arg;
+          }
+
+          return this.rval;
+        },
+
+        dispatchException: function(exception) {
+          if (this.done) {
+            throw exception;
+          }
+
+          var context = this;
+          function handle(loc, caught) {
+            record.type = "throw";
+            record.arg = exception;
+            context.next = loc;
+
+            if (caught) {
+              // If the dispatched exception was caught by a catch block,
+              // then let that catch block handle the exception normally.
+              context.method = "next";
+              context.arg = undefined$1;
+            }
+
+            return !! caught;
+          }
+
+          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+            var entry = this.tryEntries[i];
+            var record = entry.completion;
+
+            if (entry.tryLoc === "root") {
+              // Exception thrown outside of any try block that could handle
+              // it, so set the completion value of the entire function to
+              // throw the exception.
+              return handle("end");
+            }
+
+            if (entry.tryLoc <= this.prev) {
+              var hasCatch = hasOwn.call(entry, "catchLoc");
+              var hasFinally = hasOwn.call(entry, "finallyLoc");
+
+              if (hasCatch && hasFinally) {
+                if (this.prev < entry.catchLoc) {
+                  return handle(entry.catchLoc, true);
+                } else if (this.prev < entry.finallyLoc) {
+                  return handle(entry.finallyLoc);
+                }
+
+              } else if (hasCatch) {
+                if (this.prev < entry.catchLoc) {
+                  return handle(entry.catchLoc, true);
+                }
+
+              } else if (hasFinally) {
+                if (this.prev < entry.finallyLoc) {
+                  return handle(entry.finallyLoc);
+                }
+
+              } else {
+                throw new Error("try statement without catch or finally");
+              }
+            }
+          }
+        },
+
+        abrupt: function(type, arg) {
+          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+            var entry = this.tryEntries[i];
+            if (entry.tryLoc <= this.prev &&
+                hasOwn.call(entry, "finallyLoc") &&
+                this.prev < entry.finallyLoc) {
+              var finallyEntry = entry;
+              break;
+            }
+          }
+
+          if (finallyEntry &&
+              (type === "break" ||
+               type === "continue") &&
+              finallyEntry.tryLoc <= arg &&
+              arg <= finallyEntry.finallyLoc) {
+            // Ignore the finally entry if control is not jumping to a
+            // location outside the try/catch block.
+            finallyEntry = null;
+          }
+
+          var record = finallyEntry ? finallyEntry.completion : {};
+          record.type = type;
+          record.arg = arg;
+
+          if (finallyEntry) {
+            this.method = "next";
+            this.next = finallyEntry.finallyLoc;
+            return ContinueSentinel;
+          }
+
+          return this.complete(record);
+        },
+
+        complete: function(record, afterLoc) {
+          if (record.type === "throw") {
+            throw record.arg;
+          }
+
+          if (record.type === "break" ||
+              record.type === "continue") {
+            this.next = record.arg;
+          } else if (record.type === "return") {
+            this.rval = this.arg = record.arg;
+            this.method = "return";
+            this.next = "end";
+          } else if (record.type === "normal" && afterLoc) {
+            this.next = afterLoc;
+          }
+
+          return ContinueSentinel;
+        },
+
+        finish: function(finallyLoc) {
+          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+            var entry = this.tryEntries[i];
+            if (entry.finallyLoc === finallyLoc) {
+              this.complete(entry.completion, entry.afterLoc);
+              resetTryEntry(entry);
+              return ContinueSentinel;
+            }
+          }
+        },
+
+        "catch": function(tryLoc) {
+          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+            var entry = this.tryEntries[i];
+            if (entry.tryLoc === tryLoc) {
+              var record = entry.completion;
+              if (record.type === "throw") {
+                var thrown = record.arg;
+                resetTryEntry(entry);
+              }
+              return thrown;
+            }
+          }
+
+          // The context.catch method must only be called with a location
+          // argument that corresponds to a known catch block.
+          throw new Error("illegal catch attempt");
+        },
+
+        delegateYield: function(iterable, resultName, nextLoc) {
+          this.delegate = {
+            iterator: values(iterable),
+            resultName: resultName,
+            nextLoc: nextLoc
+          };
+
+          if (this.method === "next") {
+            // Deliberately forget the last sent value so that we don't
+            // accidentally pass it on to the delegate.
+            this.arg = undefined$1;
+          }
+
+          return ContinueSentinel;
+        }
+      };
+
+      // Regardless of whether this script is executing as a CommonJS module
+      // or not, return the runtime object so that we can declare the variable
+      // regeneratorRuntime in the outer scope, which allows this module to be
+      // injected easily by `bin/regenerator --include-runtime script.js`.
+      return exports;
+
+    }(
+      // If this script is executing as a CommonJS module, use module.exports
+      // as the regeneratorRuntime namespace. Otherwise create a new empty
+      // object. Either way, the resulting object will be used to initialize
+      // the regeneratorRuntime variable at the top of this file.
+       module.exports 
+    ));
+
+    try {
+      regeneratorRuntime = runtime;
+    } catch (accidentalStrictMode) {
+      // This module should not be running in strict mode, so the above
+      // assignment should always work unless something is misconfigured. Just
+      // in case runtime.js accidentally runs in strict mode, we can escape
+      // strict mode using a global Function call. This could conceivably fail
+      // if a Content Security Policy forbids using Function, but in that case
+      // the proper solution is to fix the accidental strict mode problem. If
+      // you've misconfigured your bundler to force strict mode and applied a
+      // CSP to forbid Function, and you're not willing to fix either of those
+      // problems, please detail your unique predicament in a GitHub issue.
+      Function("r", "regeneratorRuntime = r")(runtime);
+    }
+    });
+
+    var createProperty = function (object, key, value) {
+      var propertyKey = toPrimitive(key);
+      if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
+      else object[propertyKey] = value;
+    };
+
+    var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+    var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+    var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+    var IS_CONCAT_SPREADABLE_SUPPORT = !fails(function () {
+      var array = [];
+      array[IS_CONCAT_SPREADABLE] = false;
+      return array.concat()[0] !== array;
+    });
+
+    var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+    var isConcatSpreadable = function (O) {
+      if (!isObject(O)) return false;
+      var spreadable = O[IS_CONCAT_SPREADABLE];
+      return spreadable !== undefined ? !!spreadable : isArray(O);
+    };
+
+    var FORCED$1 = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+    // `Array.prototype.concat` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.concat
+    // with adding support of @@isConcatSpreadable and @@species
+    _export({ target: 'Array', proto: true, forced: FORCED$1 }, {
+      concat: function concat(arg) { // eslint-disable-line no-unused-vars
+        var O = toObject(this);
+        var A = arraySpeciesCreate(O, 0);
+        var n = 0;
+        var i, k, length, len, E;
+        for (i = -1, length = arguments.length; i < length; i++) {
+          E = i === -1 ? O : arguments[i];
+          if (isConcatSpreadable(E)) {
+            len = toLength(E.length);
+            if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+            for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+          } else {
+            if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+            createProperty(A, n++, E);
+          }
+        }
+        A.length = n;
+        return A;
+      }
+    });
+
+    // `Array.from` method implementation
+    // https://tc39.github.io/ecma262/#sec-array.from
+    var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
+      var O = toObject(arrayLike);
+      var C = typeof this == 'function' ? this : Array;
+      var argumentsLength = arguments.length;
+      var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
+      var mapping = mapfn !== undefined;
+      var index = 0;
+      var iteratorMethod = getIteratorMethod(O);
+      var length, result, step, iterator;
+      if (mapping) mapfn = bindContext(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
+      // if the target is not iterable or it's an array with the default iterator - use a simple case
+      if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
+        iterator = iteratorMethod.call(O);
+        result = new C();
+        for (;!(step = iterator.next()).done; index++) {
+          createProperty(result, index, mapping
+            ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true)
+            : step.value
+          );
+        }
+      } else {
+        length = toLength(O.length);
+        result = new C(length);
+        for (;length > index; index++) {
+          createProperty(result, index, mapping ? mapfn(O[index], index) : O[index]);
+        }
+      }
+      result.length = index;
+      return result;
+    };
+
+    var INCORRECT_ITERATION$1 = !checkCorrectnessOfIteration(function (iterable) {
+      Array.from(iterable);
+    });
+
+    // `Array.from` method
+    // https://tc39.github.io/ecma262/#sec-array.from
+    _export({ target: 'Array', stat: true, forced: INCORRECT_ITERATION$1 }, {
+      from: arrayFrom
+    });
+
+    var correctPrototypeGetter = !fails(function () {
+      function F() { /* empty */ }
+      F.prototype.constructor = null;
+      return Object.getPrototypeOf(new F()) !== F.prototype;
+    });
+
+    var IE_PROTO$1 = sharedKey('IE_PROTO');
+    var ObjectPrototype$1 = Object.prototype;
+
+    // `Object.getPrototypeOf` method
+    // https://tc39.github.io/ecma262/#sec-object.getprototypeof
+    var objectGetPrototypeOf = correctPrototypeGetter ? Object.getPrototypeOf : function (O) {
+      O = toObject(O);
+      if (has(O, IE_PROTO$1)) return O[IE_PROTO$1];
+      if (typeof O.constructor == 'function' && O instanceof O.constructor) {
+        return O.constructor.prototype;
+      } return O instanceof Object ? ObjectPrototype$1 : null;
+    };
+
+    var ITERATOR$3 = wellKnownSymbol('iterator');
+    var BUGGY_SAFARI_ITERATORS = false;
+
+    var returnThis = function () { return this; };
+
+    // `%IteratorPrototype%` object
+    // https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
+    var IteratorPrototype, PrototypeOfArrayIteratorPrototype, arrayIterator;
+
+    if ([].keys) {
+      arrayIterator = [].keys();
+      // Safari 8 has buggy iterators w/o `next`
+      if (!('next' in arrayIterator)) BUGGY_SAFARI_ITERATORS = true;
+      else {
+        PrototypeOfArrayIteratorPrototype = objectGetPrototypeOf(objectGetPrototypeOf(arrayIterator));
+        if (PrototypeOfArrayIteratorPrototype !== Object.prototype) IteratorPrototype = PrototypeOfArrayIteratorPrototype;
+      }
+    }
+
+    if (IteratorPrototype == undefined) IteratorPrototype = {};
+
+    // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
+    if ( !has(IteratorPrototype, ITERATOR$3)) hide(IteratorPrototype, ITERATOR$3, returnThis);
+
+    var iteratorsCore = {
+      IteratorPrototype: IteratorPrototype,
+      BUGGY_SAFARI_ITERATORS: BUGGY_SAFARI_ITERATORS
+    };
+
+    var IteratorPrototype$1 = iteratorsCore.IteratorPrototype;
+
+
+
+
+
+    var returnThis$1 = function () { return this; };
+
+    var createIteratorConstructor = function (IteratorConstructor, NAME, next) {
+      var TO_STRING_TAG = NAME + ' Iterator';
+      IteratorConstructor.prototype = objectCreate(IteratorPrototype$1, { next: createPropertyDescriptor(1, next) });
+      setToStringTag(IteratorConstructor, TO_STRING_TAG, false);
+      iterators[TO_STRING_TAG] = returnThis$1;
+      return IteratorConstructor;
+    };
+
+    var aPossiblePrototype = function (it) {
+      if (!isObject(it) && it !== null) {
+        throw TypeError("Can't set " + String(it) + ' as a prototype');
+      } return it;
+    };
+
+    // `Object.setPrototypeOf` method
+    // https://tc39.github.io/ecma262/#sec-object.setprototypeof
+    // Works with __proto__ only. Old v8 can't work with null proto objects.
+    /* eslint-disable no-proto */
+    var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
+      var CORRECT_SETTER = false;
+      var test = {};
+      var setter;
+      try {
+        setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
+        setter.call(test, []);
+        CORRECT_SETTER = test instanceof Array;
+      } catch (error) { /* empty */ }
+      return function setPrototypeOf(O, proto) {
+        anObject(O);
+        aPossiblePrototype(proto);
+        if (CORRECT_SETTER) setter.call(O, proto);
+        else O.__proto__ = proto;
+        return O;
+      };
+    }() : undefined);
+
+    var IteratorPrototype$2 = iteratorsCore.IteratorPrototype;
+    var BUGGY_SAFARI_ITERATORS$1 = iteratorsCore.BUGGY_SAFARI_ITERATORS;
+    var ITERATOR$4 = wellKnownSymbol('iterator');
+    var KEYS = 'keys';
+    var VALUES = 'values';
+    var ENTRIES = 'entries';
+
+    var returnThis$2 = function () { return this; };
+
+    var defineIterator = function (Iterable, NAME, IteratorConstructor, next, DEFAULT, IS_SET, FORCED) {
+      createIteratorConstructor(IteratorConstructor, NAME, next);
+
+      var getIterationMethod = function (KIND) {
+        if (KIND === DEFAULT && defaultIterator) return defaultIterator;
+        if (!BUGGY_SAFARI_ITERATORS$1 && KIND in IterablePrototype) return IterablePrototype[KIND];
+        switch (KIND) {
+          case KEYS: return function keys() { return new IteratorConstructor(this, KIND); };
+          case VALUES: return function values() { return new IteratorConstructor(this, KIND); };
+          case ENTRIES: return function entries() { return new IteratorConstructor(this, KIND); };
+        } return function () { return new IteratorConstructor(this); };
+      };
+
+      var TO_STRING_TAG = NAME + ' Iterator';
+      var INCORRECT_VALUES_NAME = false;
+      var IterablePrototype = Iterable.prototype;
+      var nativeIterator = IterablePrototype[ITERATOR$4]
+        || IterablePrototype['@@iterator']
+        || DEFAULT && IterablePrototype[DEFAULT];
+      var defaultIterator = !BUGGY_SAFARI_ITERATORS$1 && nativeIterator || getIterationMethod(DEFAULT);
+      var anyNativeIterator = NAME == 'Array' ? IterablePrototype.entries || nativeIterator : nativeIterator;
+      var CurrentIteratorPrototype, methods, KEY;
+
+      // fix native
+      if (anyNativeIterator) {
+        CurrentIteratorPrototype = objectGetPrototypeOf(anyNativeIterator.call(new Iterable()));
+        if (IteratorPrototype$2 !== Object.prototype && CurrentIteratorPrototype.next) {
+          if ( objectGetPrototypeOf(CurrentIteratorPrototype) !== IteratorPrototype$2) {
+            if (objectSetPrototypeOf) {
+              objectSetPrototypeOf(CurrentIteratorPrototype, IteratorPrototype$2);
+            } else if (typeof CurrentIteratorPrototype[ITERATOR$4] != 'function') {
+              hide(CurrentIteratorPrototype, ITERATOR$4, returnThis$2);
+            }
+          }
+          // Set @@toStringTag to native iterators
+          setToStringTag(CurrentIteratorPrototype, TO_STRING_TAG, true);
+        }
+      }
+
+      // fix Array#{values, @@iterator}.name in V8 / FF
+      if (DEFAULT == VALUES && nativeIterator && nativeIterator.name !== VALUES) {
+        INCORRECT_VALUES_NAME = true;
+        defaultIterator = function values() { return nativeIterator.call(this); };
+      }
+
+      // define iterator
+      if ( IterablePrototype[ITERATOR$4] !== defaultIterator) {
+        hide(IterablePrototype, ITERATOR$4, defaultIterator);
+      }
+      iterators[NAME] = defaultIterator;
+
+      // export additional methods
+      if (DEFAULT) {
+        methods = {
+          values: getIterationMethod(VALUES),
+          keys: IS_SET ? defaultIterator : getIterationMethod(KEYS),
+          entries: getIterationMethod(ENTRIES)
+        };
+        if (FORCED) for (KEY in methods) {
+          if (BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME || !(KEY in IterablePrototype)) {
+            redefine(IterablePrototype, KEY, methods[KEY]);
+          }
+        } else _export({ target: NAME, proto: true, forced: BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME }, methods);
+      }
+
+      return methods;
+    };
+
+    var ARRAY_ITERATOR = 'Array Iterator';
+    var setInternalState$1 = internalState.set;
+    var getInternalState$1 = internalState.getterFor(ARRAY_ITERATOR);
+
+    // `Array.prototype.entries` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.entries
+    // `Array.prototype.keys` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.keys
+    // `Array.prototype.values` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.values
+    // `Array.prototype[@@iterator]` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
+    // `CreateArrayIterator` internal method
+    // https://tc39.github.io/ecma262/#sec-createarrayiterator
+    var es_array_iterator = defineIterator(Array, 'Array', function (iterated, kind) {
+      setInternalState$1(this, {
+        type: ARRAY_ITERATOR,
+        target: toIndexedObject(iterated), // target
+        index: 0,                          // next index
+        kind: kind                         // kind
+      });
+    // `%ArrayIteratorPrototype%.next` method
+    // https://tc39.github.io/ecma262/#sec-%arrayiteratorprototype%.next
+    }, function () {
+      var state = getInternalState$1(this);
+      var target = state.target;
+      var kind = state.kind;
+      var index = state.index++;
+      if (!target || index >= target.length) {
+        state.target = undefined;
+        return { value: undefined, done: true };
+      }
+      if (kind == 'keys') return { value: index, done: false };
+      if (kind == 'values') return { value: target[index], done: false };
+      return { value: [index, target[index]], done: false };
+    }, 'values');
+
+    // argumentsList[@@iterator] is %ArrayProto_values%
+    // https://tc39.github.io/ecma262/#sec-createunmappedargumentsobject
+    // https://tc39.github.io/ecma262/#sec-createmappedargumentsobject
+    iterators.Arguments = iterators.Array;
+
+    // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+    addToUnscopables('keys');
+    addToUnscopables('values');
+    addToUnscopables('entries');
+
+    var $map = arrayIteration.map;
+
+
+    // `Array.prototype.map` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.map
+    // with adding support of @@species
+    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('map') }, {
+      map: function map(callbackfn /* , thisArg */) {
+        return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+      }
+    });
+
+    // `String.prototype.{ codePointAt, at }` methods implementation
+    var createMethod$4 = function (CONVERT_TO_STRING) {
+      return function ($this, pos) {
+        var S = String(requireObjectCoercible($this));
+        var position = toInteger(pos);
+        var size = S.length;
+        var first, second;
+        if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
+        first = S.charCodeAt(position);
+        return first < 0xD800 || first > 0xDBFF || position + 1 === size
+          || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
+            ? CONVERT_TO_STRING ? S.charAt(position) : first
+            : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
+      };
+    };
+
+    var stringMultibyte = {
+      // `String.prototype.codePointAt` method
+      // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+      codeAt: createMethod$4(false),
+      // `String.prototype.at` method
+      // https://github.com/mathiasbynens/String.prototype.at
+      charAt: createMethod$4(true)
+    };
+
+    var charAt = stringMultibyte.charAt;
+
+
+
+    var STRING_ITERATOR = 'String Iterator';
+    var setInternalState$2 = internalState.set;
+    var getInternalState$2 = internalState.getterFor(STRING_ITERATOR);
+
+    // `String.prototype[@@iterator]` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
+    defineIterator(String, 'String', function (iterated) {
+      setInternalState$2(this, {
+        type: STRING_ITERATOR,
+        string: String(iterated),
+        index: 0
+      });
+    // `%StringIteratorPrototype%.next` method
+    // https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
+    }, function next() {
+      var state = getInternalState$2(this);
+      var string = state.string;
+      var index = state.index;
+      var point;
+      if (index >= string.length) return { value: undefined, done: true };
+      point = charAt(string, index);
+      state.index += point.length;
+      return { value: point, done: false };
+    });
+
+    var ITERATOR$5 = wellKnownSymbol('iterator');
+    var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
+    var ArrayValues = es_array_iterator.values;
+
+    for (var COLLECTION_NAME$1 in domIterables) {
+      var Collection$1 = global_1[COLLECTION_NAME$1];
+      var CollectionPrototype$1 = Collection$1 && Collection$1.prototype;
+      if (CollectionPrototype$1) {
+        // some Chrome versions have non-configurable methods on DOMTokenList
+        if (CollectionPrototype$1[ITERATOR$5] !== ArrayValues) try {
+          hide(CollectionPrototype$1, ITERATOR$5, ArrayValues);
+        } catch (error) {
+          CollectionPrototype$1[ITERATOR$5] = ArrayValues;
+        }
+        if (!CollectionPrototype$1[TO_STRING_TAG$3]) hide(CollectionPrototype$1, TO_STRING_TAG$3, COLLECTION_NAME$1);
+        if (domIterables[COLLECTION_NAME$1]) for (var METHOD_NAME in es_array_iterator) {
+          // some Chrome versions have non-configurable methods on DOMTokenList
+          if (CollectionPrototype$1[METHOD_NAME] !== es_array_iterator[METHOD_NAME]) try {
+            hide(CollectionPrototype$1, METHOD_NAME, es_array_iterator[METHOD_NAME]);
+          } catch (error) {
+            CollectionPrototype$1[METHOD_NAME] = es_array_iterator[METHOD_NAME];
+          }
+        }
+      }
+    }
+
+    function getMockUsers() {
+      return _getMockUsers.apply(this, arguments);
+    }
+
+    function _getMockUsers() {
+      _getMockUsers = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee2() {
+        var count,
+            gender,
+            res,
+            data,
+            ntkData,
+            _args2 = arguments;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                count = _args2.length > 0 && _args2[0] !== undefined ? _args2[0] : 20;
+                gender = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : '';
+                _context2.next = 4;
+                return fetch("https://randomuser.me/api/?results=".concat(count, "&gender=").concat(gender, "&seed=alondanin"));
+
+              case 4:
+                res = _context2.sent;
+                _context2.next = 7;
+                return res.json();
+
+              case 7:
+                data = _context2.sent;
+                ntkData = data.results.map(function (user) {
+                  var ntkPerson = {
+                    ntkDetails: {
+                      id: "".concat(user.login.uid),
+                      name: "".concat(user.name.first, " ").concat(user.name.last),
+                      age: user.dob.age,
+                      imageUrl: "".concat(user.picture.large),
+                      moreDetails: {
+                        about: "Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the browser, Svelte shifts that work into a compile step that happens when you build your app.\n\nInstead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.",
+                        hobbies: "bike, dance, comedies",
+                        email: "".concat(user.email)
+                      }
+                    },
+                    toApproveList: [],
+                    fromApproveList: []
+                  };
+                  return ntkPerson;
+                });
+                return _context2.abrupt("return", ntkData);
+
+              case 10:
+              case "end":
+                return _context2.stop();
+            }
+          }
+        }, _callee2);
+      }));
+      return _getMockUsers.apply(this, arguments);
+    }
+
+    var IDX=36, HEX='';
+    while (IDX--) HEX += IDX.toString(36);
+
+    function uid$1 (len) {
+    	var str='', num = len || 11;
+    	while (num--) str += HEX[Math.random() * 36 | 0];
+    	return str;
+    }
+
+    var LoginStatus;
+
+    (function (LoginStatus) {
+      LoginStatus[LoginStatus["Pending"] = 1] = "Pending";
+      LoginStatus[LoginStatus["LoggedIn"] = 2] = "LoggedIn";
+      LoginStatus[LoginStatus["LoginFailed"] = 3] = "LoginFailed";
+    })(LoginStatus || (LoginStatus = {}));
+
+    var $findIndex = arrayIteration.findIndex;
+
+
+    var FIND_INDEX = 'findIndex';
+    var SKIPS_HOLES$1 = true;
+
+    // Shouldn't skip holes
+    if (FIND_INDEX in []) Array(1)[FIND_INDEX](function () { SKIPS_HOLES$1 = false; });
+
+    // `Array.prototype.findIndex` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.findindex
+    _export({ target: 'Array', proto: true, forced: SKIPS_HOLES$1 }, {
+      findIndex: function findIndex(callbackfn /* , that = undefined */) {
+        return $findIndex(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+      }
+    });
+
+    // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+    addToUnscopables(FIND_INDEX);
+
+    var ntkStore = writable({
+      ntkPersons: [],
+      hasFetched: false
+    });
+    var customNtkStore = {
+      subscribe: ntkStore.subscribe,
+      isEmpty: function isEmpty() {
+        var store = get_store_value(ntkStore);
+        return !store.hasFetched;
+      },
+      setStoreAsync: function () {
+        var _setStoreAsync = _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee() {
+          var ntks;
+          return regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.prev = 0;
+                  console.log('setStoreAsync');
+                  _context.next = 4;
+                  return BLM.fetchNtks();
+
+                case 4:
+                  ntks = _context.sent;
+                  ntkStore.update(function (state) {
+                    return {
+                      ntkPersons: _toConsumableArray(ntks),
+                      hasFetched: true
+                    };
+                  });
+                  _context.next = 11;
+                  break;
+
+                case 8:
+                  _context.prev = 8;
+                  _context.t0 = _context["catch"](0);
+                  console.log(_context.t0);
+
+                case 11:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee, null, [[0, 8]]);
+        }));
+
+        function setStoreAsync() {
+          return _setStoreAsync.apply(this, arguments);
+        }
+
+        return setStoreAsync;
+      }(),
+      onMarkedChanged: function () {
+        var _onMarkedChanged = _asyncToGenerator(
+        /*#__PURE__*/
+        regeneratorRuntime.mark(function _callee2(fromNtkId) {
+          return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            while (1) {
+              switch (_context2.prev = _context2.next) {
+                case 0:
+                  ntkStore.update(function (state) {
+                    var ntkp = _toConsumableArray(state.ntkPersons);
+
+                    var foundIndex = ntkp.findIndex(function (ntkPerson) {
+                      return ntkPerson.ntkDetails.id === fromNtkId;
+                    });
+
+                    if (foundIndex === -1) {
+                      throw new Error('No person was found to update');
+                    }
+
+                    var fromPerson = ntkp[foundIndex];
+                    var me = BLM.getCurrentUser();
+                    fromPerson.toApproveList = fromPerson.toApproveList || [];
+                    var foundItem = fromPerson.toApproveList.find(function (item) {
+                      return item.id === me.ntkDetails.id;
+                    });
+
+                    if (foundItem) {
+                      fromPerson.toApproveList = fromPerson.toApproveList.filter(function (item) {
+                        return item.id !== me.ntkDetails.id;
+                      });
+                      me.fromApproveList = me.fromApproveList.filter(function (item) {
+                        return item.id !== fromNtkId;
+                      });
+                    } else {
+                      fromPerson.toApproveList.push({
+                        connectionStatus: ConnectionStatus.pending,
+                        id: me.ntkDetails.id
+                      });
+                      me.fromApproveList = me.fromApproveList || [];
+                      me.fromApproveList.push({
+                        connectionStatus: ConnectionStatus.pending,
+                        id: fromNtkId
+                      });
+                    }
+
+                    fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                      method: 'DELETE',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    }).then(function () {
+                      fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                        method: 'POST',
+                        body: JSON.stringify(ntkp),
+                        headers: {
+                          'Content-Type': 'application/json'
+                        }
+                      });
+                    });
+                    return {
+                      ntkPersons: ntkp,
+                      hasFetched: state.hasFetched
+                    };
+                  });
+
+                case 1:
+                case "end":
+                  return _context2.stop();
+              }
+            }
+          }, _callee2);
+        }));
+
+        function onMarkedChanged(_x) {
+          return _onMarkedChanged.apply(this, arguments);
+        }
+
+        return onMarkedChanged;
+      }(),
+      onApprovalChanged: function onApprovalChanged(toNtkId, isApproved) {
+        ntkStore.update(function (state) {
+          var ntkp = state.ntkPersons;
+          var foundIndex = ntkp.findIndex(function (ntkPerson) {
+            return ntkPerson.ntkDetails.id === toNtkId;
+          });
+
+          if (foundIndex === -1) {
+            throw new Error('No person was found to update');
+          }
+
+          var currentPerson = BLM.getCurrentUser();
+          var otherPerson = ntkp[foundIndex]; //Update other person with what the current person did with his friendship request:
+
+          var otherPersonFromApprovalDetails = otherPerson.fromApproveList.find(function (details) {
+            return details.id === currentPerson.ntkDetails.id;
+          });
+          otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.resolved : ConnectionStatus.rejected; // Update current Perons with the same details in his to list:
+
+          var curentPersonToApprovalDetails = currentPerson.toApproveList.find(function (details) {
+            return details.id === toNtkId;
+          });
+          curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.resolved : ConnectionStatus.rejected;
+          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function () {
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+              method: 'POST',
+              body: JSON.stringify(ntkp),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+          });
+          return _objectSpread2({}, state);
+        });
+      },
+      registerUser: function registerUser(user) {
+        ntkStore.update(function (state) {
+          var ntkp = state.ntkPersons;
+          var newNTK = {
+            ntkDetails: _objectSpread2({}, user, {
+              id: uid$1()
+            }),
+            toApproveList: [],
+            fromApproveList: []
+          };
+          ntkp.push(newNTK);
+          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function () {
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+              method: 'POST',
+              body: JSON.stringify(ntkp),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+          });
+          return _objectSpread2({}, state);
+        });
+      },
+      updateStore: function updateStore(newState) {
+        ntkStore.update(function () {
+          return newState;
+        });
+      } // export function getMyNtks(): NTKPerson[] {
+      //     const store = get(ntkStore);
+      //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
+      //         return ntk.isMarked
+      //     })
+      //     return ntks
+      // }
+      //
+      // export function getNtks(): NTKPerson[] {
+      //     const store = get(ntkStore);
+      //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
+      //         return !ntk.isMarked
+      //     })
+      //     return ntks
+      // }
+
+    };
+
+    var appStatusStore = writable({
+      loginStatus: LoginStatus.Pending,
+      currentUser: null
+    });
+    var customAppStatusStore = {
+      subscribe: appStatusStore.subscribe,
+      onLogin: function onLogin(loginDetails) {
+        appStatusStore.update(function (state) {
+          return {
+            loginStatus: loginDetails.status,
+            currentUser: loginDetails.currentUser
+          };
+        });
+      },
+      onLogout: function onLogout() {
+        appStatusStore.update(function (state) {
+          return {
+            loginStatus: LoginStatus.Pending,
+            currentUser: null
+          };
+        });
+      },
+      getCurrentUser: function getCurrentUser() {
+        var store = get_store_value(appStatusStore);
+        return store.currentUser;
+      }
+    };
+
+    var BLM =
+    /*#__PURE__*/
+    function () {
+      function BLM() {
+        _classCallCheck(this, BLM);
+      }
+
+      _createClass(BLM, null, [{
+        key: "setAppData",
+        value: function () {
+          var _setAppData = _asyncToGenerator(
+          /*#__PURE__*/
+          regeneratorRuntime.mark(function _callee() {
+            return regeneratorRuntime.wrap(function _callee$(_context) {
+              while (1) {
+                switch (_context.prev = _context.next) {
+                  case 0:
+                    customNtkStore.setStoreAsync();
+
+                  case 1:
+                  case "end":
+                    return _context.stop();
+                }
+              }
+            }, _callee);
+          }));
+
+          function setAppData() {
+            return _setAppData.apply(this, arguments);
+          }
+
+          return setAppData;
+        }()
+      }, {
+        key: "fetchNtks",
+        value: function () {
+          var _fetchNtks = _asyncToGenerator(
+          /*#__PURE__*/
+          regeneratorRuntime.mark(function _callee2() {
+            var res, data, ntks, dataArray;
+            return regeneratorRuntime.wrap(function _callee2$(_context2) {
+              while (1) {
+                switch (_context2.prev = _context2.next) {
+                  case 0:
+                    _context2.prev = 0;
+                    _context2.next = 3;
+                    return fetch('https://nice-to-know.firebaseio.com/ntkp.json');
+
+                  case 3:
+                    res = _context2.sent;
+
+                    if (!res.ok) {
+                      _context2.next = 24;
+                      break;
+                    }
+
+                    _context2.next = 7;
+                    return res.json();
+
+                  case 7:
+                    data = _context2.sent;
+
+                    if (!data) {
+                      _context2.next = 15;
+                      break;
+                    }
+
+                    dataArray = Object.values(data);
+                    _context2.next = 12;
+                    return dataArray[0];
+
+                  case 12:
+                    ntks = _context2.sent;
+                    _context2.next = 21;
+                    break;
+
+                  case 15:
+                    _context2.next = 17;
+                    return getMockUsers(150);
+
+                  case 17:
+                    ntks = _context2.sent;
+                    ntks.forEach(function (ntk, index) {
+                      ntk.ntkDetails.id = uid$1();
+                    });
+                    _context2.next = 21;
+                    return fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                      method: 'POST',
+                      body: JSON.stringify(ntks),
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+
+                  case 21:
+                    return _context2.abrupt("return", ntks);
+
+                  case 24:
+                    throw new Error("Server error");
+
+                  case 25:
+                    _context2.next = 30;
+                    break;
+
+                  case 27:
+                    _context2.prev = 27;
+                    _context2.t0 = _context2["catch"](0);
+                    console.log(_context2.t0);
+
+                  case 30:
+                  case "end":
+                    return _context2.stop();
+                }
+              }
+            }, _callee2, null, [[0, 27]]);
+          }));
+
+          function fetchNtks() {
+            return _fetchNtks.apply(this, arguments);
+          }
+
+          return fetchNtks;
+        }()
+      }, {
+        key: "login",
+        value: function () {
+          var _login = _asyncToGenerator(
+          /*#__PURE__*/
+          regeneratorRuntime.mark(function _callee3(userName) {
+            var ntks, foundNtk;
+            return regeneratorRuntime.wrap(function _callee3$(_context3) {
+              while (1) {
+                switch (_context3.prev = _context3.next) {
+                  case 0:
+                    _context3.prev = 0;
+                    ntks = BLM.getNtks();
+                    foundNtk = ntks.find(function (ntk) {
+                      return ntk.ntkDetails.name === userName.trim();
+                    });
+
+                    if (foundNtk) {
+                      customAppStatusStore.onLogin({
+                        status: LoginStatus.LoggedIn,
+                        currentUser: foundNtk
+                      });
+                    } else {
+                      customAppStatusStore.onLogin({
+                        status: LoginStatus.LoginFailed,
+                        currentUser: null
+                      });
+                    }
+
+                    _context3.next = 9;
+                    break;
+
+                  case 6:
+                    _context3.prev = 6;
+                    _context3.t0 = _context3["catch"](0);
+                    throw new Error("server error: " + _context3.t0.message);
+
+                  case 9:
+                  case "end":
+                    return _context3.stop();
+                }
+              }
+            }, _callee3, null, [[0, 6]]);
+          }));
+
+          function login(_x) {
+            return _login.apply(this, arguments);
+          }
+
+          return login;
+        }()
+      }, {
+        key: "getCurrentUser",
+        value: function getCurrentUser() {
+          try {
+            var ntks = BLM.getNtks();
+            var currentUser = customAppStatusStore.getCurrentUser();
+            console.log('==>currentUser', currentUser);
+            return currentUser ? ntks.find(function (ntk) {
+              return ntk.ntkDetails.id === currentUser.ntkDetails.id;
+            }) : null;
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      }, {
+        key: "register",
+        value: function register(newUser) {
+          var state = get_store_value(customNtkStore);
+          var ntks = state ? state.ntkPersons : [];
+          var newNTK = {
+            ntkDetails: _objectSpread2({}, newUser, {
+              id: uid$1()
+            }),
+            toApproveList: [],
+            fromApproveList: []
+          };
+          ntks.push(newNTK);
+          console.log('register, ntks', ntks);
+          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function () {
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+              method: 'POST',
+              body: JSON.stringify(ntks),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(function () {
+              console.log('register themn, ntks', ntks);
+              customNtkStore.updateStore({
+                hasFetched: state.hasFetched,
+                ntkPersons: ntks
+              });
+              customAppStatusStore.onLogin({
+                status: LoginStatus.LoggedIn,
+                currentUser: newNTK
+              });
+            });
+          });
+        }
+      }, {
+        key: "logout",
+        value: function logout() {
+          customAppStatusStore.onLogout();
+        }
+      }, {
+        key: "getNtks",
+        value: function getNtks() {
+          var state = get_store_value(customNtkStore);
+          return state.ntkPersons || [];
+        }
+      }, {
+        key: "getMyNtks",
+        value: function getMyNtks() {
+          var currentUser = BLM.getCurrentUser();
+          var allNkts = BLM.getNtks();
+          var fromNtks = allNkts.filter(function (ntk) {
+            return currentUser.fromApproveList && currentUser.fromApproveList.find(function (item) {
+              return item.id === ntk.ntkDetails.id;
+            });
+          });
+          return fromNtks;
+        }
+      }, {
+        key: "getToNtks",
+        value: function getToNtks() {
+          var currentUser = BLM.getCurrentUser();
+          var allNkts = BLM.getNtks();
+          var toNtks = allNkts.filter(function (ntk) {
+            return currentUser.toApproveList && currentUser.toApproveList.find(function (item) {
+              return item.id === ntk.ntkDetails.id;
+            });
+          });
+          return toNtks;
+        }
+      }]);
+
+      return BLM;
+    }();
 
     /* node_modules\@smui\card\Card.svelte generated by Svelte v3.9.1 */
 
@@ -5359,9 +8208,9 @@ var app = (function () {
 
     const file$9 = "src\\common\\NTKCard.svelte";
 
-    // (148:10) {#if ntkPerson.ntkDetails.age}
+    // (156:10) {#if personCard.ntkDetails.age}
     function create_if_block_2(ctx) {
-    	var h5, span0, t1, span1, t2_value = ctx.ntkPerson.ntkDetails.age + "", t2;
+    	var h5, span0, t1, span1, t2_value = ctx.personCard.ntkDetails.age + "", t2;
 
     	return {
     		c: function create() {
@@ -5371,10 +8220,10 @@ var app = (function () {
     			t1 = space();
     			span1 = element("span");
     			t2 = text(t2_value);
-    			add_location(span0, file$9, 149, 14, 7837);
-    			add_location(span1, file$9, 150, 14, 7870);
+    			add_location(span0, file$9, 157, 14, 8157);
+    			add_location(span1, file$9, 158, 14, 8190);
     			attr(h5, "class", "ntk-age svelte-pksw81");
-    			add_location(h5, file$9, 148, 12, 7801);
+    			add_location(h5, file$9, 156, 12, 8121);
     		},
 
     		m: function mount(target, anchor) {
@@ -5386,7 +8235,7 @@ var app = (function () {
     		},
 
     		p: function update(changed, ctx) {
-    			if ((changed.ntkPerson) && t2_value !== (t2_value = ctx.ntkPerson.ntkDetails.age + "")) {
+    			if ((changed.personCard) && t2_value !== (t2_value = ctx.personCard.ntkDetails.age + "")) {
     				set_data(t2, t2_value);
     			}
     		},
@@ -5399,7 +8248,7 @@ var app = (function () {
     	};
     }
 
-    // (172:10) <Label>
+    // (180:10) <Label>
     function create_default_slot_8(ctx) {
     	var t;
 
@@ -5420,7 +8269,7 @@ var app = (function () {
     	};
     }
 
-    // (171:8) <Button on:click={() => clicked++} variant="raised" color="secondary">
+    // (179:8) <Button on:click={() => clicked++} variant="raised" color="secondary">
     function create_default_slot_7(ctx) {
     	var current;
 
@@ -5466,7 +8315,7 @@ var app = (function () {
     	};
     }
 
-    // (170:6) <ActionButtons>
+    // (178:6) <ActionButtons>
     function create_default_slot_6(ctx) {
     	var current;
 
@@ -5515,7 +8364,7 @@ var app = (function () {
     	};
     }
 
-    // (177:8) {#if !isApproval}
+    // (185:8) {#if !isApproval}
     function create_if_block_1(ctx) {
     	var current;
 
@@ -5523,7 +8372,7 @@ var app = (function () {
     		props: {
     		markedIcon: "favorite",
     		unmarkedIcon: "favorite_border",
-    		isMarked: ctx.ntkPerson.isMarked,
+    		isMarked: ctx.personCard.isMarked,
     		title: "Mark as potential nice-to-know"
     	},
     		$$inline: true
@@ -5542,7 +8391,7 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var togglebutton_changes = {};
-    			if (changed.ntkPerson) togglebutton_changes.isMarked = ctx.ntkPerson.isMarked;
+    			if (changed.personCard) togglebutton_changes.isMarked = ctx.personCard.isMarked;
     			togglebutton.$set(togglebutton_changes);
     		},
 
@@ -5564,7 +8413,7 @@ var app = (function () {
     	};
     }
 
-    // (185:8) {#if isApproval}
+    // (193:8) {#if isApproval}
     function create_if_block$1(ctx) {
     	var t, current;
 
@@ -5631,7 +8480,7 @@ var app = (function () {
     	};
     }
 
-    // (186:10) <IconButton              class="material-icons up"              on:click={() => setApproval(true)}              title="approve">
+    // (194:10) <IconButton              class="material-icons up"              on:click={() => setApproval(true)}              title="approve">
     function create_default_slot_5(ctx) {
     	var t;
 
@@ -5652,7 +8501,7 @@ var app = (function () {
     	};
     }
 
-    // (192:10) <IconButton              class="material-icons down"              on:click={() => setApproval(false)}              title="disapprove">
+    // (200:10) <IconButton              class="material-icons down"              on:click={() => setApproval(false)}              title="disapprove">
     function create_default_slot_4(ctx) {
     	var t;
 
@@ -5673,7 +8522,7 @@ var app = (function () {
     	};
     }
 
-    // (199:8) <IconButton            class="material-icons"            on:click={() => clicked++}            title="More options">
+    // (207:8) <IconButton            class="material-icons"            on:click={() => clicked++}            title="More options">
     function create_default_slot_3(ctx) {
     	var t;
 
@@ -5694,7 +8543,7 @@ var app = (function () {
     	};
     }
 
-    // (176:6) <ActionIcons>
+    // (184:6) <ActionIcons>
     function create_default_slot_2$1(ctx) {
     	var t0, t1, current;
 
@@ -5807,7 +8656,7 @@ var app = (function () {
     	};
     }
 
-    // (169:4) <Actions>
+    // (177:4) <Actions>
     function create_default_slot_1$1(ctx) {
     	var t, current;
 
@@ -5847,7 +8696,7 @@ var app = (function () {
     			actionbuttons.$set(actionbuttons_changes);
 
     			var actionicons_changes = {};
-    			if (changed.$$scope || changed.isApproval || changed.ntkPerson) actionicons_changes.$$scope = { changed, ctx };
+    			if (changed.$$scope || changed.isApproval || changed.personCard) actionicons_changes.$$scope = { changed, ctx };
     			actionicons.$set(actionicons_changes);
     		},
 
@@ -5878,16 +8727,16 @@ var app = (function () {
     	};
     }
 
-    // (140:2) <Card class="card-theme {getApprovalClass()}">
+    // (148:2) <Card class="card-theme {getApprovalClass()}">
     function create_default_slot$4(ctx) {
-    	var div10, div2, div0, t0, div1, h3, t1_value = ctx.ntkPerson.ntkDetails.name + "", t1, t2, t3, div9, div5, div3, t5, div4, t6_value = ctx.ntkPerson.ntkDetails.moreDetails.aboutMe + "", t6, t7, div8, div6, t9, div7, t10_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "", t10, t11, current, dispose;
+    	var div10, div2, div0, t0, div1, h3, t1_value = ctx.personCard.ntkDetails.name + "", t1, t2, t3, div9, div5, div3, t5, div4, t6_value = ctx.personCard.ntkDetails.moreDetails.aboutMe + "", t6, t7, div8, div6, t9, div7, t10_value = ctx.personCard.ntkDetails.moreDetails.hobbies + "", t10, t11, current, dispose;
 
     	var avatar = new Avatar({
-    		props: { imageUrl: ctx.ntkPerson.ntkDetails.imageUrl },
+    		props: { imageUrl: ctx.personCard.ntkDetails.imageUrl },
     		$$inline: true
     	});
 
-    	var if_block = (ctx.ntkPerson.ntkDetails.age) && create_if_block_2(ctx);
+    	var if_block = (ctx.personCard.ntkDetails.age) && create_if_block_2(ctx);
 
     	var actions = new Actions({
     		props: {
@@ -5927,29 +8776,29 @@ var app = (function () {
     			t11 = space();
     			actions.$$.fragment.c();
     			attr(div0, "class", "inner svelte-pksw81");
-    			add_location(div0, file$9, 142, 8, 7544);
+    			add_location(div0, file$9, 150, 8, 7861);
     			attr(h3, "class", "ntk-name svelte-pksw81");
-    			add_location(h3, file$9, 146, 10, 7692);
+    			add_location(h3, file$9, 154, 10, 8010);
     			attr(div1, "class", "person-details svelte-pksw81");
-    			add_location(div1, file$9, 145, 8, 7652);
+    			add_location(div1, file$9, 153, 8, 7970);
     			attr(div2, "class", "avatar-container svelte-pksw81");
-    			add_location(div2, file$9, 141, 6, 7504);
+    			add_location(div2, file$9, 149, 6, 7821);
     			attr(div3, "class", "caption svelte-pksw81");
-    			add_location(div3, file$9, 158, 10, 8076);
+    			add_location(div3, file$9, 166, 10, 8397);
     			attr(div4, "class", "details svelte-pksw81");
-    			add_location(div4, file$9, 159, 10, 8123);
+    			add_location(div4, file$9, 167, 10, 8444);
     			attr(div5, "class", "ntk-details-row svelte-pksw81");
-    			add_location(div5, file$9, 157, 8, 8035);
+    			add_location(div5, file$9, 165, 8, 8356);
     			attr(div6, "class", "caption svelte-pksw81");
-    			add_location(div6, file$9, 162, 10, 8259);
+    			add_location(div6, file$9, 170, 10, 8581);
     			attr(div7, "class", "details svelte-pksw81");
-    			add_location(div7, file$9, 163, 10, 8305);
+    			add_location(div7, file$9, 171, 10, 8627);
     			attr(div8, "class", "ntk-details-row svelte-pksw81");
-    			add_location(div8, file$9, 161, 8, 8218);
+    			add_location(div8, file$9, 169, 8, 8540);
     			attr(div9, "class", "ntk-details-rows-container svelte-pksw81");
-    			add_location(div9, file$9, 156, 6, 7985);
+    			add_location(div9, file$9, 164, 6, 8306);
     			attr(div10, "class", "card-details svelte-pksw81");
-    			add_location(div10, file$9, 140, 4, 7441);
+    			add_location(div10, file$9, 148, 4, 7758);
     			dispose = listen(div10, "dblclick", ctx.onCardDblclick);
     		},
 
@@ -5984,14 +8833,14 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var avatar_changes = {};
-    			if (changed.ntkPerson) avatar_changes.imageUrl = ctx.ntkPerson.ntkDetails.imageUrl;
+    			if (changed.personCard) avatar_changes.imageUrl = ctx.personCard.ntkDetails.imageUrl;
     			avatar.$set(avatar_changes);
 
-    			if ((!current || changed.ntkPerson) && t1_value !== (t1_value = ctx.ntkPerson.ntkDetails.name + "")) {
+    			if ((!current || changed.personCard) && t1_value !== (t1_value = ctx.personCard.ntkDetails.name + "")) {
     				set_data(t1, t1_value);
     			}
 
-    			if (ctx.ntkPerson.ntkDetails.age) {
+    			if (ctx.personCard.ntkDetails.age) {
     				if (if_block) {
     					if_block.p(changed, ctx);
     				} else {
@@ -6004,16 +8853,16 @@ var app = (function () {
     				if_block = null;
     			}
 
-    			if ((!current || changed.ntkPerson) && t6_value !== (t6_value = ctx.ntkPerson.ntkDetails.moreDetails.aboutMe + "")) {
+    			if ((!current || changed.personCard) && t6_value !== (t6_value = ctx.personCard.ntkDetails.moreDetails.aboutMe + "")) {
     				set_data(t6, t6_value);
     			}
 
-    			if ((!current || changed.ntkPerson) && t10_value !== (t10_value = ctx.ntkPerson.ntkDetails.moreDetails.hobbies + "")) {
+    			if ((!current || changed.personCard) && t10_value !== (t10_value = ctx.personCard.ntkDetails.moreDetails.hobbies + "")) {
     				set_data(t10, t10_value);
     			}
 
     			var actions_changes = {};
-    			if (changed.$$scope || changed.isApproval || changed.ntkPerson) actions_changes.$$scope = { changed, ctx };
+    			if (changed.$$scope || changed.isApproval || changed.personCard) actions_changes.$$scope = { changed, ctx };
     			actions.$set(actions_changes);
     		},
 
@@ -6069,7 +8918,7 @@ var app = (function () {
     			div = element("div");
     			card.$$.fragment.c();
     			attr(div, "class", "my-card svelte-pksw81");
-    			add_location(div, file$9, 138, 0, 7364);
+    			add_location(div, file$9, 146, 0, 7681);
     		},
 
     		l: function claim(nodes) {
@@ -6085,7 +8934,7 @@ var app = (function () {
     		p: function update(changed, ctx) {
     			var card_changes = {};
     			if (changed.getApprovalClass) card_changes.class = "card-theme " + ctx.getApprovalClass();
-    			if (changed.$$scope || changed.isApproval || changed.ntkPerson) card_changes.$$scope = { changed, ctx };
+    			if (changed.$$scope || changed.isApproval || changed.personCard) card_changes.$$scope = { changed, ctx };
     			card.$set(card_changes);
     		},
 
@@ -6117,30 +8966,31 @@ var app = (function () {
       let clicked = 0;
       const dispatch = createEventDispatcher();
 
-      let { ntkPerson, isApproval = false } = $$props;
+      let { personCard, isApproval = false } = $$props;
 
       function onMarkedChanged() {
-        dispatch("markedChanged", { id: ntkPerson.ntkDetails.id });
+        dispatch("markedChanged", { id: personCard.ntkDetails.id });
       }
 
       function onCardDblclick() {
-        dispatch("ntkPersonSelected", ntkPerson);
+        dispatch("ntkPersonSelected", personCard);
       }
 
       function setApproval(isApproved) {
-        dispatch("approvalChanged", { id: ntkPerson.ntkDetails.id, isApproved });
+        dispatch("approvalChanged", { id: personCard.ntkDetails.id, isApproved });
       }
 
       function getApprovalClass() {
         let approvalClass;
-        switch (ntkPerson.approvalStatus) {
-          case ApprovalStatus.approved:
+
+        switch (personCard.connectionStatus) {
+          case ConnectionStatus.approved:
             approvalClass = "is-approved";
             break;
-          case ApprovalStatus.disapproved:
+          case ConnectionStatus.disapproved:
             approvalClass = "is-disapproved";
             break;
-          case ApprovalStatus.pending:
+          case ConnectionStatus.pending:
             approvalClass = "";
             break;
         }
@@ -6148,7 +8998,13 @@ var app = (function () {
         return approvalClass;
       }
 
-    	const writable_props = ['ntkPerson', 'isApproval'];
+      // function isApprovalPending() {
+      //   const currentUser = BLM.getCurrentUser();
+      //   const isPending = currentUser.fromApproveList && currentUser.fromApproveList.find(item => item.id === personCard.ntkDetails.id);
+      //   return !!isPending;
+      // }
+
+    	const writable_props = ['personCard', 'isApproval'];
     	Object.keys($$props).forEach(key => {
     		if (!writable_props.includes(key) && !key.startsWith('$$')) console_1$1.warn(`<NTKCard> was created with unknown prop '${key}'`);
     	});
@@ -6178,17 +9034,17 @@ var app = (function () {
     	}
 
     	$$self.$set = $$props => {
-    		if ('ntkPerson' in $$props) $$invalidate('ntkPerson', ntkPerson = $$props.ntkPerson);
+    		if ('personCard' in $$props) $$invalidate('personCard', personCard = $$props.personCard);
     		if ('isApproval' in $$props) $$invalidate('isApproval', isApproval = $$props.isApproval);
     	};
 
-    	$$self.$$.update = ($$dirty = { ntkPerson: 1 }) => {
-    		if ($$dirty.ntkPerson) { console.log("ntkPerson", ntkPerson); }
+    	$$self.$$.update = ($$dirty = { personCard: 1 }) => {
+    		if ($$dirty.personCard) { console.log("ntkPerson", personCard); }
     	};
 
     	return {
     		clicked,
-    		ntkPerson,
+    		personCard,
     		isApproval,
     		onMarkedChanged,
     		onCardDblclick,
@@ -6205,20 +9061,20 @@ var app = (function () {
     class NTKCard extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$d, create_fragment$d, safe_not_equal, ["ntkPerson", "isApproval"]);
+    		init(this, options, instance$d, create_fragment$d, safe_not_equal, ["personCard", "isApproval"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
-    		if (ctx.ntkPerson === undefined && !('ntkPerson' in props)) {
-    			console_1$1.warn("<NTKCard> was created without expected prop 'ntkPerson'");
+    		if (ctx.personCard === undefined && !('personCard' in props)) {
+    			console_1$1.warn("<NTKCard> was created without expected prop 'personCard'");
     		}
     	}
 
-    	get ntkPerson() {
+    	get personCard() {
     		throw new Error("<NTKCard>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
-    	set ntkPerson(value) {
+    	set personCard(value) {
     		throw new Error("<NTKCard>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
@@ -8657,13 +11513,13 @@ var app = (function () {
 
     const file$f = "src\\common\\NTKList.svelte";
 
-    // (43:8) <VirtualList items={ntkList} let:item>
+    // (78:4) <VirtualList items={personCardList} let:item>
     function create_default_slot$6(ctx) {
     	var div, current;
 
     	var ntkcard = new NTKCard({
     		props: {
-    		ntkPerson: ctx.item,
+    		personCard: ctx.item,
     		isApproval: ctx.isApproval
     	},
     		$$inline: true
@@ -8677,7 +11533,7 @@ var app = (function () {
     			div = element("div");
     			ntkcard.$$.fragment.c();
     			attr(div, "class", "item svelte-1kh51ze");
-    			add_location(div, file$f, 44, 12, 2485);
+    			add_location(div, file$f, 79, 6, 3534);
     		},
 
     		m: function mount(target, anchor) {
@@ -8688,7 +11544,7 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var ntkcard_changes = {};
-    			if (changed.item) ntkcard_changes.ntkPerson = ctx.item;
+    			if (changed.item) ntkcard_changes.personCard = ctx.item;
     			if (changed.isApproval) ntkcard_changes.isApproval = ctx.isApproval;
     			ntkcard.$set(ntkcard_changes);
     		},
@@ -8715,7 +11571,7 @@ var app = (function () {
     	};
     }
 
-    // (69:0) {#if isNTKPersonDialogOpen}
+    // (102:0) {#if isNTKPersonDialogOpen}
     function create_if_block$2(ctx) {
     	var current;
 
@@ -8764,7 +11620,7 @@ var app = (function () {
 
     	var virtuallist = new VirtualList({
     		props: {
-    		items: ctx.ntkList,
+    		items: ctx.personCardList,
     		$$slots: {
     		default: [create_default_slot$6, ({ item }) => ({ item })]
     	},
@@ -8785,9 +11641,9 @@ var app = (function () {
     			if (if_block) if_block.c();
     			if_block_anchor = empty();
     			attr(div0, "class", "card-container svelte-1kh51ze");
-    			add_location(div0, file$f, 41, 4, 2319);
+    			add_location(div0, file$f, 76, 2, 3377);
     			attr(div1, "class", "container svelte-1kh51ze");
-    			add_location(div1, file$f, 40, 0, 2290);
+    			add_location(div1, file$f, 75, 0, 3350);
     		},
 
     		l: function claim(nodes) {
@@ -8807,7 +11663,7 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var virtuallist_changes = {};
-    			if (changed.ntkList) virtuallist_changes.items = ctx.ntkList;
+    			if (changed.personCardList) virtuallist_changes.items = ctx.personCardList;
     			if (changed.$$scope || changed.isApproval) virtuallist_changes.$$scope = { changed, ctx };
     			virtuallist.$set(virtuallist_changes);
 
@@ -8864,19 +11720,45 @@ var app = (function () {
     	};
     }
 
+    function getConnectionStatus(ntkPerson) {
+      const currentUser = BLM.getCurrentUser();
+      const foundApprovalItem = ntkPerson.toApproveList
+        ? ntkPerson.toApproveList.find(
+            item => item.id === currentUser.ntkDetails.id
+          )
+        : null;
+      const connectionStatus = foundApprovalItem
+        ? foundApprovalItem.connectionStatus
+        : ConnectionStatus.pending;
+
+      return connectionStatus;
+    }
+
+    function getIsMarked(ntkPerson) {
+      const currentUser = BLM.getCurrentUser();
+
+      const foundApprovalItem = currentUser.fromApproveList
+        ? currentUser.fromApproveList.find(
+            item => item.id === ntkPerson.ntkDetails.id
+          )
+        : null;
+
+        return !!foundApprovalItem;
+    }
+
     function instance$j($$self, $$props, $$invalidate) {
     	
+      let { ntkList = [], isApproval } = $$props;
+      let personCardList = [];
 
-        let { ntkList=[], isApproval } = $$props;
+      let currentSelectedPerson;
 
-        let currentSelectedPerson;
+      let isNTKPersonDialogOpen = false;
 
-        let isNTKPersonDialogOpen = false;
-
-        function onPersonSelected(event) {
-            $$invalidate('currentSelectedPerson', currentSelectedPerson = event.detail);
-            $$invalidate('isNTKPersonDialogOpen', isNTKPersonDialogOpen = true);
-        }
+      function onPersonSelected(event) {
+        $$invalidate('currentSelectedPerson', currentSelectedPerson = event.detail);
+        $$invalidate('isNTKPersonDialogOpen', isNTKPersonDialogOpen = true);
+      }
 
     	const writable_props = ['ntkList', 'isApproval'];
     	Object.keys($$props).forEach(key => {
@@ -8892,7 +11774,7 @@ var app = (function () {
     	}
 
     	function dialogClosed_handler() {
-    		const $$result = isNTKPersonDialogOpen = false;
+    		const $$result = (isNTKPersonDialogOpen = false);
     		$$invalidate('isNTKPersonDialogOpen', isNTKPersonDialogOpen);
     		return $$result;
     	}
@@ -8902,9 +11784,20 @@ var app = (function () {
     		if ('isApproval' in $$props) $$invalidate('isApproval', isApproval = $$props.isApproval);
     	};
 
+    	$$self.$$.update = ($$dirty = { ntkList: 1 }) => {
+    		if ($$dirty.ntkList) { {
+            $$invalidate('personCardList', personCardList = ntkList.map(ntkPerson => ({
+              ntkDetails: ntkPerson.ntkDetails,
+              isMarked: getIsMarked(ntkPerson),
+              connectionStatus: getConnectionStatus(ntkPerson)
+            })));
+          } }
+    	};
+
     	return {
     		ntkList,
     		isApproval,
+    		personCardList,
     		currentSelectedPerson,
     		isNTKPersonDialogOpen,
     		onPersonSelected,
@@ -8943,2815 +11836,6 @@ var app = (function () {
     	}
     }
 
-    var $findIndex = arrayIteration.findIndex;
-
-
-    var FIND_INDEX = 'findIndex';
-    var SKIPS_HOLES$1 = true;
-
-    // Shouldn't skip holes
-    if (FIND_INDEX in []) Array(1)[FIND_INDEX](function () { SKIPS_HOLES$1 = false; });
-
-    // `Array.prototype.findIndex` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.findindex
-    _export({ target: 'Array', proto: true, forced: SKIPS_HOLES$1 }, {
-      findIndex: function findIndex(callbackfn /* , that = undefined */) {
-        return $findIndex(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-      }
-    });
-
-    // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
-    addToUnscopables(FIND_INDEX);
-
-    var createProperty = function (object, key, value) {
-      var propertyKey = toPrimitive(key);
-      if (propertyKey in object) objectDefineProperty.f(object, propertyKey, createPropertyDescriptor(0, value));
-      else object[propertyKey] = value;
-    };
-
-    var SPECIES$1 = wellKnownSymbol('species');
-
-    var arrayMethodHasSpeciesSupport = function (METHOD_NAME) {
-      return !fails(function () {
-        var array = [];
-        var constructor = array.constructor = {};
-        constructor[SPECIES$1] = function () {
-          return { foo: 1 };
-        };
-        return array[METHOD_NAME](Boolean).foo !== 1;
-      });
-    };
-
-    var max$1 = Math.max;
-    var min$2 = Math.min;
-    var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
-    var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
-
-    // `Array.prototype.splice` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.splice
-    // with adding support of @@species
-    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('splice') }, {
-      splice: function splice(start, deleteCount /* , ...items */) {
-        var O = toObject(this);
-        var len = toLength(O.length);
-        var actualStart = toAbsoluteIndex(start, len);
-        var argumentsLength = arguments.length;
-        var insertCount, actualDeleteCount, A, k, from, to;
-        if (argumentsLength === 0) {
-          insertCount = actualDeleteCount = 0;
-        } else if (argumentsLength === 1) {
-          insertCount = 0;
-          actualDeleteCount = len - actualStart;
-        } else {
-          insertCount = argumentsLength - 2;
-          actualDeleteCount = min$2(max$1(toInteger(deleteCount), 0), len - actualStart);
-        }
-        if (len + insertCount - actualDeleteCount > MAX_SAFE_INTEGER) {
-          throw TypeError(MAXIMUM_ALLOWED_LENGTH_EXCEEDED);
-        }
-        A = arraySpeciesCreate(O, actualDeleteCount);
-        for (k = 0; k < actualDeleteCount; k++) {
-          from = actualStart + k;
-          if (from in O) createProperty(A, k, O[from]);
-        }
-        A.length = actualDeleteCount;
-        if (insertCount < actualDeleteCount) {
-          for (k = actualStart; k < len - actualDeleteCount; k++) {
-            from = k + actualDeleteCount;
-            to = k + insertCount;
-            if (from in O) O[to] = O[from];
-            else delete O[to];
-          }
-          for (k = len; k > len - actualDeleteCount + insertCount; k--) delete O[k - 1];
-        } else if (insertCount > actualDeleteCount) {
-          for (k = len - actualDeleteCount; k > actualStart; k--) {
-            from = k + actualDeleteCount - 1;
-            to = k + insertCount - 1;
-            if (from in O) O[to] = O[from];
-            else delete O[to];
-          }
-        }
-        for (k = 0; k < insertCount; k++) {
-          O[k + actualStart] = arguments[k + 2];
-        }
-        O.length = len - actualDeleteCount + insertCount;
-        return A;
-      }
-    });
-
-    var TO_STRING_TAG = wellKnownSymbol('toStringTag');
-    // ES3 wrong here
-    var CORRECT_ARGUMENTS = classofRaw(function () { return arguments; }()) == 'Arguments';
-
-    // fallback for IE11 Script Access Denied error
-    var tryGet = function (it, key) {
-      try {
-        return it[key];
-      } catch (error) { /* empty */ }
-    };
-
-    // getting tag from ES6+ `Object.prototype.toString`
-    var classof = function (it) {
-      var O, tag, result;
-      return it === undefined ? 'Undefined' : it === null ? 'Null'
-        // @@toStringTag case
-        : typeof (tag = tryGet(O = Object(it), TO_STRING_TAG)) == 'string' ? tag
-        // builtinTag case
-        : CORRECT_ARGUMENTS ? classofRaw(O)
-        // ES3 arguments fallback
-        : (result = classofRaw(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
-    };
-
-    var TO_STRING_TAG$1 = wellKnownSymbol('toStringTag');
-    var test = {};
-
-    test[TO_STRING_TAG$1] = 'z';
-
-    // `Object.prototype.toString` method implementation
-    // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
-    var objectToString = String(test) !== '[object z]' ? function toString() {
-      return '[object ' + classof(this) + ']';
-    } : test.toString;
-
-    var ObjectPrototype = Object.prototype;
-
-    // `Object.prototype.toString` method
-    // https://tc39.github.io/ecma262/#sec-object.prototype.tostring
-    if (objectToString !== ObjectPrototype.toString) {
-      redefine(ObjectPrototype, 'toString', objectToString, { unsafe: true });
-    }
-
-    var nativePromiseConstructor = global_1.Promise;
-
-    var redefineAll = function (target, src, options) {
-      for (var key in src) redefine(target, key, src[key], options);
-      return target;
-    };
-
-    var defineProperty = objectDefineProperty.f;
-
-
-
-    var TO_STRING_TAG$2 = wellKnownSymbol('toStringTag');
-
-    var setToStringTag = function (it, TAG, STATIC) {
-      if (it && !has(it = STATIC ? it : it.prototype, TO_STRING_TAG$2)) {
-        defineProperty(it, TO_STRING_TAG$2, { configurable: true, value: TAG });
-      }
-    };
-
-    var SPECIES$2 = wellKnownSymbol('species');
-
-    var setSpecies = function (CONSTRUCTOR_NAME) {
-      var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
-      var defineProperty = objectDefineProperty.f;
-
-      if (descriptors && Constructor && !Constructor[SPECIES$2]) {
-        defineProperty(Constructor, SPECIES$2, {
-          configurable: true,
-          get: function () { return this; }
-        });
-      }
-    };
-
-    var anInstance = function (it, Constructor, name) {
-      if (!(it instanceof Constructor)) {
-        throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
-      } return it;
-    };
-
-    var iterators = {};
-
-    var ITERATOR = wellKnownSymbol('iterator');
-    var ArrayPrototype$1 = Array.prototype;
-
-    // check on default Array iterator
-    var isArrayIteratorMethod = function (it) {
-      return it !== undefined && (iterators.Array === it || ArrayPrototype$1[ITERATOR] === it);
-    };
-
-    var ITERATOR$1 = wellKnownSymbol('iterator');
-
-    var getIteratorMethod = function (it) {
-      if (it != undefined) return it[ITERATOR$1]
-        || it['@@iterator']
-        || iterators[classof(it)];
-    };
-
-    // call something on iterator step with safe closing on error
-    var callWithSafeIterationClosing = function (iterator, fn, value, ENTRIES) {
-      try {
-        return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
-      // 7.4.6 IteratorClose(iterator, completion)
-      } catch (error) {
-        var returnMethod = iterator['return'];
-        if (returnMethod !== undefined) anObject(returnMethod.call(iterator));
-        throw error;
-      }
-    };
-
-    var iterate_1 = createCommonjsModule(function (module) {
-    var Result = function (stopped, result) {
-      this.stopped = stopped;
-      this.result = result;
-    };
-
-    var iterate = module.exports = function (iterable, fn, that, AS_ENTRIES, IS_ITERATOR) {
-      var boundFunction = bindContext(fn, that, AS_ENTRIES ? 2 : 1);
-      var iterator, iterFn, index, length, result, step;
-
-      if (IS_ITERATOR) {
-        iterator = iterable;
-      } else {
-        iterFn = getIteratorMethod(iterable);
-        if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
-        // optimisation for array iterators
-        if (isArrayIteratorMethod(iterFn)) {
-          for (index = 0, length = toLength(iterable.length); length > index; index++) {
-            result = AS_ENTRIES
-              ? boundFunction(anObject(step = iterable[index])[0], step[1])
-              : boundFunction(iterable[index]);
-            if (result && result instanceof Result) return result;
-          } return new Result(false);
-        }
-        iterator = iterFn.call(iterable);
-      }
-
-      while (!(step = iterator.next()).done) {
-        result = callWithSafeIterationClosing(iterator, boundFunction, step.value, AS_ENTRIES);
-        if (result && result instanceof Result) return result;
-      } return new Result(false);
-    };
-
-    iterate.stop = function (result) {
-      return new Result(true, result);
-    };
-    });
-
-    var ITERATOR$2 = wellKnownSymbol('iterator');
-    var SAFE_CLOSING = false;
-
-    try {
-      var called = 0;
-      var iteratorWithReturn = {
-        next: function () {
-          return { done: !!called++ };
-        },
-        'return': function () {
-          SAFE_CLOSING = true;
-        }
-      };
-      iteratorWithReturn[ITERATOR$2] = function () {
-        return this;
-      };
-      // eslint-disable-next-line no-throw-literal
-      Array.from(iteratorWithReturn, function () { throw 2; });
-    } catch (error) { /* empty */ }
-
-    var checkCorrectnessOfIteration = function (exec, SKIP_CLOSING) {
-      if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
-      var ITERATION_SUPPORT = false;
-      try {
-        var object = {};
-        object[ITERATOR$2] = function () {
-          return {
-            next: function () {
-              return { done: ITERATION_SUPPORT = true };
-            }
-          };
-        };
-        exec(object);
-      } catch (error) { /* empty */ }
-      return ITERATION_SUPPORT;
-    };
-
-    var SPECIES$3 = wellKnownSymbol('species');
-
-    // `SpeciesConstructor` abstract operation
-    // https://tc39.github.io/ecma262/#sec-speciesconstructor
-    var speciesConstructor = function (O, defaultConstructor) {
-      var C = anObject(O).constructor;
-      var S;
-      return C === undefined || (S = anObject(C)[SPECIES$3]) == undefined ? defaultConstructor : aFunction$1(S);
-    };
-
-    var location = global_1.location;
-    var set$1 = global_1.setImmediate;
-    var clear = global_1.clearImmediate;
-    var process = global_1.process;
-    var MessageChannel = global_1.MessageChannel;
-    var Dispatch = global_1.Dispatch;
-    var counter = 0;
-    var queue = {};
-    var ONREADYSTATECHANGE = 'onreadystatechange';
-    var defer, channel, port;
-
-    var run$1 = function (id) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (queue.hasOwnProperty(id)) {
-        var fn = queue[id];
-        delete queue[id];
-        fn();
-      }
-    };
-
-    var runner = function (id) {
-      return function () {
-        run$1(id);
-      };
-    };
-
-    var listener = function (event) {
-      run$1(event.data);
-    };
-
-    var post = function (id) {
-      // old engines have not location.origin
-      global_1.postMessage(id + '', location.protocol + '//' + location.host);
-    };
-
-    // Node.js 0.9+ & IE10+ has setImmediate, otherwise:
-    if (!set$1 || !clear) {
-      set$1 = function setImmediate(fn) {
-        var args = [];
-        var i = 1;
-        while (arguments.length > i) args.push(arguments[i++]);
-        queue[++counter] = function () {
-          // eslint-disable-next-line no-new-func
-          (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
-        };
-        defer(counter);
-        return counter;
-      };
-      clear = function clearImmediate(id) {
-        delete queue[id];
-      };
-      // Node.js 0.8-
-      if (classofRaw(process) == 'process') {
-        defer = function (id) {
-          process.nextTick(runner(id));
-        };
-      // Sphere (JS game engine) Dispatch API
-      } else if (Dispatch && Dispatch.now) {
-        defer = function (id) {
-          Dispatch.now(runner(id));
-        };
-      // Browsers with MessageChannel, includes WebWorkers
-      } else if (MessageChannel) {
-        channel = new MessageChannel();
-        port = channel.port2;
-        channel.port1.onmessage = listener;
-        defer = bindContext(port.postMessage, port, 1);
-      // Browsers with postMessage, skip WebWorkers
-      // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
-      } else if (global_1.addEventListener && typeof postMessage == 'function' && !global_1.importScripts && !fails(post)) {
-        defer = post;
-        global_1.addEventListener('message', listener, false);
-      // IE8-
-      } else if (ONREADYSTATECHANGE in documentCreateElement('script')) {
-        defer = function (id) {
-          html.appendChild(documentCreateElement('script'))[ONREADYSTATECHANGE] = function () {
-            html.removeChild(this);
-            run$1(id);
-          };
-        };
-      // Rest old browsers
-      } else {
-        defer = function (id) {
-          setTimeout(runner(id), 0);
-        };
-      }
-    }
-
-    var task = {
-      set: set$1,
-      clear: clear
-    };
-
-    var userAgent = getBuiltIn('navigator', 'userAgent') || '';
-
-    var getOwnPropertyDescriptor$2 = objectGetOwnPropertyDescriptor.f;
-
-    var macrotask = task.set;
-
-
-    var MutationObserver$1 = global_1.MutationObserver || global_1.WebKitMutationObserver;
-    var process$1 = global_1.process;
-    var Promise$1 = global_1.Promise;
-    var IS_NODE = classofRaw(process$1) == 'process';
-    // Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
-    var queueMicrotaskDescriptor = getOwnPropertyDescriptor$2(global_1, 'queueMicrotask');
-    var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
-
-    var flush$1, head, last, notify, toggle, node, promise, then;
-
-    // modern engines have queueMicrotask method
-    if (!queueMicrotask) {
-      flush$1 = function () {
-        var parent, fn;
-        if (IS_NODE && (parent = process$1.domain)) parent.exit();
-        while (head) {
-          fn = head.fn;
-          head = head.next;
-          try {
-            fn();
-          } catch (error) {
-            if (head) notify();
-            else last = undefined;
-            throw error;
-          }
-        } last = undefined;
-        if (parent) parent.enter();
-      };
-
-      // Node.js
-      if (IS_NODE) {
-        notify = function () {
-          process$1.nextTick(flush$1);
-        };
-      // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
-      } else if (MutationObserver$1 && !/(iphone|ipod|ipad).*applewebkit/i.test(userAgent)) {
-        toggle = true;
-        node = document.createTextNode('');
-        new MutationObserver$1(flush$1).observe(node, { characterData: true }); // eslint-disable-line no-new
-        notify = function () {
-          node.data = toggle = !toggle;
-        };
-      // environments with maybe non-completely correct, but existent Promise
-      } else if (Promise$1 && Promise$1.resolve) {
-        // Promise.resolve without an argument throws an error in LG WebOS 2
-        promise = Promise$1.resolve(undefined);
-        then = promise.then;
-        notify = function () {
-          then.call(promise, flush$1);
-        };
-      // for other environments - macrotask based on:
-      // - setImmediate
-      // - MessageChannel
-      // - window.postMessag
-      // - onreadystatechange
-      // - setTimeout
-      } else {
-        notify = function () {
-          // strange IE + webpack dev server bug - use .call(global)
-          macrotask.call(global_1, flush$1);
-        };
-      }
-    }
-
-    var microtask = queueMicrotask || function (fn) {
-      var task = { fn: fn, next: undefined };
-      if (last) last.next = task;
-      if (!head) {
-        head = task;
-        notify();
-      } last = task;
-    };
-
-    var PromiseCapability = function (C) {
-      var resolve, reject;
-      this.promise = new C(function ($$resolve, $$reject) {
-        if (resolve !== undefined || reject !== undefined) throw TypeError('Bad Promise constructor');
-        resolve = $$resolve;
-        reject = $$reject;
-      });
-      this.resolve = aFunction$1(resolve);
-      this.reject = aFunction$1(reject);
-    };
-
-    // 25.4.1.5 NewPromiseCapability(C)
-    var f$5 = function (C) {
-      return new PromiseCapability(C);
-    };
-
-    var newPromiseCapability = {
-    	f: f$5
-    };
-
-    var promiseResolve = function (C, x) {
-      anObject(C);
-      if (isObject(x) && x.constructor === C) return x;
-      var promiseCapability = newPromiseCapability.f(C);
-      var resolve = promiseCapability.resolve;
-      resolve(x);
-      return promiseCapability.promise;
-    };
-
-    var hostReportErrors = function (a, b) {
-      var console = global_1.console;
-      if (console && console.error) {
-        arguments.length === 1 ? console.error(a) : console.error(a, b);
-      }
-    };
-
-    var perform = function (exec) {
-      try {
-        return { error: false, value: exec() };
-      } catch (error) {
-        return { error: true, value: error };
-      }
-    };
-
-    var task$1 = task.set;
-
-
-
-
-
-
-
-
-
-
-    var SPECIES$4 = wellKnownSymbol('species');
-    var PROMISE = 'Promise';
-    var getInternalState = internalState.get;
-    var setInternalState = internalState.set;
-    var getInternalPromiseState = internalState.getterFor(PROMISE);
-    var PromiseConstructor = nativePromiseConstructor;
-    var TypeError$1 = global_1.TypeError;
-    var document$2 = global_1.document;
-    var process$2 = global_1.process;
-    var $fetch = global_1.fetch;
-    var versions = process$2 && process$2.versions;
-    var v8 = versions && versions.v8 || '';
-    var newPromiseCapability$1 = newPromiseCapability.f;
-    var newGenericPromiseCapability = newPromiseCapability$1;
-    var IS_NODE$1 = classofRaw(process$2) == 'process';
-    var DISPATCH_EVENT = !!(document$2 && document$2.createEvent && global_1.dispatchEvent);
-    var UNHANDLED_REJECTION = 'unhandledrejection';
-    var REJECTION_HANDLED = 'rejectionhandled';
-    var PENDING = 0;
-    var FULFILLED = 1;
-    var REJECTED = 2;
-    var HANDLED = 1;
-    var UNHANDLED = 2;
-    var Internal, OwnPromiseCapability, PromiseWrapper, nativeThen;
-
-    var FORCED = isForced_1(PROMISE, function () {
-      // correct subclassing with @@species support
-      var promise = PromiseConstructor.resolve(1);
-      var empty = function () { /* empty */ };
-      var FakePromise = (promise.constructor = {})[SPECIES$4] = function (exec) {
-        exec(empty, empty);
-      };
-      // unhandled rejections tracking support, NodeJS Promise without it fails @@species test
-      return !((IS_NODE$1 || typeof PromiseRejectionEvent == 'function')
-        && (!isPure || promise['finally'])
-        && promise.then(empty) instanceof FakePromise
-        // v8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
-        // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
-        // we can't detect it synchronously, so just check versions
-        && v8.indexOf('6.6') !== 0
-        && userAgent.indexOf('Chrome/66') === -1);
-    });
-
-    var INCORRECT_ITERATION = FORCED || !checkCorrectnessOfIteration(function (iterable) {
-      PromiseConstructor.all(iterable)['catch'](function () { /* empty */ });
-    });
-
-    // helpers
-    var isThenable = function (it) {
-      var then;
-      return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
-    };
-
-    var notify$1 = function (promise, state, isReject) {
-      if (state.notified) return;
-      state.notified = true;
-      var chain = state.reactions;
-      microtask(function () {
-        var value = state.value;
-        var ok = state.state == FULFILLED;
-        var index = 0;
-        // variable length - can't use forEach
-        while (chain.length > index) {
-          var reaction = chain[index++];
-          var handler = ok ? reaction.ok : reaction.fail;
-          var resolve = reaction.resolve;
-          var reject = reaction.reject;
-          var domain = reaction.domain;
-          var result, then, exited;
-          try {
-            if (handler) {
-              if (!ok) {
-                if (state.rejection === UNHANDLED) onHandleUnhandled(promise, state);
-                state.rejection = HANDLED;
-              }
-              if (handler === true) result = value;
-              else {
-                if (domain) domain.enter();
-                result = handler(value); // can throw
-                if (domain) {
-                  domain.exit();
-                  exited = true;
-                }
-              }
-              if (result === reaction.promise) {
-                reject(TypeError$1('Promise-chain cycle'));
-              } else if (then = isThenable(result)) {
-                then.call(result, resolve, reject);
-              } else resolve(result);
-            } else reject(value);
-          } catch (error) {
-            if (domain && !exited) domain.exit();
-            reject(error);
-          }
-        }
-        state.reactions = [];
-        state.notified = false;
-        if (isReject && !state.rejection) onUnhandled(promise, state);
-      });
-    };
-
-    var dispatchEvent = function (name, promise, reason) {
-      var event, handler;
-      if (DISPATCH_EVENT) {
-        event = document$2.createEvent('Event');
-        event.promise = promise;
-        event.reason = reason;
-        event.initEvent(name, false, true);
-        global_1.dispatchEvent(event);
-      } else event = { promise: promise, reason: reason };
-      if (handler = global_1['on' + name]) handler(event);
-      else if (name === UNHANDLED_REJECTION) hostReportErrors('Unhandled promise rejection', reason);
-    };
-
-    var onUnhandled = function (promise, state) {
-      task$1.call(global_1, function () {
-        var value = state.value;
-        var IS_UNHANDLED = isUnhandled(state);
-        var result;
-        if (IS_UNHANDLED) {
-          result = perform(function () {
-            if (IS_NODE$1) {
-              process$2.emit('unhandledRejection', value, promise);
-            } else dispatchEvent(UNHANDLED_REJECTION, promise, value);
-          });
-          // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
-          state.rejection = IS_NODE$1 || isUnhandled(state) ? UNHANDLED : HANDLED;
-          if (result.error) throw result.value;
-        }
-      });
-    };
-
-    var isUnhandled = function (state) {
-      return state.rejection !== HANDLED && !state.parent;
-    };
-
-    var onHandleUnhandled = function (promise, state) {
-      task$1.call(global_1, function () {
-        if (IS_NODE$1) {
-          process$2.emit('rejectionHandled', promise);
-        } else dispatchEvent(REJECTION_HANDLED, promise, state.value);
-      });
-    };
-
-    var bind$1 = function (fn, promise, state, unwrap) {
-      return function (value) {
-        fn(promise, state, value, unwrap);
-      };
-    };
-
-    var internalReject = function (promise, state, value, unwrap) {
-      if (state.done) return;
-      state.done = true;
-      if (unwrap) state = unwrap;
-      state.value = value;
-      state.state = REJECTED;
-      notify$1(promise, state, true);
-    };
-
-    var internalResolve = function (promise, state, value, unwrap) {
-      if (state.done) return;
-      state.done = true;
-      if (unwrap) state = unwrap;
-      try {
-        if (promise === value) throw TypeError$1("Promise can't be resolved itself");
-        var then = isThenable(value);
-        if (then) {
-          microtask(function () {
-            var wrapper = { done: false };
-            try {
-              then.call(value,
-                bind$1(internalResolve, promise, wrapper, state),
-                bind$1(internalReject, promise, wrapper, state)
-              );
-            } catch (error) {
-              internalReject(promise, wrapper, error, state);
-            }
-          });
-        } else {
-          state.value = value;
-          state.state = FULFILLED;
-          notify$1(promise, state, false);
-        }
-      } catch (error) {
-        internalReject(promise, { done: false }, error, state);
-      }
-    };
-
-    // constructor polyfill
-    if (FORCED) {
-      // 25.4.3.1 Promise(executor)
-      PromiseConstructor = function Promise(executor) {
-        anInstance(this, PromiseConstructor, PROMISE);
-        aFunction$1(executor);
-        Internal.call(this);
-        var state = getInternalState(this);
-        try {
-          executor(bind$1(internalResolve, this, state), bind$1(internalReject, this, state));
-        } catch (error) {
-          internalReject(this, state, error);
-        }
-      };
-      // eslint-disable-next-line no-unused-vars
-      Internal = function Promise(executor) {
-        setInternalState(this, {
-          type: PROMISE,
-          done: false,
-          notified: false,
-          parent: false,
-          reactions: [],
-          rejection: false,
-          state: PENDING,
-          value: undefined
-        });
-      };
-      Internal.prototype = redefineAll(PromiseConstructor.prototype, {
-        // `Promise.prototype.then` method
-        // https://tc39.github.io/ecma262/#sec-promise.prototype.then
-        then: function then(onFulfilled, onRejected) {
-          var state = getInternalPromiseState(this);
-          var reaction = newPromiseCapability$1(speciesConstructor(this, PromiseConstructor));
-          reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
-          reaction.fail = typeof onRejected == 'function' && onRejected;
-          reaction.domain = IS_NODE$1 ? process$2.domain : undefined;
-          state.parent = true;
-          state.reactions.push(reaction);
-          if (state.state != PENDING) notify$1(this, state, false);
-          return reaction.promise;
-        },
-        // `Promise.prototype.catch` method
-        // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
-        'catch': function (onRejected) {
-          return this.then(undefined, onRejected);
-        }
-      });
-      OwnPromiseCapability = function () {
-        var promise = new Internal();
-        var state = getInternalState(promise);
-        this.promise = promise;
-        this.resolve = bind$1(internalResolve, promise, state);
-        this.reject = bind$1(internalReject, promise, state);
-      };
-      newPromiseCapability.f = newPromiseCapability$1 = function (C) {
-        return C === PromiseConstructor || C === PromiseWrapper
-          ? new OwnPromiseCapability(C)
-          : newGenericPromiseCapability(C);
-      };
-
-      if ( typeof nativePromiseConstructor == 'function') {
-        nativeThen = nativePromiseConstructor.prototype.then;
-
-        // wrap native Promise#then for native async functions
-        redefine(nativePromiseConstructor.prototype, 'then', function then(onFulfilled, onRejected) {
-          var that = this;
-          return new PromiseConstructor(function (resolve, reject) {
-            nativeThen.call(that, resolve, reject);
-          }).then(onFulfilled, onRejected);
-        });
-
-        // wrap fetch result
-        if (typeof $fetch == 'function') _export({ global: true, enumerable: true, forced: true }, {
-          // eslint-disable-next-line no-unused-vars
-          fetch: function fetch(input) {
-            return promiseResolve(PromiseConstructor, $fetch.apply(global_1, arguments));
-          }
-        });
-      }
-    }
-
-    _export({ global: true, wrap: true, forced: FORCED }, {
-      Promise: PromiseConstructor
-    });
-
-    setToStringTag(PromiseConstructor, PROMISE, false);
-    setSpecies(PROMISE);
-
-    PromiseWrapper = path[PROMISE];
-
-    // statics
-    _export({ target: PROMISE, stat: true, forced: FORCED }, {
-      // `Promise.reject` method
-      // https://tc39.github.io/ecma262/#sec-promise.reject
-      reject: function reject(r) {
-        var capability = newPromiseCapability$1(this);
-        capability.reject.call(undefined, r);
-        return capability.promise;
-      }
-    });
-
-    _export({ target: PROMISE, stat: true, forced:  FORCED }, {
-      // `Promise.resolve` method
-      // https://tc39.github.io/ecma262/#sec-promise.resolve
-      resolve: function resolve(x) {
-        return promiseResolve( this, x);
-      }
-    });
-
-    _export({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
-      // `Promise.all` method
-      // https://tc39.github.io/ecma262/#sec-promise.all
-      all: function all(iterable) {
-        var C = this;
-        var capability = newPromiseCapability$1(C);
-        var resolve = capability.resolve;
-        var reject = capability.reject;
-        var result = perform(function () {
-          var $promiseResolve = aFunction$1(C.resolve);
-          var values = [];
-          var counter = 0;
-          var remaining = 1;
-          iterate_1(iterable, function (promise) {
-            var index = counter++;
-            var alreadyCalled = false;
-            values.push(undefined);
-            remaining++;
-            $promiseResolve.call(C, promise).then(function (value) {
-              if (alreadyCalled) return;
-              alreadyCalled = true;
-              values[index] = value;
-              --remaining || resolve(values);
-            }, reject);
-          });
-          --remaining || resolve(values);
-        });
-        if (result.error) reject(result.value);
-        return capability.promise;
-      },
-      // `Promise.race` method
-      // https://tc39.github.io/ecma262/#sec-promise.race
-      race: function race(iterable) {
-        var C = this;
-        var capability = newPromiseCapability$1(C);
-        var reject = capability.reject;
-        var result = perform(function () {
-          var $promiseResolve = aFunction$1(C.resolve);
-          iterate_1(iterable, function (promise) {
-            $promiseResolve.call(C, promise).then(capability.resolve, reject);
-          });
-        });
-        if (result.error) reject(result.value);
-        return capability.promise;
-      }
-    });
-
-    function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
-      try {
-        var info = gen[key](arg);
-        var value = info.value;
-      } catch (error) {
-        reject(error);
-        return;
-      }
-
-      if (info.done) {
-        resolve(value);
-      } else {
-        Promise.resolve(value).then(_next, _throw);
-      }
-    }
-
-    function _asyncToGenerator(fn) {
-      return function () {
-        var self = this,
-            args = arguments;
-        return new Promise(function (resolve, reject) {
-          var gen = fn.apply(self, args);
-
-          function _next(value) {
-            asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
-          }
-
-          function _throw(err) {
-            asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
-          }
-
-          _next(undefined);
-        });
-      };
-    }
-
-    function _classCallCheck(instance, Constructor) {
-      if (!(instance instanceof Constructor)) {
-        throw new TypeError("Cannot call a class as a function");
-      }
-    }
-
-    function _defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
-
-    function _createClass(Constructor, protoProps, staticProps) {
-      if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) _defineProperties(Constructor, staticProps);
-      return Constructor;
-    }
-
-    function _defineProperty(obj, key, value) {
-      if (key in obj) {
-        Object.defineProperty(obj, key, {
-          value: value,
-          enumerable: true,
-          configurable: true,
-          writable: true
-        });
-      } else {
-        obj[key] = value;
-      }
-
-      return obj;
-    }
-
-    function ownKeys$1(object, enumerableOnly) {
-      var keys = Object.keys(object);
-
-      if (Object.getOwnPropertySymbols) {
-        var symbols = Object.getOwnPropertySymbols(object);
-        if (enumerableOnly) symbols = symbols.filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-        });
-        keys.push.apply(keys, symbols);
-      }
-
-      return keys;
-    }
-
-    function _objectSpread2(target) {
-      for (var i = 1; i < arguments.length; i++) {
-        var source = arguments[i] != null ? arguments[i] : {};
-
-        if (i % 2) {
-          ownKeys$1(source, true).forEach(function (key) {
-            _defineProperty(target, key, source[key]);
-          });
-        } else if (Object.getOwnPropertyDescriptors) {
-          Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-        } else {
-          ownKeys$1(source).forEach(function (key) {
-            Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-          });
-        }
-      }
-
-      return target;
-    }
-
-    function _toConsumableArray(arr) {
-      return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
-    }
-
-    function _arrayWithoutHoles(arr) {
-      if (Array.isArray(arr)) {
-        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-        return arr2;
-      }
-    }
-
-    function _iterableToArray(iter) {
-      if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
-    }
-
-    function _nonIterableSpread() {
-      throw new TypeError("Invalid attempt to spread non-iterable instance");
-    }
-
-    var runtime_1 = createCommonjsModule(function (module) {
-    /**
-     * Copyright (c) 2014-present, Facebook, Inc.
-     *
-     * This source code is licensed under the MIT license found in the
-     * LICENSE file in the root directory of this source tree.
-     */
-
-    var runtime = (function (exports) {
-
-      var Op = Object.prototype;
-      var hasOwn = Op.hasOwnProperty;
-      var undefined$1; // More compressible than void 0.
-      var $Symbol = typeof Symbol === "function" ? Symbol : {};
-      var iteratorSymbol = $Symbol.iterator || "@@iterator";
-      var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
-      var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
-
-      function wrap(innerFn, outerFn, self, tryLocsList) {
-        // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
-        var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
-        var generator = Object.create(protoGenerator.prototype);
-        var context = new Context(tryLocsList || []);
-
-        // The ._invoke method unifies the implementations of the .next,
-        // .throw, and .return methods.
-        generator._invoke = makeInvokeMethod(innerFn, self, context);
-
-        return generator;
-      }
-      exports.wrap = wrap;
-
-      // Try/catch helper to minimize deoptimizations. Returns a completion
-      // record like context.tryEntries[i].completion. This interface could
-      // have been (and was previously) designed to take a closure to be
-      // invoked without arguments, but in all the cases we care about we
-      // already have an existing method we want to call, so there's no need
-      // to create a new function object. We can even get away with assuming
-      // the method takes exactly one argument, since that happens to be true
-      // in every case, so we don't have to touch the arguments object. The
-      // only additional allocation required is the completion record, which
-      // has a stable shape and so hopefully should be cheap to allocate.
-      function tryCatch(fn, obj, arg) {
-        try {
-          return { type: "normal", arg: fn.call(obj, arg) };
-        } catch (err) {
-          return { type: "throw", arg: err };
-        }
-      }
-
-      var GenStateSuspendedStart = "suspendedStart";
-      var GenStateSuspendedYield = "suspendedYield";
-      var GenStateExecuting = "executing";
-      var GenStateCompleted = "completed";
-
-      // Returning this object from the innerFn has the same effect as
-      // breaking out of the dispatch switch statement.
-      var ContinueSentinel = {};
-
-      // Dummy constructor functions that we use as the .constructor and
-      // .constructor.prototype properties for functions that return Generator
-      // objects. For full spec compliance, you may wish to configure your
-      // minifier not to mangle the names of these two functions.
-      function Generator() {}
-      function GeneratorFunction() {}
-      function GeneratorFunctionPrototype() {}
-
-      // This is a polyfill for %IteratorPrototype% for environments that
-      // don't natively support it.
-      var IteratorPrototype = {};
-      IteratorPrototype[iteratorSymbol] = function () {
-        return this;
-      };
-
-      var getProto = Object.getPrototypeOf;
-      var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
-      if (NativeIteratorPrototype &&
-          NativeIteratorPrototype !== Op &&
-          hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
-        // This environment has a native %IteratorPrototype%; use it instead
-        // of the polyfill.
-        IteratorPrototype = NativeIteratorPrototype;
-      }
-
-      var Gp = GeneratorFunctionPrototype.prototype =
-        Generator.prototype = Object.create(IteratorPrototype);
-      GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
-      GeneratorFunctionPrototype.constructor = GeneratorFunction;
-      GeneratorFunctionPrototype[toStringTagSymbol] =
-        GeneratorFunction.displayName = "GeneratorFunction";
-
-      // Helper for defining the .next, .throw, and .return methods of the
-      // Iterator interface in terms of a single ._invoke method.
-      function defineIteratorMethods(prototype) {
-        ["next", "throw", "return"].forEach(function(method) {
-          prototype[method] = function(arg) {
-            return this._invoke(method, arg);
-          };
-        });
-      }
-
-      exports.isGeneratorFunction = function(genFun) {
-        var ctor = typeof genFun === "function" && genFun.constructor;
-        return ctor
-          ? ctor === GeneratorFunction ||
-            // For the native GeneratorFunction constructor, the best we can
-            // do is to check its .name property.
-            (ctor.displayName || ctor.name) === "GeneratorFunction"
-          : false;
-      };
-
-      exports.mark = function(genFun) {
-        if (Object.setPrototypeOf) {
-          Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
-        } else {
-          genFun.__proto__ = GeneratorFunctionPrototype;
-          if (!(toStringTagSymbol in genFun)) {
-            genFun[toStringTagSymbol] = "GeneratorFunction";
-          }
-        }
-        genFun.prototype = Object.create(Gp);
-        return genFun;
-      };
-
-      // Within the body of any async function, `await x` is transformed to
-      // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
-      // `hasOwn.call(value, "__await")` to determine if the yielded value is
-      // meant to be awaited.
-      exports.awrap = function(arg) {
-        return { __await: arg };
-      };
-
-      function AsyncIterator(generator) {
-        function invoke(method, arg, resolve, reject) {
-          var record = tryCatch(generator[method], generator, arg);
-          if (record.type === "throw") {
-            reject(record.arg);
-          } else {
-            var result = record.arg;
-            var value = result.value;
-            if (value &&
-                typeof value === "object" &&
-                hasOwn.call(value, "__await")) {
-              return Promise.resolve(value.__await).then(function(value) {
-                invoke("next", value, resolve, reject);
-              }, function(err) {
-                invoke("throw", err, resolve, reject);
-              });
-            }
-
-            return Promise.resolve(value).then(function(unwrapped) {
-              // When a yielded Promise is resolved, its final value becomes
-              // the .value of the Promise<{value,done}> result for the
-              // current iteration.
-              result.value = unwrapped;
-              resolve(result);
-            }, function(error) {
-              // If a rejected Promise was yielded, throw the rejection back
-              // into the async generator function so it can be handled there.
-              return invoke("throw", error, resolve, reject);
-            });
-          }
-        }
-
-        var previousPromise;
-
-        function enqueue(method, arg) {
-          function callInvokeWithMethodAndArg() {
-            return new Promise(function(resolve, reject) {
-              invoke(method, arg, resolve, reject);
-            });
-          }
-
-          return previousPromise =
-            // If enqueue has been called before, then we want to wait until
-            // all previous Promises have been resolved before calling invoke,
-            // so that results are always delivered in the correct order. If
-            // enqueue has not been called before, then it is important to
-            // call invoke immediately, without waiting on a callback to fire,
-            // so that the async generator function has the opportunity to do
-            // any necessary setup in a predictable way. This predictability
-            // is why the Promise constructor synchronously invokes its
-            // executor callback, and why async functions synchronously
-            // execute code before the first await. Since we implement simple
-            // async functions in terms of async generators, it is especially
-            // important to get this right, even though it requires care.
-            previousPromise ? previousPromise.then(
-              callInvokeWithMethodAndArg,
-              // Avoid propagating failures to Promises returned by later
-              // invocations of the iterator.
-              callInvokeWithMethodAndArg
-            ) : callInvokeWithMethodAndArg();
-        }
-
-        // Define the unified helper method that is used to implement .next,
-        // .throw, and .return (see defineIteratorMethods).
-        this._invoke = enqueue;
-      }
-
-      defineIteratorMethods(AsyncIterator.prototype);
-      AsyncIterator.prototype[asyncIteratorSymbol] = function () {
-        return this;
-      };
-      exports.AsyncIterator = AsyncIterator;
-
-      // Note that simple async functions are implemented on top of
-      // AsyncIterator objects; they just return a Promise for the value of
-      // the final result produced by the iterator.
-      exports.async = function(innerFn, outerFn, self, tryLocsList) {
-        var iter = new AsyncIterator(
-          wrap(innerFn, outerFn, self, tryLocsList)
-        );
-
-        return exports.isGeneratorFunction(outerFn)
-          ? iter // If outerFn is a generator, return the full iterator.
-          : iter.next().then(function(result) {
-              return result.done ? result.value : iter.next();
-            });
-      };
-
-      function makeInvokeMethod(innerFn, self, context) {
-        var state = GenStateSuspendedStart;
-
-        return function invoke(method, arg) {
-          if (state === GenStateExecuting) {
-            throw new Error("Generator is already running");
-          }
-
-          if (state === GenStateCompleted) {
-            if (method === "throw") {
-              throw arg;
-            }
-
-            // Be forgiving, per 25.3.3.3.3 of the spec:
-            // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
-            return doneResult();
-          }
-
-          context.method = method;
-          context.arg = arg;
-
-          while (true) {
-            var delegate = context.delegate;
-            if (delegate) {
-              var delegateResult = maybeInvokeDelegate(delegate, context);
-              if (delegateResult) {
-                if (delegateResult === ContinueSentinel) continue;
-                return delegateResult;
-              }
-            }
-
-            if (context.method === "next") {
-              // Setting context._sent for legacy support of Babel's
-              // function.sent implementation.
-              context.sent = context._sent = context.arg;
-
-            } else if (context.method === "throw") {
-              if (state === GenStateSuspendedStart) {
-                state = GenStateCompleted;
-                throw context.arg;
-              }
-
-              context.dispatchException(context.arg);
-
-            } else if (context.method === "return") {
-              context.abrupt("return", context.arg);
-            }
-
-            state = GenStateExecuting;
-
-            var record = tryCatch(innerFn, self, context);
-            if (record.type === "normal") {
-              // If an exception is thrown from innerFn, we leave state ===
-              // GenStateExecuting and loop back for another invocation.
-              state = context.done
-                ? GenStateCompleted
-                : GenStateSuspendedYield;
-
-              if (record.arg === ContinueSentinel) {
-                continue;
-              }
-
-              return {
-                value: record.arg,
-                done: context.done
-              };
-
-            } else if (record.type === "throw") {
-              state = GenStateCompleted;
-              // Dispatch the exception by looping back around to the
-              // context.dispatchException(context.arg) call above.
-              context.method = "throw";
-              context.arg = record.arg;
-            }
-          }
-        };
-      }
-
-      // Call delegate.iterator[context.method](context.arg) and handle the
-      // result, either by returning a { value, done } result from the
-      // delegate iterator, or by modifying context.method and context.arg,
-      // setting context.delegate to null, and returning the ContinueSentinel.
-      function maybeInvokeDelegate(delegate, context) {
-        var method = delegate.iterator[context.method];
-        if (method === undefined$1) {
-          // A .throw or .return when the delegate iterator has no .throw
-          // method always terminates the yield* loop.
-          context.delegate = null;
-
-          if (context.method === "throw") {
-            // Note: ["return"] must be used for ES3 parsing compatibility.
-            if (delegate.iterator["return"]) {
-              // If the delegate iterator has a return method, give it a
-              // chance to clean up.
-              context.method = "return";
-              context.arg = undefined$1;
-              maybeInvokeDelegate(delegate, context);
-
-              if (context.method === "throw") {
-                // If maybeInvokeDelegate(context) changed context.method from
-                // "return" to "throw", let that override the TypeError below.
-                return ContinueSentinel;
-              }
-            }
-
-            context.method = "throw";
-            context.arg = new TypeError(
-              "The iterator does not provide a 'throw' method");
-          }
-
-          return ContinueSentinel;
-        }
-
-        var record = tryCatch(method, delegate.iterator, context.arg);
-
-        if (record.type === "throw") {
-          context.method = "throw";
-          context.arg = record.arg;
-          context.delegate = null;
-          return ContinueSentinel;
-        }
-
-        var info = record.arg;
-
-        if (! info) {
-          context.method = "throw";
-          context.arg = new TypeError("iterator result is not an object");
-          context.delegate = null;
-          return ContinueSentinel;
-        }
-
-        if (info.done) {
-          // Assign the result of the finished delegate to the temporary
-          // variable specified by delegate.resultName (see delegateYield).
-          context[delegate.resultName] = info.value;
-
-          // Resume execution at the desired location (see delegateYield).
-          context.next = delegate.nextLoc;
-
-          // If context.method was "throw" but the delegate handled the
-          // exception, let the outer generator proceed normally. If
-          // context.method was "next", forget context.arg since it has been
-          // "consumed" by the delegate iterator. If context.method was
-          // "return", allow the original .return call to continue in the
-          // outer generator.
-          if (context.method !== "return") {
-            context.method = "next";
-            context.arg = undefined$1;
-          }
-
-        } else {
-          // Re-yield the result returned by the delegate method.
-          return info;
-        }
-
-        // The delegate iterator is finished, so forget it and continue with
-        // the outer generator.
-        context.delegate = null;
-        return ContinueSentinel;
-      }
-
-      // Define Generator.prototype.{next,throw,return} in terms of the
-      // unified ._invoke helper method.
-      defineIteratorMethods(Gp);
-
-      Gp[toStringTagSymbol] = "Generator";
-
-      // A Generator should always return itself as the iterator object when the
-      // @@iterator function is called on it. Some browsers' implementations of the
-      // iterator prototype chain incorrectly implement this, causing the Generator
-      // object to not be returned from this call. This ensures that doesn't happen.
-      // See https://github.com/facebook/regenerator/issues/274 for more details.
-      Gp[iteratorSymbol] = function() {
-        return this;
-      };
-
-      Gp.toString = function() {
-        return "[object Generator]";
-      };
-
-      function pushTryEntry(locs) {
-        var entry = { tryLoc: locs[0] };
-
-        if (1 in locs) {
-          entry.catchLoc = locs[1];
-        }
-
-        if (2 in locs) {
-          entry.finallyLoc = locs[2];
-          entry.afterLoc = locs[3];
-        }
-
-        this.tryEntries.push(entry);
-      }
-
-      function resetTryEntry(entry) {
-        var record = entry.completion || {};
-        record.type = "normal";
-        delete record.arg;
-        entry.completion = record;
-      }
-
-      function Context(tryLocsList) {
-        // The root entry object (effectively a try statement without a catch
-        // or a finally block) gives us a place to store values thrown from
-        // locations where there is no enclosing try statement.
-        this.tryEntries = [{ tryLoc: "root" }];
-        tryLocsList.forEach(pushTryEntry, this);
-        this.reset(true);
-      }
-
-      exports.keys = function(object) {
-        var keys = [];
-        for (var key in object) {
-          keys.push(key);
-        }
-        keys.reverse();
-
-        // Rather than returning an object with a next method, we keep
-        // things simple and return the next function itself.
-        return function next() {
-          while (keys.length) {
-            var key = keys.pop();
-            if (key in object) {
-              next.value = key;
-              next.done = false;
-              return next;
-            }
-          }
-
-          // To avoid creating an additional object, we just hang the .value
-          // and .done properties off the next function object itself. This
-          // also ensures that the minifier will not anonymize the function.
-          next.done = true;
-          return next;
-        };
-      };
-
-      function values(iterable) {
-        if (iterable) {
-          var iteratorMethod = iterable[iteratorSymbol];
-          if (iteratorMethod) {
-            return iteratorMethod.call(iterable);
-          }
-
-          if (typeof iterable.next === "function") {
-            return iterable;
-          }
-
-          if (!isNaN(iterable.length)) {
-            var i = -1, next = function next() {
-              while (++i < iterable.length) {
-                if (hasOwn.call(iterable, i)) {
-                  next.value = iterable[i];
-                  next.done = false;
-                  return next;
-                }
-              }
-
-              next.value = undefined$1;
-              next.done = true;
-
-              return next;
-            };
-
-            return next.next = next;
-          }
-        }
-
-        // Return an iterator with no values.
-        return { next: doneResult };
-      }
-      exports.values = values;
-
-      function doneResult() {
-        return { value: undefined$1, done: true };
-      }
-
-      Context.prototype = {
-        constructor: Context,
-
-        reset: function(skipTempReset) {
-          this.prev = 0;
-          this.next = 0;
-          // Resetting context._sent for legacy support of Babel's
-          // function.sent implementation.
-          this.sent = this._sent = undefined$1;
-          this.done = false;
-          this.delegate = null;
-
-          this.method = "next";
-          this.arg = undefined$1;
-
-          this.tryEntries.forEach(resetTryEntry);
-
-          if (!skipTempReset) {
-            for (var name in this) {
-              // Not sure about the optimal order of these conditions:
-              if (name.charAt(0) === "t" &&
-                  hasOwn.call(this, name) &&
-                  !isNaN(+name.slice(1))) {
-                this[name] = undefined$1;
-              }
-            }
-          }
-        },
-
-        stop: function() {
-          this.done = true;
-
-          var rootEntry = this.tryEntries[0];
-          var rootRecord = rootEntry.completion;
-          if (rootRecord.type === "throw") {
-            throw rootRecord.arg;
-          }
-
-          return this.rval;
-        },
-
-        dispatchException: function(exception) {
-          if (this.done) {
-            throw exception;
-          }
-
-          var context = this;
-          function handle(loc, caught) {
-            record.type = "throw";
-            record.arg = exception;
-            context.next = loc;
-
-            if (caught) {
-              // If the dispatched exception was caught by a catch block,
-              // then let that catch block handle the exception normally.
-              context.method = "next";
-              context.arg = undefined$1;
-            }
-
-            return !! caught;
-          }
-
-          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-            var entry = this.tryEntries[i];
-            var record = entry.completion;
-
-            if (entry.tryLoc === "root") {
-              // Exception thrown outside of any try block that could handle
-              // it, so set the completion value of the entire function to
-              // throw the exception.
-              return handle("end");
-            }
-
-            if (entry.tryLoc <= this.prev) {
-              var hasCatch = hasOwn.call(entry, "catchLoc");
-              var hasFinally = hasOwn.call(entry, "finallyLoc");
-
-              if (hasCatch && hasFinally) {
-                if (this.prev < entry.catchLoc) {
-                  return handle(entry.catchLoc, true);
-                } else if (this.prev < entry.finallyLoc) {
-                  return handle(entry.finallyLoc);
-                }
-
-              } else if (hasCatch) {
-                if (this.prev < entry.catchLoc) {
-                  return handle(entry.catchLoc, true);
-                }
-
-              } else if (hasFinally) {
-                if (this.prev < entry.finallyLoc) {
-                  return handle(entry.finallyLoc);
-                }
-
-              } else {
-                throw new Error("try statement without catch or finally");
-              }
-            }
-          }
-        },
-
-        abrupt: function(type, arg) {
-          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-            var entry = this.tryEntries[i];
-            if (entry.tryLoc <= this.prev &&
-                hasOwn.call(entry, "finallyLoc") &&
-                this.prev < entry.finallyLoc) {
-              var finallyEntry = entry;
-              break;
-            }
-          }
-
-          if (finallyEntry &&
-              (type === "break" ||
-               type === "continue") &&
-              finallyEntry.tryLoc <= arg &&
-              arg <= finallyEntry.finallyLoc) {
-            // Ignore the finally entry if control is not jumping to a
-            // location outside the try/catch block.
-            finallyEntry = null;
-          }
-
-          var record = finallyEntry ? finallyEntry.completion : {};
-          record.type = type;
-          record.arg = arg;
-
-          if (finallyEntry) {
-            this.method = "next";
-            this.next = finallyEntry.finallyLoc;
-            return ContinueSentinel;
-          }
-
-          return this.complete(record);
-        },
-
-        complete: function(record, afterLoc) {
-          if (record.type === "throw") {
-            throw record.arg;
-          }
-
-          if (record.type === "break" ||
-              record.type === "continue") {
-            this.next = record.arg;
-          } else if (record.type === "return") {
-            this.rval = this.arg = record.arg;
-            this.method = "return";
-            this.next = "end";
-          } else if (record.type === "normal" && afterLoc) {
-            this.next = afterLoc;
-          }
-
-          return ContinueSentinel;
-        },
-
-        finish: function(finallyLoc) {
-          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-            var entry = this.tryEntries[i];
-            if (entry.finallyLoc === finallyLoc) {
-              this.complete(entry.completion, entry.afterLoc);
-              resetTryEntry(entry);
-              return ContinueSentinel;
-            }
-          }
-        },
-
-        "catch": function(tryLoc) {
-          for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-            var entry = this.tryEntries[i];
-            if (entry.tryLoc === tryLoc) {
-              var record = entry.completion;
-              if (record.type === "throw") {
-                var thrown = record.arg;
-                resetTryEntry(entry);
-              }
-              return thrown;
-            }
-          }
-
-          // The context.catch method must only be called with a location
-          // argument that corresponds to a known catch block.
-          throw new Error("illegal catch attempt");
-        },
-
-        delegateYield: function(iterable, resultName, nextLoc) {
-          this.delegate = {
-            iterator: values(iterable),
-            resultName: resultName,
-            nextLoc: nextLoc
-          };
-
-          if (this.method === "next") {
-            // Deliberately forget the last sent value so that we don't
-            // accidentally pass it on to the delegate.
-            this.arg = undefined$1;
-          }
-
-          return ContinueSentinel;
-        }
-      };
-
-      // Regardless of whether this script is executing as a CommonJS module
-      // or not, return the runtime object so that we can declare the variable
-      // regeneratorRuntime in the outer scope, which allows this module to be
-      // injected easily by `bin/regenerator --include-runtime script.js`.
-      return exports;
-
-    }(
-      // If this script is executing as a CommonJS module, use module.exports
-      // as the regeneratorRuntime namespace. Otherwise create a new empty
-      // object. Either way, the resulting object will be used to initialize
-      // the regeneratorRuntime variable at the top of this file.
-       module.exports 
-    ));
-
-    try {
-      regeneratorRuntime = runtime;
-    } catch (accidentalStrictMode) {
-      // This module should not be running in strict mode, so the above
-      // assignment should always work unless something is misconfigured. Just
-      // in case runtime.js accidentally runs in strict mode, we can escape
-      // strict mode using a global Function call. This could conceivably fail
-      // if a Content Security Policy forbids using Function, but in that case
-      // the proper solution is to fix the accidental strict mode problem. If
-      // you've misconfigured your bundler to force strict mode and applied a
-      // CSP to forbid Function, and you're not willing to fix either of those
-      // problems, please detail your unique predicament in a GitHub issue.
-      Function("r", "regeneratorRuntime = r")(runtime);
-    }
-    });
-
-    var IDX=36, HEX='';
-    while (IDX--) HEX += IDX.toString(36);
-
-    function uid$1 (len) {
-    	var str='', num = len || 11;
-    	while (num--) str += HEX[Math.random() * 36 | 0];
-    	return str;
-    }
-
-    var $filter = arrayIteration.filter;
-
-
-    // `Array.prototype.filter` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.filter
-    // with adding support of @@species
-    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('filter') }, {
-      filter: function filter(callbackfn /* , thisArg */) {
-        return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-      }
-    });
-
-    var sloppyArrayMethod = function (METHOD_NAME, argument) {
-      var method = [][METHOD_NAME];
-      return !method || !fails(function () {
-        // eslint-disable-next-line no-useless-call,no-throw-literal
-        method.call(null, argument || function () { throw 1; }, 1);
-      });
-    };
-
-    var $forEach = arrayIteration.forEach;
-
-
-    // `Array.prototype.forEach` method implementation
-    // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-    var arrayForEach = sloppyArrayMethod('forEach') ? function forEach(callbackfn /* , thisArg */) {
-      return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-    } : [].forEach;
-
-    // `Array.prototype.forEach` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-    _export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
-      forEach: arrayForEach
-    });
-
-    var defineProperty$1 = objectDefineProperty.f;
-
-    var FunctionPrototype = Function.prototype;
-    var FunctionPrototypeToString = FunctionPrototype.toString;
-    var nameRE = /^\s*function ([^ (]*)/;
-    var NAME = 'name';
-
-    // Function instances `.name` property
-    // https://tc39.github.io/ecma262/#sec-function-instances-name
-    if (descriptors && !(NAME in FunctionPrototype)) {
-      defineProperty$1(FunctionPrototype, NAME, {
-        configurable: true,
-        get: function () {
-          try {
-            return FunctionPrototypeToString.call(this).match(nameRE)[1];
-          } catch (error) {
-            return '';
-          }
-        }
-      });
-    }
-
-    var propertyIsEnumerable = objectPropertyIsEnumerable.f;
-
-    // `Object.{ entries, values }` methods implementation
-    var createMethod$2 = function (TO_ENTRIES) {
-      return function (it) {
-        var O = toIndexedObject(it);
-        var keys = objectKeys(O);
-        var length = keys.length;
-        var i = 0;
-        var result = [];
-        var key;
-        while (length > i) {
-          key = keys[i++];
-          if (!descriptors || propertyIsEnumerable.call(O, key)) {
-            result.push(TO_ENTRIES ? [key, O[key]] : O[key]);
-          }
-        }
-        return result;
-      };
-    };
-
-    var objectToArray = {
-      // `Object.entries` method
-      // https://tc39.github.io/ecma262/#sec-object.entries
-      entries: createMethod$2(true),
-      // `Object.values` method
-      // https://tc39.github.io/ecma262/#sec-object.values
-      values: createMethod$2(false)
-    };
-
-    var $values = objectToArray.values;
-
-    // `Object.values` method
-    // https://tc39.github.io/ecma262/#sec-object.values
-    _export({ target: 'Object', stat: true }, {
-      values: function values(O) {
-        return $values(O);
-      }
-    });
-
-    // iterable DOM collections
-    // flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
-    var domIterables = {
-      CSSRuleList: 0,
-      CSSStyleDeclaration: 0,
-      CSSValueList: 0,
-      ClientRectList: 0,
-      DOMRectList: 0,
-      DOMStringList: 0,
-      DOMTokenList: 1,
-      DataTransferItemList: 0,
-      FileList: 0,
-      HTMLAllCollection: 0,
-      HTMLCollection: 0,
-      HTMLFormElement: 0,
-      HTMLSelectElement: 0,
-      MediaList: 0,
-      MimeTypeArray: 0,
-      NamedNodeMap: 0,
-      NodeList: 1,
-      PaintRequestList: 0,
-      Plugin: 0,
-      PluginArray: 0,
-      SVGLengthList: 0,
-      SVGNumberList: 0,
-      SVGPathSegList: 0,
-      SVGPointList: 0,
-      SVGStringList: 0,
-      SVGTransformList: 0,
-      SourceBufferList: 0,
-      StyleSheetList: 0,
-      TextTrackCueList: 0,
-      TextTrackList: 0,
-      TouchList: 0
-    };
-
-    for (var COLLECTION_NAME in domIterables) {
-      var Collection = global_1[COLLECTION_NAME];
-      var CollectionPrototype = Collection && Collection.prototype;
-      // some Chrome versions have non-configurable methods on DOMTokenList
-      if (CollectionPrototype && CollectionPrototype.forEach !== arrayForEach) try {
-        hide(CollectionPrototype, 'forEach', arrayForEach);
-      } catch (error) {
-        CollectionPrototype.forEach = arrayForEach;
-      }
-    }
-
-    var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
-    var MAX_SAFE_INTEGER$1 = 0x1FFFFFFFFFFFFF;
-    var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
-
-    var IS_CONCAT_SPREADABLE_SUPPORT = !fails(function () {
-      var array = [];
-      array[IS_CONCAT_SPREADABLE] = false;
-      return array.concat()[0] !== array;
-    });
-
-    var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
-
-    var isConcatSpreadable = function (O) {
-      if (!isObject(O)) return false;
-      var spreadable = O[IS_CONCAT_SPREADABLE];
-      return spreadable !== undefined ? !!spreadable : isArray(O);
-    };
-
-    var FORCED$1 = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
-
-    // `Array.prototype.concat` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.concat
-    // with adding support of @@isConcatSpreadable and @@species
-    _export({ target: 'Array', proto: true, forced: FORCED$1 }, {
-      concat: function concat(arg) { // eslint-disable-line no-unused-vars
-        var O = toObject(this);
-        var A = arraySpeciesCreate(O, 0);
-        var n = 0;
-        var i, k, length, len, E;
-        for (i = -1, length = arguments.length; i < length; i++) {
-          E = i === -1 ? O : arguments[i];
-          if (isConcatSpreadable(E)) {
-            len = toLength(E.length);
-            if (n + len > MAX_SAFE_INTEGER$1) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-            for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
-          } else {
-            if (n >= MAX_SAFE_INTEGER$1) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-            createProperty(A, n++, E);
-          }
-        }
-        A.length = n;
-        return A;
-      }
-    });
-
-    // `Array.from` method implementation
-    // https://tc39.github.io/ecma262/#sec-array.from
-    var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
-      var O = toObject(arrayLike);
-      var C = typeof this == 'function' ? this : Array;
-      var argumentsLength = arguments.length;
-      var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
-      var mapping = mapfn !== undefined;
-      var index = 0;
-      var iteratorMethod = getIteratorMethod(O);
-      var length, result, step, iterator;
-      if (mapping) mapfn = bindContext(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
-      // if the target is not iterable or it's an array with the default iterator - use a simple case
-      if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
-        iterator = iteratorMethod.call(O);
-        result = new C();
-        for (;!(step = iterator.next()).done; index++) {
-          createProperty(result, index, mapping
-            ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true)
-            : step.value
-          );
-        }
-      } else {
-        length = toLength(O.length);
-        result = new C(length);
-        for (;length > index; index++) {
-          createProperty(result, index, mapping ? mapfn(O[index], index) : O[index]);
-        }
-      }
-      result.length = index;
-      return result;
-    };
-
-    var INCORRECT_ITERATION$1 = !checkCorrectnessOfIteration(function (iterable) {
-      Array.from(iterable);
-    });
-
-    // `Array.from` method
-    // https://tc39.github.io/ecma262/#sec-array.from
-    _export({ target: 'Array', stat: true, forced: INCORRECT_ITERATION$1 }, {
-      from: arrayFrom
-    });
-
-    var correctPrototypeGetter = !fails(function () {
-      function F() { /* empty */ }
-      F.prototype.constructor = null;
-      return Object.getPrototypeOf(new F()) !== F.prototype;
-    });
-
-    var IE_PROTO$1 = sharedKey('IE_PROTO');
-    var ObjectPrototype$1 = Object.prototype;
-
-    // `Object.getPrototypeOf` method
-    // https://tc39.github.io/ecma262/#sec-object.getprototypeof
-    var objectGetPrototypeOf = correctPrototypeGetter ? Object.getPrototypeOf : function (O) {
-      O = toObject(O);
-      if (has(O, IE_PROTO$1)) return O[IE_PROTO$1];
-      if (typeof O.constructor == 'function' && O instanceof O.constructor) {
-        return O.constructor.prototype;
-      } return O instanceof Object ? ObjectPrototype$1 : null;
-    };
-
-    var ITERATOR$3 = wellKnownSymbol('iterator');
-    var BUGGY_SAFARI_ITERATORS = false;
-
-    var returnThis = function () { return this; };
-
-    // `%IteratorPrototype%` object
-    // https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
-    var IteratorPrototype, PrototypeOfArrayIteratorPrototype, arrayIterator;
-
-    if ([].keys) {
-      arrayIterator = [].keys();
-      // Safari 8 has buggy iterators w/o `next`
-      if (!('next' in arrayIterator)) BUGGY_SAFARI_ITERATORS = true;
-      else {
-        PrototypeOfArrayIteratorPrototype = objectGetPrototypeOf(objectGetPrototypeOf(arrayIterator));
-        if (PrototypeOfArrayIteratorPrototype !== Object.prototype) IteratorPrototype = PrototypeOfArrayIteratorPrototype;
-      }
-    }
-
-    if (IteratorPrototype == undefined) IteratorPrototype = {};
-
-    // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-    if ( !has(IteratorPrototype, ITERATOR$3)) hide(IteratorPrototype, ITERATOR$3, returnThis);
-
-    var iteratorsCore = {
-      IteratorPrototype: IteratorPrototype,
-      BUGGY_SAFARI_ITERATORS: BUGGY_SAFARI_ITERATORS
-    };
-
-    var IteratorPrototype$1 = iteratorsCore.IteratorPrototype;
-
-
-
-
-
-    var returnThis$1 = function () { return this; };
-
-    var createIteratorConstructor = function (IteratorConstructor, NAME, next) {
-      var TO_STRING_TAG = NAME + ' Iterator';
-      IteratorConstructor.prototype = objectCreate(IteratorPrototype$1, { next: createPropertyDescriptor(1, next) });
-      setToStringTag(IteratorConstructor, TO_STRING_TAG, false);
-      iterators[TO_STRING_TAG] = returnThis$1;
-      return IteratorConstructor;
-    };
-
-    var aPossiblePrototype = function (it) {
-      if (!isObject(it) && it !== null) {
-        throw TypeError("Can't set " + String(it) + ' as a prototype');
-      } return it;
-    };
-
-    // `Object.setPrototypeOf` method
-    // https://tc39.github.io/ecma262/#sec-object.setprototypeof
-    // Works with __proto__ only. Old v8 can't work with null proto objects.
-    /* eslint-disable no-proto */
-    var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
-      var CORRECT_SETTER = false;
-      var test = {};
-      var setter;
-      try {
-        setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
-        setter.call(test, []);
-        CORRECT_SETTER = test instanceof Array;
-      } catch (error) { /* empty */ }
-      return function setPrototypeOf(O, proto) {
-        anObject(O);
-        aPossiblePrototype(proto);
-        if (CORRECT_SETTER) setter.call(O, proto);
-        else O.__proto__ = proto;
-        return O;
-      };
-    }() : undefined);
-
-    var IteratorPrototype$2 = iteratorsCore.IteratorPrototype;
-    var BUGGY_SAFARI_ITERATORS$1 = iteratorsCore.BUGGY_SAFARI_ITERATORS;
-    var ITERATOR$4 = wellKnownSymbol('iterator');
-    var KEYS = 'keys';
-    var VALUES = 'values';
-    var ENTRIES = 'entries';
-
-    var returnThis$2 = function () { return this; };
-
-    var defineIterator = function (Iterable, NAME, IteratorConstructor, next, DEFAULT, IS_SET, FORCED) {
-      createIteratorConstructor(IteratorConstructor, NAME, next);
-
-      var getIterationMethod = function (KIND) {
-        if (KIND === DEFAULT && defaultIterator) return defaultIterator;
-        if (!BUGGY_SAFARI_ITERATORS$1 && KIND in IterablePrototype) return IterablePrototype[KIND];
-        switch (KIND) {
-          case KEYS: return function keys() { return new IteratorConstructor(this, KIND); };
-          case VALUES: return function values() { return new IteratorConstructor(this, KIND); };
-          case ENTRIES: return function entries() { return new IteratorConstructor(this, KIND); };
-        } return function () { return new IteratorConstructor(this); };
-      };
-
-      var TO_STRING_TAG = NAME + ' Iterator';
-      var INCORRECT_VALUES_NAME = false;
-      var IterablePrototype = Iterable.prototype;
-      var nativeIterator = IterablePrototype[ITERATOR$4]
-        || IterablePrototype['@@iterator']
-        || DEFAULT && IterablePrototype[DEFAULT];
-      var defaultIterator = !BUGGY_SAFARI_ITERATORS$1 && nativeIterator || getIterationMethod(DEFAULT);
-      var anyNativeIterator = NAME == 'Array' ? IterablePrototype.entries || nativeIterator : nativeIterator;
-      var CurrentIteratorPrototype, methods, KEY;
-
-      // fix native
-      if (anyNativeIterator) {
-        CurrentIteratorPrototype = objectGetPrototypeOf(anyNativeIterator.call(new Iterable()));
-        if (IteratorPrototype$2 !== Object.prototype && CurrentIteratorPrototype.next) {
-          if ( objectGetPrototypeOf(CurrentIteratorPrototype) !== IteratorPrototype$2) {
-            if (objectSetPrototypeOf) {
-              objectSetPrototypeOf(CurrentIteratorPrototype, IteratorPrototype$2);
-            } else if (typeof CurrentIteratorPrototype[ITERATOR$4] != 'function') {
-              hide(CurrentIteratorPrototype, ITERATOR$4, returnThis$2);
-            }
-          }
-          // Set @@toStringTag to native iterators
-          setToStringTag(CurrentIteratorPrototype, TO_STRING_TAG, true);
-        }
-      }
-
-      // fix Array#{values, @@iterator}.name in V8 / FF
-      if (DEFAULT == VALUES && nativeIterator && nativeIterator.name !== VALUES) {
-        INCORRECT_VALUES_NAME = true;
-        defaultIterator = function values() { return nativeIterator.call(this); };
-      }
-
-      // define iterator
-      if ( IterablePrototype[ITERATOR$4] !== defaultIterator) {
-        hide(IterablePrototype, ITERATOR$4, defaultIterator);
-      }
-      iterators[NAME] = defaultIterator;
-
-      // export additional methods
-      if (DEFAULT) {
-        methods = {
-          values: getIterationMethod(VALUES),
-          keys: IS_SET ? defaultIterator : getIterationMethod(KEYS),
-          entries: getIterationMethod(ENTRIES)
-        };
-        if (FORCED) for (KEY in methods) {
-          if (BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME || !(KEY in IterablePrototype)) {
-            redefine(IterablePrototype, KEY, methods[KEY]);
-          }
-        } else _export({ target: NAME, proto: true, forced: BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME }, methods);
-      }
-
-      return methods;
-    };
-
-    var ARRAY_ITERATOR = 'Array Iterator';
-    var setInternalState$1 = internalState.set;
-    var getInternalState$1 = internalState.getterFor(ARRAY_ITERATOR);
-
-    // `Array.prototype.entries` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.entries
-    // `Array.prototype.keys` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.keys
-    // `Array.prototype.values` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.values
-    // `Array.prototype[@@iterator]` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
-    // `CreateArrayIterator` internal method
-    // https://tc39.github.io/ecma262/#sec-createarrayiterator
-    var es_array_iterator = defineIterator(Array, 'Array', function (iterated, kind) {
-      setInternalState$1(this, {
-        type: ARRAY_ITERATOR,
-        target: toIndexedObject(iterated), // target
-        index: 0,                          // next index
-        kind: kind                         // kind
-      });
-    // `%ArrayIteratorPrototype%.next` method
-    // https://tc39.github.io/ecma262/#sec-%arrayiteratorprototype%.next
-    }, function () {
-      var state = getInternalState$1(this);
-      var target = state.target;
-      var kind = state.kind;
-      var index = state.index++;
-      if (!target || index >= target.length) {
-        state.target = undefined;
-        return { value: undefined, done: true };
-      }
-      if (kind == 'keys') return { value: index, done: false };
-      if (kind == 'values') return { value: target[index], done: false };
-      return { value: [index, target[index]], done: false };
-    }, 'values');
-
-    // argumentsList[@@iterator] is %ArrayProto_values%
-    // https://tc39.github.io/ecma262/#sec-createunmappedargumentsobject
-    // https://tc39.github.io/ecma262/#sec-createmappedargumentsobject
-    iterators.Arguments = iterators.Array;
-
-    // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
-    addToUnscopables('keys');
-    addToUnscopables('values');
-    addToUnscopables('entries');
-
-    var $map = arrayIteration.map;
-
-
-    // `Array.prototype.map` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.map
-    // with adding support of @@species
-    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('map') }, {
-      map: function map(callbackfn /* , thisArg */) {
-        return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-      }
-    });
-
-    // `String.prototype.{ codePointAt, at }` methods implementation
-    var createMethod$3 = function (CONVERT_TO_STRING) {
-      return function ($this, pos) {
-        var S = String(requireObjectCoercible($this));
-        var position = toInteger(pos);
-        var size = S.length;
-        var first, second;
-        if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
-        first = S.charCodeAt(position);
-        return first < 0xD800 || first > 0xDBFF || position + 1 === size
-          || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
-            ? CONVERT_TO_STRING ? S.charAt(position) : first
-            : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
-      };
-    };
-
-    var stringMultibyte = {
-      // `String.prototype.codePointAt` method
-      // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-      codeAt: createMethod$3(false),
-      // `String.prototype.at` method
-      // https://github.com/mathiasbynens/String.prototype.at
-      charAt: createMethod$3(true)
-    };
-
-    var charAt = stringMultibyte.charAt;
-
-
-
-    var STRING_ITERATOR = 'String Iterator';
-    var setInternalState$2 = internalState.set;
-    var getInternalState$2 = internalState.getterFor(STRING_ITERATOR);
-
-    // `String.prototype[@@iterator]` method
-    // https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
-    defineIterator(String, 'String', function (iterated) {
-      setInternalState$2(this, {
-        type: STRING_ITERATOR,
-        string: String(iterated),
-        index: 0
-      });
-    // `%StringIteratorPrototype%.next` method
-    // https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
-    }, function next() {
-      var state = getInternalState$2(this);
-      var string = state.string;
-      var index = state.index;
-      var point;
-      if (index >= string.length) return { value: undefined, done: true };
-      point = charAt(string, index);
-      state.index += point.length;
-      return { value: point, done: false };
-    });
-
-    var ITERATOR$5 = wellKnownSymbol('iterator');
-    var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
-    var ArrayValues = es_array_iterator.values;
-
-    for (var COLLECTION_NAME$1 in domIterables) {
-      var Collection$1 = global_1[COLLECTION_NAME$1];
-      var CollectionPrototype$1 = Collection$1 && Collection$1.prototype;
-      if (CollectionPrototype$1) {
-        // some Chrome versions have non-configurable methods on DOMTokenList
-        if (CollectionPrototype$1[ITERATOR$5] !== ArrayValues) try {
-          hide(CollectionPrototype$1, ITERATOR$5, ArrayValues);
-        } catch (error) {
-          CollectionPrototype$1[ITERATOR$5] = ArrayValues;
-        }
-        if (!CollectionPrototype$1[TO_STRING_TAG$3]) hide(CollectionPrototype$1, TO_STRING_TAG$3, COLLECTION_NAME$1);
-        if (domIterables[COLLECTION_NAME$1]) for (var METHOD_NAME in es_array_iterator) {
-          // some Chrome versions have non-configurable methods on DOMTokenList
-          if (CollectionPrototype$1[METHOD_NAME] !== es_array_iterator[METHOD_NAME]) try {
-            hide(CollectionPrototype$1, METHOD_NAME, es_array_iterator[METHOD_NAME]);
-          } catch (error) {
-            CollectionPrototype$1[METHOD_NAME] = es_array_iterator[METHOD_NAME];
-          }
-        }
-      }
-    }
-
-    function getMockUsers() {
-      return _getMockUsers.apply(this, arguments);
-    }
-
-    function _getMockUsers() {
-      _getMockUsers = _asyncToGenerator(
-      /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee2() {
-        var count,
-            gender,
-            res,
-            data,
-            ntkData,
-            _args2 = arguments;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                count = _args2.length > 0 && _args2[0] !== undefined ? _args2[0] : 20;
-                gender = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : '';
-                _context2.next = 4;
-                return fetch("https://randomuser.me/api/?results=".concat(count, "&gender=").concat(gender, "&seed=alondanin"));
-
-              case 4:
-                res = _context2.sent;
-                _context2.next = 7;
-                return res.json();
-
-              case 7:
-                data = _context2.sent;
-                ntkData = data.results.map(function (user) {
-                  var ntkPerson = {
-                    ntkDetails: {
-                      id: "".concat(user.login.uid),
-                      name: "".concat(user.name.first, " ").concat(user.name.last),
-                      age: user.dob.age,
-                      imageUrl: "".concat(user.picture.large),
-                      moreDetails: {
-                        about: "Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the browser, Svelte shifts that work into a compile step that happens when you build your app.\n\nInstead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.",
-                        hobbies: "bike, dance, comedies",
-                        email: "".concat(user.email)
-                      }
-                    },
-                    isMarked: false,
-                    approvalStatus: false
-                  };
-                  return ntkPerson;
-                });
-                return _context2.abrupt("return", ntkData);
-
-              case 10:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2);
-      }));
-      return _getMockUsers.apply(this, arguments);
-    }
-
-    var LoginStatus;
-
-    (function (LoginStatus) {
-      LoginStatus[LoginStatus["Pending"] = 1] = "Pending";
-      LoginStatus[LoginStatus["LoggedIn"] = 2] = "LoggedIn";
-      LoginStatus[LoginStatus["LoginFailed"] = 3] = "LoginFailed";
-    })(LoginStatus || (LoginStatus = {}));
-
-    var appStatusStore = writable({
-      loginStatus: LoginStatus.Pending,
-      currentUser: null
-    });
-    var customAppStatusStore = {
-      subscribe: appStatusStore.subscribe,
-      onLogin: function onLogin(loginDetails) {
-        appStatusStore.update(function (state) {
-          return {
-            loginStatus: loginDetails.status,
-            currentUser: loginDetails.currentUser
-          };
-        });
-      },
-      onLogout: function onLogout() {
-        appStatusStore.update(function (state) {
-          return {
-            loginStatus: LoginStatus.Pending,
-            currentUser: null
-          };
-        });
-      },
-      getCurrentUser: function getCurrentUser() {
-        var store = get_store_value(appStatusStore);
-        return store.currentUser;
-      }
-    };
-
-    var BLM =
-    /*#__PURE__*/
-    function () {
-      function BLM() {
-        _classCallCheck(this, BLM);
-      }
-
-      _createClass(BLM, null, [{
-        key: "setAppData",
-        value: function () {
-          var _setAppData = _asyncToGenerator(
-          /*#__PURE__*/
-          regeneratorRuntime.mark(function _callee() {
-            return regeneratorRuntime.wrap(function _callee$(_context) {
-              while (1) {
-                switch (_context.prev = _context.next) {
-                  case 0:
-                    customNtkStore.setStoreAsync();
-
-                  case 1:
-                  case "end":
-                    return _context.stop();
-                }
-              }
-            }, _callee);
-          }));
-
-          function setAppData() {
-            return _setAppData.apply(this, arguments);
-          }
-
-          return setAppData;
-        }()
-      }, {
-        key: "fetchNtks",
-        value: function () {
-          var _fetchNtks = _asyncToGenerator(
-          /*#__PURE__*/
-          regeneratorRuntime.mark(function _callee2() {
-            var res, data, ntks, dataArray;
-            return regeneratorRuntime.wrap(function _callee2$(_context2) {
-              while (1) {
-                switch (_context2.prev = _context2.next) {
-                  case 0:
-                    _context2.prev = 0;
-                    _context2.next = 3;
-                    return fetch('https://nice-to-know.firebaseio.com/ntkp.json');
-
-                  case 3:
-                    res = _context2.sent;
-
-                    if (!res.ok) {
-                      _context2.next = 24;
-                      break;
-                    }
-
-                    _context2.next = 7;
-                    return res.json();
-
-                  case 7:
-                    data = _context2.sent;
-
-                    if (!data) {
-                      _context2.next = 15;
-                      break;
-                    }
-
-                    dataArray = Object.values(data);
-                    _context2.next = 12;
-                    return dataArray[0];
-
-                  case 12:
-                    ntks = _context2.sent;
-                    _context2.next = 21;
-                    break;
-
-                  case 15:
-                    _context2.next = 17;
-                    return getMockUsers(50);
-
-                  case 17:
-                    ntks = _context2.sent;
-                    ntks.forEach(function (ntk, index) {
-                      ntk.ntkDetails.id = uid$1();
-                    });
-                    _context2.next = 21;
-                    return fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-                      method: 'POST',
-                      body: JSON.stringify(ntks),
-                      headers: {
-                        'Content-Type': 'application/json'
-                      }
-                    });
-
-                  case 21:
-                    return _context2.abrupt("return", ntks);
-
-                  case 24:
-                    throw new Error("Server error");
-
-                  case 25:
-                    _context2.next = 30;
-                    break;
-
-                  case 27:
-                    _context2.prev = 27;
-                    _context2.t0 = _context2["catch"](0);
-                    console.log(_context2.t0);
-
-                  case 30:
-                  case "end":
-                    return _context2.stop();
-                }
-              }
-            }, _callee2, null, [[0, 27]]);
-          }));
-
-          function fetchNtks() {
-            return _fetchNtks.apply(this, arguments);
-          }
-
-          return fetchNtks;
-        }()
-      }, {
-        key: "login",
-        value: function () {
-          var _login = _asyncToGenerator(
-          /*#__PURE__*/
-          regeneratorRuntime.mark(function _callee3(userName) {
-            var ntks, foundNtk;
-            return regeneratorRuntime.wrap(function _callee3$(_context3) {
-              while (1) {
-                switch (_context3.prev = _context3.next) {
-                  case 0:
-                    _context3.prev = 0;
-                    ntks = BLM.getNtks();
-                    foundNtk = ntks.find(function (ntk) {
-                      return ntk.ntkDetails.name === userName;
-                    });
-
-                    if (foundNtk) {
-                      customAppStatusStore.onLogin({
-                        status: LoginStatus.LoggedIn,
-                        currentUser: foundNtk
-                      });
-                    } else {
-                      customAppStatusStore.onLogin({
-                        status: LoginStatus.LoginFailed,
-                        currentUser: null
-                      });
-                    }
-
-                    _context3.next = 9;
-                    break;
-
-                  case 6:
-                    _context3.prev = 6;
-                    _context3.t0 = _context3["catch"](0);
-                    throw new Error("server error: " + _context3.t0.message);
-
-                  case 9:
-                  case "end":
-                    return _context3.stop();
-                }
-              }
-            }, _callee3, null, [[0, 6]]);
-          }));
-
-          function login(_x) {
-            return _login.apply(this, arguments);
-          }
-
-          return login;
-        }()
-      }, {
-        key: "getCurrentUser",
-        value: function getCurrentUser() {
-          try {
-            var currentUser = customAppStatusStore.getCurrentUser();
-            console.log('==>currentUser', currentUser);
-            return currentUser;
-          } catch (err) {
-            console.error(err);
-          }
-        }
-      }, {
-        key: "register",
-        value: function register(newUser) {
-          var state = get_store_value(customNtkStore);
-          var ntks = state ? state.ntkPersons : [];
-          var newNTK = {
-            ntkDetails: _objectSpread2({}, newUser, {
-              id: uid$1()
-            }),
-            isMarked: false,
-            approvalStatus: ApprovalStatus.pending
-          };
-          ntks.push(newNTK);
-          console.log('register, ntks', ntks);
-          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }).then(function () {
-            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-              method: 'POST',
-              body: JSON.stringify(ntks),
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }).then(function () {
-              console.log('register themn, ntks', ntks);
-              customNtkStore.updateStore({
-                hasFetched: state.hasFetched,
-                ntkPersons: ntks
-              });
-              customAppStatusStore.onLogin({
-                status: LoginStatus.LoggedIn,
-                currentUser: newNTK
-              });
-            });
-          });
-        }
-      }, {
-        key: "logout",
-        value: function logout() {
-          customAppStatusStore.onLogout();
-        }
-      }, {
-        key: "getNtks",
-        value: function getNtks() {
-          var state = get_store_value(customNtkStore);
-          return state.ntkPersons || [];
-        }
-      }, {
-        key: "getMyNtks",
-        value: function getMyNtks() {
-          var currentUser = BLM.getCurrentUser();
-          var allNkts = BLM.getNtks();
-          var myNtks = allNkts.filter(function (ntk) {
-            return ntk.ntkDetails.id !== currentUser.ntkDetails.id && ntk.isMarked;
-          });
-          return myNtks;
-        }
-      }, {
-        key: "getNtksToApprove",
-        value: function getNtksToApprove() {
-          var currentUser = BLM.getCurrentUser();
-          var allNkts = BLM.getNtks();
-          var myNtks = allNkts.filter(function (ntk) {
-            return ntk.ntkDetails.id !== currentUser.ntkDetails.id && ntk.isMarked;
-          });
-          return allNkts;
-        }
-      }]);
-
-      return BLM;
-    }();
-
-    var ntkStore = writable({
-      ntkPersons: [],
-      hasFetched: false
-    });
-    var customNtkStore = {
-      subscribe: ntkStore.subscribe,
-      isEmpty: function isEmpty() {
-        var store = get_store_value(ntkStore);
-        return !store.hasFetched;
-      },
-      setStoreAsync: function () {
-        var _setStoreAsync = _asyncToGenerator(
-        /*#__PURE__*/
-        regeneratorRuntime.mark(function _callee() {
-          var ntks;
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  _context.prev = 0;
-                  console.log('setStoreAsync');
-                  _context.next = 4;
-                  return BLM.fetchNtks();
-
-                case 4:
-                  ntks = _context.sent;
-                  ntkStore.update(function (state) {
-                    return {
-                      ntkPersons: _toConsumableArray(ntks),
-                      hasFetched: true
-                    };
-                  });
-                  _context.next = 11;
-                  break;
-
-                case 8:
-                  _context.prev = 8;
-                  _context.t0 = _context["catch"](0);
-                  console.log(_context.t0);
-
-                case 11:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, null, [[0, 8]]);
-        }));
-
-        function setStoreAsync() {
-          return _setStoreAsync.apply(this, arguments);
-        }
-
-        return setStoreAsync;
-      }(),
-      onMarkedChanged: function () {
-        var _onMarkedChanged = _asyncToGenerator(
-        /*#__PURE__*/
-        regeneratorRuntime.mark(function _callee2(ntkId) {
-          return regeneratorRuntime.wrap(function _callee2$(_context2) {
-            while (1) {
-              switch (_context2.prev = _context2.next) {
-                case 0:
-                  ntkStore.update(function (state) {
-                    var ntkp = state.ntkPersons;
-                    var foundIndex = ntkp.findIndex(function (ntkPerson) {
-                      return ntkPerson.ntkDetails.id === ntkId;
-                    });
-
-                    if (foundIndex === -1) {
-                      throw new Error('No person was found to update');
-                    }
-
-                    ntkp[foundIndex].isMarked = !ntkp[foundIndex].isMarked;
-                    ntkp.splice(foundIndex, 1, ntkp[foundIndex]);
-                    fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-                      method: 'DELETE',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      }
-                    }).then(function () {
-                      fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-                        method: 'POST',
-                        body: JSON.stringify(ntkp),
-                        headers: {
-                          'Content-Type': 'application/json'
-                        }
-                      });
-                    });
-                    return _objectSpread2({}, state);
-                  });
-
-                case 1:
-                case "end":
-                  return _context2.stop();
-              }
-            }
-          }, _callee2);
-        }));
-
-        function onMarkedChanged(_x) {
-          return _onMarkedChanged.apply(this, arguments);
-        }
-
-        return onMarkedChanged;
-      }(),
-      onApprovalChanged: function onApprovalChanged(ntkId, isApproved) {
-        ntkStore.update(function (state) {
-          var ntkp = state.ntkPersons;
-          var foundIndex = ntkp.findIndex(function (ntkPerson) {
-            return ntkPerson.ntkDetails.id === ntkId;
-          });
-
-          if (foundIndex === -1) {
-            throw new Error('No person was found to update');
-          }
-
-          ntkp[foundIndex].approvalStatus = isApproved ? ApprovalStatus.approved : ApprovalStatus.disapproved;
-          ntkp.splice(foundIndex, 1, ntkp[foundIndex]);
-          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }).then(function () {
-            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-              method: 'POST',
-              body: JSON.stringify(ntkp),
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-          });
-          return _objectSpread2({}, state);
-        });
-      },
-      registerUser: function registerUser(user) {
-        ntkStore.update(function (state) {
-          var ntkp = state.ntkPersons;
-          var newNTK = {
-            ntkDetails: _objectSpread2({}, user, {
-              id: uid$1()
-            }),
-            isMarked: false,
-            approvalStatus: ApprovalStatus.pending
-          };
-          ntkp.push(newNTK);
-          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }).then(function () {
-            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
-              method: 'POST',
-              body: JSON.stringify(ntkp),
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-          });
-          return _objectSpread2({}, state);
-        });
-      },
-      updateStore: function updateStore(newState) {
-        ntkStore.update(function () {
-          return newState;
-        });
-      } // export function getMyNtks(): NTKPerson[] {
-      //     const store = get(ntkStore);
-      //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
-      //         return ntk.isMarked
-      //     })
-      //     return ntks
-      // }
-      //
-      // export function getNtks(): NTKPerson[] {
-      //     const store = get(ntkStore);
-      //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
-      //         return !ntk.isMarked
-      //     })
-      //     return ntks
-      // }
-
-    };
-
     /* src\components\AllNTKs.svelte generated by Svelte v3.9.1 */
 
     const file$g = "src\\components\\AllNTKs.svelte";
@@ -11773,7 +11857,7 @@ var app = (function () {
     			div = element("div");
     			ntklist.$$.fragment.c();
     			attr(div, "class", "container svelte-1mbbivc");
-    			add_location(div, file$g, 48, 0, 2070);
+    			add_location(div, file$g, 49, 0, 2114);
     		},
 
     		l: function claim(nodes) {
@@ -11828,6 +11912,7 @@ var app = (function () {
       });
 
       const unsubscribe = customNtkStore.subscribe(state => {
+        console.log('all=>', state.ntkPersons);
         $$invalidate('ntkList', ntkList = state.ntkPersons);
       });
 
@@ -12098,7 +12183,7 @@ var app = (function () {
 
     const file$i = "src\\components\\NTKsApproval.svelte";
 
-    // (86:8) {:else}
+    // (84:2) {:else}
     function create_else_block$2(ctx) {
     	var div, t, h2, current;
 
@@ -12119,9 +12204,9 @@ var app = (function () {
     			h2 = element("h2");
     			h2.textContent = "No nice-to-knows to approve";
     			attr(h2, "class", "svelte-r70l8g");
-    			add_location(h2, file$i, 88, 12, 4046);
+    			add_location(h2, file$i, 86, 6, 3905);
     			attr(div, "class", "no-ntks svelte-r70l8g");
-    			add_location(div, file$i, 86, 8, 3946);
+    			add_location(div, file$i, 84, 4, 3817);
     		},
 
     		m: function mount(target, anchor) {
@@ -12160,7 +12245,7 @@ var app = (function () {
     	};
     }
 
-    // (79:4) {#if ntkList.length > 0}
+    // (78:2) {#if ntkList.length > 0}
     function create_if_block$4(ctx) {
     	var current;
 
@@ -12208,7 +12293,7 @@ var app = (function () {
     	};
     }
 
-    // (88:12) <Icon class="material-icons">
+    // (86:6) <Icon class="material-icons">
     function create_default_slot$8(ctx) {
     	var t;
 
@@ -12252,7 +12337,7 @@ var app = (function () {
     			div = element("div");
     			if_block.c();
     			attr(div, "class", "container svelte-r70l8g");
-    			add_location(div, file$i, 77, 0, 3656);
+    			add_location(div, file$i, 76, 0, 3602);
     		},
 
     		l: function claim(nodes) {
@@ -12309,34 +12394,34 @@ var app = (function () {
     }
 
     function onMarkedChanged$2(event) {
-          customNtkStore.onMarkedChanged(event.detail.id);
-      }
+      customNtkStore.onMarkedChanged(event.detail.id);
+    }
 
     function onApprovalChanged(event) {
-          customNtkStore.onApprovalChanged(event.detail.id, event.detail.isApproved);
-      }
+      customNtkStore.onApprovalChanged(event.detail.id, event.detail.isApproved);
+    }
 
     function instance$m($$self, $$props, $$invalidate) {
     	
 
-        let ntkList=[];
+      let ntkList = [];
 
-        const unsubscribe=customNtkStore.subscribe(state => {
-            $$invalidate('ntkList', ntkList=state.ntkPersons.filter(ntkp => ntkp.isMarked));
-        });
-
-        onMount(() => {
-        $$invalidate('ntkList', ntkList = BLM.getNtksToApprove());
+      const unsubscribe = customNtkStore.subscribe(state => {
+        $$invalidate('ntkList', ntkList = state.ntkPersons.filter(ntkp => ntkp.isMarked));
       });
 
-        onDestroy(() => {
-            unsubscribe();
-        });
-        //
-        // function onPersonSelected(event) {
-        //     currentSelectedPerson = event.detail;
-        //     isNTKPersonDialogOpen = true;
-        // }
+      onMount(() => {
+        $$invalidate('ntkList', ntkList = BLM.getToNtks());
+      });
+
+      onDestroy(() => {
+        unsubscribe();
+      });
+      //
+      // function onPersonSelected(event) {
+      //     currentSelectedPerson = event.detail;
+      //     isNTKPersonDialogOpen = true;
+      // }
 
     	return { ntkList };
     }

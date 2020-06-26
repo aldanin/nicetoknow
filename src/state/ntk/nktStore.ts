@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import { NTKStore, CustomNTKStore, NTKPerson, NTKPersonDetails, ApprovalStatus } from './ntk.model';
+import { NTKStore, CustomNTKStore, NTKPerson, NTKPersonDetails, ConnectionStatus, ConnectionDetails } from './ntk.model';
 import { getMockNtk, getMockUsers } from './mock';
 import uid from 'uid';
 import { BLM } from '../../BLM/BLM';
@@ -31,16 +31,36 @@ const customNtkStore: CustomNTKStore = {
             console.log(err)
         }
     },
-    onMarkedChanged: async (ntkId: string) => {
+    onMarkedChanged: async (fromNtkId: string) => {
         ntkStore.update(state => {
-            const ntkp = state.ntkPersons;
-            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === ntkId);
+            const ntkp = [...state.ntkPersons];
+            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === fromNtkId);
             if (foundIndex === -1) {
                 throw new Error('No person was found to update')
             }
-            ntkp[foundIndex].isMarked = !ntkp[foundIndex].isMarked;
 
-            ntkp.splice(foundIndex, 1, ntkp[foundIndex]);
+            const fromPerson = ntkp[foundIndex];
+            const me = BLM.getCurrentUser();
+
+            fromPerson.toApproveList = fromPerson.toApproveList || [];
+            const foundItem = fromPerson.toApproveList.find(item=>item.id ===me.ntkDetails.id)
+
+            if (foundItem) {
+                fromPerson.toApproveList = fromPerson.toApproveList.filter(item=>item.id !==me.ntkDetails.id);
+                me.fromApproveList = me.fromApproveList.filter(item=>item.id !==fromNtkId)
+            } else {
+                fromPerson.toApproveList.push({
+                    connectionStatus: ConnectionStatus.pending,
+                    id: me.ntkDetails.id
+                });
+    
+                me.fromApproveList =  me.fromApproveList || [];
+                me.fromApproveList.push({
+                    connectionStatus: ConnectionStatus.pending,
+                    id: fromNtkId
+                })
+            }
+           
 
             fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
                 method: 'DELETE',
@@ -59,19 +79,31 @@ const customNtkStore: CustomNTKStore = {
                 })
             })
 
-            return { ...state };
+            return { ntkPersons: ntkp, hasFetched: state.hasFetched };
         })
     },
-    onApprovalChanged: (ntkId: string, isApproved: boolean) => {
+    onApprovalChanged: (toNtkId: string, isApproved: boolean) => {
         ntkStore.update(state => {
             const ntkp = state.ntkPersons;
-            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === ntkId);
+            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === toNtkId);
             if (foundIndex === -1) {
                 throw new Error('No person was found to update')
             }
-            ntkp[foundIndex].approvalStatus = isApproved ? ApprovalStatus.approved : ApprovalStatus.disapproved;
 
-            ntkp.splice(foundIndex, 1, ntkp[foundIndex]);
+            const currentPerson = BLM.getCurrentUser();
+            const otherPerson = ntkp[foundIndex];
+
+            //Update other person with what the current person did with his friendship request:
+            const otherPersonFromApprovalDetails =
+                otherPerson.fromApproveList.find((details: ConnectionDetails) => details.id === currentPerson.ntkDetails.id);
+            otherPersonFromApprovalDetails.connectionStatus =
+                isApproved ? ConnectionStatus.resolved : ConnectionStatus.rejected;
+
+            // Update current Perons with the same details in his to list:
+            const curentPersonToApprovalDetails =
+                currentPerson.toApproveList.find((details: ConnectionDetails) => details.id === toNtkId);
+            curentPersonToApprovalDetails.connectionStatus =
+                isApproved ? ConnectionStatus.resolved : ConnectionStatus.rejected;
 
             fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
                 method: 'DELETE',
@@ -98,10 +130,10 @@ const customNtkStore: CustomNTKStore = {
             const ntkp = state.ntkPersons;
             const newNTK: NTKPerson = {
                 ntkDetails: { ...user, id: uid() },
-                isMarked: false,
-                approvalStatus: ApprovalStatus.pending,
+                toApproveList: [],
+                fromApproveList: [],
             }
-            ntkp.push(newNTK);
+            ntkp.push(newNTK);    
 
             fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
                 method: 'DELETE',
@@ -124,9 +156,9 @@ const customNtkStore: CustomNTKStore = {
         })
     },
     updateStore: (newState) => {
-        ntkStore.update(()=> {
+        ntkStore.update(() => {
             return newState
-        }) 
+        })
     }
 }
 

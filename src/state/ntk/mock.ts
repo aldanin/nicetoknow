@@ -48,8 +48,8 @@ Instead of using techniques like virtual DOM diffing, Svelte writes code that su
                     email: `${user.email}`
                 }
             },
-            isMarked: false,
-            approvalStatus: false,
+            toApproveList: [],
+            fromApproveList: [],
         }
 
         return ntkPerson;

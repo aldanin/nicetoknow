@@ -1,6 +1,6 @@
 <script>
-  import { ApprovalStatus } from "../state/ntk/ntk.model";
-
+  import { ConnectionStatus } from "../state/ntk/ntk.model";
+  import { BLM } from "../BLM/BLM";
   import { createEventDispatcher } from "svelte";
   import Card, {
     Content,
@@ -19,39 +19,47 @@
   let clicked = 0;
   const dispatch = createEventDispatcher();
 
-  export let ntkPerson;
+  export let personCard;
   export let isApproval = false;
 
   function onMarkedChanged() {
-    dispatch("markedChanged", { id: ntkPerson.ntkDetails.id });
+    dispatch("markedChanged", { id: personCard.ntkDetails.id });
   }
 
   function onCardDblclick() {
-    dispatch("ntkPersonSelected", ntkPerson);
+    dispatch("ntkPersonSelected", personCard);
   }
 
   function setApproval(isApproved) {
-    dispatch("approvalChanged", { id: ntkPerson.ntkDetails.id, isApproved });
+    dispatch("approvalChanged", { id: personCard.ntkDetails.id, isApproved });
   }
 
-  $: console.log("ntkPerson", ntkPerson);
+  $: console.log("ntkPerson", personCard);
 
   function getApprovalClass() {
     let approvalClass;
-    switch (ntkPerson.approvalStatus) {
-      case ApprovalStatus.approved:
+
+    switch (personCard.connectionStatus) {
+      case ConnectionStatus.approved:
         approvalClass = "is-approved";
         break;
-      case ApprovalStatus.disapproved:
+      case ConnectionStatus.disapproved:
         approvalClass = "is-disapproved";
         break;
-      case ApprovalStatus.pending:
+      case ConnectionStatus.pending:
         approvalClass = "";
         break;
     }
 
     return approvalClass;
   }
+
+  // function isApprovalPending() {
+  //   const currentUser = BLM.getCurrentUser();
+  //   const isPending = currentUser.fromApproveList && currentUser.fromApproveList.find(item => item.id === personCard.ntkDetails.id);
+  //   return !!isPending;
+  // }
+
 </script>
 
 <style type="text/scss">
@@ -112,7 +120,7 @@
     display: flex;
     height: 120px;
     width: 100%;
-    justify-content: left; 
+    justify-content: left;
     align-items: center;
     border-bottom: solid 1px #ececec;
     cursor: pointer;
@@ -122,7 +130,7 @@
     }
 
     .person-details {
-      margin-left: 30px; 
+      margin-left: 30px;
       width: 200px;
 
       h3,
@@ -166,14 +174,14 @@
     <div class="card-details" on:dblclick={onCardDblclick}>
       <div class="avatar-container">
         <div class="inner">
-          <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl} />
+          <Avatar imageUrl={personCard.ntkDetails.imageUrl} />
         </div>
         <div class="person-details">
-          <h3 class="ntk-name">{ntkPerson.ntkDetails.name}</h3>
-          {#if ntkPerson.ntkDetails.age}
+          <h3 class="ntk-name">{personCard.ntkDetails.name}</h3>
+          {#if personCard.ntkDetails.age}
             <h5 class="ntk-age">
               <span>Age:</span>
-              <span>{ntkPerson.ntkDetails.age}</span>
+              <span>{personCard.ntkDetails.age}</span>
             </h5>
           {/if}
         </div>
@@ -182,11 +190,11 @@
       <div class="ntk-details-rows-container">
         <div class="ntk-details-row">
           <div class="caption">About Me</div>
-          <div class="details">{ntkPerson.ntkDetails.moreDetails.aboutMe}</div>
+          <div class="details">{personCard.ntkDetails.moreDetails.aboutMe}</div>
         </div>
         <div class="ntk-details-row">
           <div class="caption">Hobbies</div>
-          <div class="details">{ntkPerson.ntkDetails.moreDetails.hobbies}</div>
+          <div class="details">{personCard.ntkDetails.moreDetails.hobbies}</div>
         </div>
       </div>
 
@@ -204,7 +212,7 @@
             markedIcon="favorite"
             unmarkedIcon="favorite_border"
             on:click={() => onMarkedChanged()}
-            isMarked={ntkPerson.isMarked}
+            isMarked={personCard.isMarked}
             title="Mark as potential nice-to-know" />
         {/if}
         {#if isApproval}
