@@ -3548,7 +3548,7 @@ var app = (function () {
     (function (ConnectionStatus) {
       ConnectionStatus[ConnectionStatus["pending"] = 1] = "pending";
       ConnectionStatus[ConnectionStatus["rejected"] = 2] = "rejected";
-      ConnectionStatus[ConnectionStatus["resolved"] = 3] = "resolved";
+      ConnectionStatus[ConnectionStatus["connected"] = 3] = "connected";
     })(ConnectionStatus || (ConnectionStatus = {}));
 
     var SPECIES$1 = wellKnownSymbol('species');
@@ -3597,6 +3597,18 @@ var app = (function () {
     // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
     _export({ target: 'Array', proto: true, forced: [].forEach != arrayForEach }, {
       forEach: arrayForEach
+    });
+
+    var $map = arrayIteration.map;
+
+
+    // `Array.prototype.map` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.map
+    // with adding support of @@species
+    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('map') }, {
+      map: function map(callbackfn /* , thisArg */) {
+        return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+      }
     });
 
     var defineProperty = objectDefineProperty.f;
@@ -5433,357 +5445,6 @@ var app = (function () {
       }
     });
 
-    // `Array.from` method implementation
-    // https://tc39.github.io/ecma262/#sec-array.from
-    var arrayFrom = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
-      var O = toObject(arrayLike);
-      var C = typeof this == 'function' ? this : Array;
-      var argumentsLength = arguments.length;
-      var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
-      var mapping = mapfn !== undefined;
-      var index = 0;
-      var iteratorMethod = getIteratorMethod(O);
-      var length, result, step, iterator;
-      if (mapping) mapfn = bindContext(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
-      // if the target is not iterable or it's an array with the default iterator - use a simple case
-      if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
-        iterator = iteratorMethod.call(O);
-        result = new C();
-        for (;!(step = iterator.next()).done; index++) {
-          createProperty(result, index, mapping
-            ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true)
-            : step.value
-          );
-        }
-      } else {
-        length = toLength(O.length);
-        result = new C(length);
-        for (;length > index; index++) {
-          createProperty(result, index, mapping ? mapfn(O[index], index) : O[index]);
-        }
-      }
-      result.length = index;
-      return result;
-    };
-
-    var INCORRECT_ITERATION$1 = !checkCorrectnessOfIteration(function (iterable) {
-      Array.from(iterable);
-    });
-
-    // `Array.from` method
-    // https://tc39.github.io/ecma262/#sec-array.from
-    _export({ target: 'Array', stat: true, forced: INCORRECT_ITERATION$1 }, {
-      from: arrayFrom
-    });
-
-    var correctPrototypeGetter = !fails(function () {
-      function F() { /* empty */ }
-      F.prototype.constructor = null;
-      return Object.getPrototypeOf(new F()) !== F.prototype;
-    });
-
-    var IE_PROTO$1 = sharedKey('IE_PROTO');
-    var ObjectPrototype$1 = Object.prototype;
-
-    // `Object.getPrototypeOf` method
-    // https://tc39.github.io/ecma262/#sec-object.getprototypeof
-    var objectGetPrototypeOf = correctPrototypeGetter ? Object.getPrototypeOf : function (O) {
-      O = toObject(O);
-      if (has(O, IE_PROTO$1)) return O[IE_PROTO$1];
-      if (typeof O.constructor == 'function' && O instanceof O.constructor) {
-        return O.constructor.prototype;
-      } return O instanceof Object ? ObjectPrototype$1 : null;
-    };
-
-    var ITERATOR$3 = wellKnownSymbol('iterator');
-    var BUGGY_SAFARI_ITERATORS = false;
-
-    var returnThis = function () { return this; };
-
-    // `%IteratorPrototype%` object
-    // https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
-    var IteratorPrototype, PrototypeOfArrayIteratorPrototype, arrayIterator;
-
-    if ([].keys) {
-      arrayIterator = [].keys();
-      // Safari 8 has buggy iterators w/o `next`
-      if (!('next' in arrayIterator)) BUGGY_SAFARI_ITERATORS = true;
-      else {
-        PrototypeOfArrayIteratorPrototype = objectGetPrototypeOf(objectGetPrototypeOf(arrayIterator));
-        if (PrototypeOfArrayIteratorPrototype !== Object.prototype) IteratorPrototype = PrototypeOfArrayIteratorPrototype;
-      }
-    }
-
-    if (IteratorPrototype == undefined) IteratorPrototype = {};
-
-    // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-    if ( !has(IteratorPrototype, ITERATOR$3)) hide(IteratorPrototype, ITERATOR$3, returnThis);
-
-    var iteratorsCore = {
-      IteratorPrototype: IteratorPrototype,
-      BUGGY_SAFARI_ITERATORS: BUGGY_SAFARI_ITERATORS
-    };
-
-    var IteratorPrototype$1 = iteratorsCore.IteratorPrototype;
-
-
-
-
-
-    var returnThis$1 = function () { return this; };
-
-    var createIteratorConstructor = function (IteratorConstructor, NAME, next) {
-      var TO_STRING_TAG = NAME + ' Iterator';
-      IteratorConstructor.prototype = objectCreate(IteratorPrototype$1, { next: createPropertyDescriptor(1, next) });
-      setToStringTag(IteratorConstructor, TO_STRING_TAG, false);
-      iterators[TO_STRING_TAG] = returnThis$1;
-      return IteratorConstructor;
-    };
-
-    var aPossiblePrototype = function (it) {
-      if (!isObject(it) && it !== null) {
-        throw TypeError("Can't set " + String(it) + ' as a prototype');
-      } return it;
-    };
-
-    // `Object.setPrototypeOf` method
-    // https://tc39.github.io/ecma262/#sec-object.setprototypeof
-    // Works with __proto__ only. Old v8 can't work with null proto objects.
-    /* eslint-disable no-proto */
-    var objectSetPrototypeOf = Object.setPrototypeOf || ('__proto__' in {} ? function () {
-      var CORRECT_SETTER = false;
-      var test = {};
-      var setter;
-      try {
-        setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
-        setter.call(test, []);
-        CORRECT_SETTER = test instanceof Array;
-      } catch (error) { /* empty */ }
-      return function setPrototypeOf(O, proto) {
-        anObject(O);
-        aPossiblePrototype(proto);
-        if (CORRECT_SETTER) setter.call(O, proto);
-        else O.__proto__ = proto;
-        return O;
-      };
-    }() : undefined);
-
-    var IteratorPrototype$2 = iteratorsCore.IteratorPrototype;
-    var BUGGY_SAFARI_ITERATORS$1 = iteratorsCore.BUGGY_SAFARI_ITERATORS;
-    var ITERATOR$4 = wellKnownSymbol('iterator');
-    var KEYS = 'keys';
-    var VALUES = 'values';
-    var ENTRIES = 'entries';
-
-    var returnThis$2 = function () { return this; };
-
-    var defineIterator = function (Iterable, NAME, IteratorConstructor, next, DEFAULT, IS_SET, FORCED) {
-      createIteratorConstructor(IteratorConstructor, NAME, next);
-
-      var getIterationMethod = function (KIND) {
-        if (KIND === DEFAULT && defaultIterator) return defaultIterator;
-        if (!BUGGY_SAFARI_ITERATORS$1 && KIND in IterablePrototype) return IterablePrototype[KIND];
-        switch (KIND) {
-          case KEYS: return function keys() { return new IteratorConstructor(this, KIND); };
-          case VALUES: return function values() { return new IteratorConstructor(this, KIND); };
-          case ENTRIES: return function entries() { return new IteratorConstructor(this, KIND); };
-        } return function () { return new IteratorConstructor(this); };
-      };
-
-      var TO_STRING_TAG = NAME + ' Iterator';
-      var INCORRECT_VALUES_NAME = false;
-      var IterablePrototype = Iterable.prototype;
-      var nativeIterator = IterablePrototype[ITERATOR$4]
-        || IterablePrototype['@@iterator']
-        || DEFAULT && IterablePrototype[DEFAULT];
-      var defaultIterator = !BUGGY_SAFARI_ITERATORS$1 && nativeIterator || getIterationMethod(DEFAULT);
-      var anyNativeIterator = NAME == 'Array' ? IterablePrototype.entries || nativeIterator : nativeIterator;
-      var CurrentIteratorPrototype, methods, KEY;
-
-      // fix native
-      if (anyNativeIterator) {
-        CurrentIteratorPrototype = objectGetPrototypeOf(anyNativeIterator.call(new Iterable()));
-        if (IteratorPrototype$2 !== Object.prototype && CurrentIteratorPrototype.next) {
-          if ( objectGetPrototypeOf(CurrentIteratorPrototype) !== IteratorPrototype$2) {
-            if (objectSetPrototypeOf) {
-              objectSetPrototypeOf(CurrentIteratorPrototype, IteratorPrototype$2);
-            } else if (typeof CurrentIteratorPrototype[ITERATOR$4] != 'function') {
-              hide(CurrentIteratorPrototype, ITERATOR$4, returnThis$2);
-            }
-          }
-          // Set @@toStringTag to native iterators
-          setToStringTag(CurrentIteratorPrototype, TO_STRING_TAG, true);
-        }
-      }
-
-      // fix Array#{values, @@iterator}.name in V8 / FF
-      if (DEFAULT == VALUES && nativeIterator && nativeIterator.name !== VALUES) {
-        INCORRECT_VALUES_NAME = true;
-        defaultIterator = function values() { return nativeIterator.call(this); };
-      }
-
-      // define iterator
-      if ( IterablePrototype[ITERATOR$4] !== defaultIterator) {
-        hide(IterablePrototype, ITERATOR$4, defaultIterator);
-      }
-      iterators[NAME] = defaultIterator;
-
-      // export additional methods
-      if (DEFAULT) {
-        methods = {
-          values: getIterationMethod(VALUES),
-          keys: IS_SET ? defaultIterator : getIterationMethod(KEYS),
-          entries: getIterationMethod(ENTRIES)
-        };
-        if (FORCED) for (KEY in methods) {
-          if (BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME || !(KEY in IterablePrototype)) {
-            redefine(IterablePrototype, KEY, methods[KEY]);
-          }
-        } else _export({ target: NAME, proto: true, forced: BUGGY_SAFARI_ITERATORS$1 || INCORRECT_VALUES_NAME }, methods);
-      }
-
-      return methods;
-    };
-
-    var ARRAY_ITERATOR = 'Array Iterator';
-    var setInternalState$1 = internalState.set;
-    var getInternalState$1 = internalState.getterFor(ARRAY_ITERATOR);
-
-    // `Array.prototype.entries` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.entries
-    // `Array.prototype.keys` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.keys
-    // `Array.prototype.values` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.values
-    // `Array.prototype[@@iterator]` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
-    // `CreateArrayIterator` internal method
-    // https://tc39.github.io/ecma262/#sec-createarrayiterator
-    var es_array_iterator = defineIterator(Array, 'Array', function (iterated, kind) {
-      setInternalState$1(this, {
-        type: ARRAY_ITERATOR,
-        target: toIndexedObject(iterated), // target
-        index: 0,                          // next index
-        kind: kind                         // kind
-      });
-    // `%ArrayIteratorPrototype%.next` method
-    // https://tc39.github.io/ecma262/#sec-%arrayiteratorprototype%.next
-    }, function () {
-      var state = getInternalState$1(this);
-      var target = state.target;
-      var kind = state.kind;
-      var index = state.index++;
-      if (!target || index >= target.length) {
-        state.target = undefined;
-        return { value: undefined, done: true };
-      }
-      if (kind == 'keys') return { value: index, done: false };
-      if (kind == 'values') return { value: target[index], done: false };
-      return { value: [index, target[index]], done: false };
-    }, 'values');
-
-    // argumentsList[@@iterator] is %ArrayProto_values%
-    // https://tc39.github.io/ecma262/#sec-createunmappedargumentsobject
-    // https://tc39.github.io/ecma262/#sec-createmappedargumentsobject
-    iterators.Arguments = iterators.Array;
-
-    // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
-    addToUnscopables('keys');
-    addToUnscopables('values');
-    addToUnscopables('entries');
-
-    var $map = arrayIteration.map;
-
-
-    // `Array.prototype.map` method
-    // https://tc39.github.io/ecma262/#sec-array.prototype.map
-    // with adding support of @@species
-    _export({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('map') }, {
-      map: function map(callbackfn /* , thisArg */) {
-        return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-      }
-    });
-
-    // `String.prototype.{ codePointAt, at }` methods implementation
-    var createMethod$4 = function (CONVERT_TO_STRING) {
-      return function ($this, pos) {
-        var S = String(requireObjectCoercible($this));
-        var position = toInteger(pos);
-        var size = S.length;
-        var first, second;
-        if (position < 0 || position >= size) return CONVERT_TO_STRING ? '' : undefined;
-        first = S.charCodeAt(position);
-        return first < 0xD800 || first > 0xDBFF || position + 1 === size
-          || (second = S.charCodeAt(position + 1)) < 0xDC00 || second > 0xDFFF
-            ? CONVERT_TO_STRING ? S.charAt(position) : first
-            : CONVERT_TO_STRING ? S.slice(position, position + 2) : (first - 0xD800 << 10) + (second - 0xDC00) + 0x10000;
-      };
-    };
-
-    var stringMultibyte = {
-      // `String.prototype.codePointAt` method
-      // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
-      codeAt: createMethod$4(false),
-      // `String.prototype.at` method
-      // https://github.com/mathiasbynens/String.prototype.at
-      charAt: createMethod$4(true)
-    };
-
-    var charAt = stringMultibyte.charAt;
-
-
-
-    var STRING_ITERATOR = 'String Iterator';
-    var setInternalState$2 = internalState.set;
-    var getInternalState$2 = internalState.getterFor(STRING_ITERATOR);
-
-    // `String.prototype[@@iterator]` method
-    // https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
-    defineIterator(String, 'String', function (iterated) {
-      setInternalState$2(this, {
-        type: STRING_ITERATOR,
-        string: String(iterated),
-        index: 0
-      });
-    // `%StringIteratorPrototype%.next` method
-    // https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
-    }, function next() {
-      var state = getInternalState$2(this);
-      var string = state.string;
-      var index = state.index;
-      var point;
-      if (index >= string.length) return { value: undefined, done: true };
-      point = charAt(string, index);
-      state.index += point.length;
-      return { value: point, done: false };
-    });
-
-    var ITERATOR$5 = wellKnownSymbol('iterator');
-    var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
-    var ArrayValues = es_array_iterator.values;
-
-    for (var COLLECTION_NAME$1 in domIterables) {
-      var Collection$1 = global_1[COLLECTION_NAME$1];
-      var CollectionPrototype$1 = Collection$1 && Collection$1.prototype;
-      if (CollectionPrototype$1) {
-        // some Chrome versions have non-configurable methods on DOMTokenList
-        if (CollectionPrototype$1[ITERATOR$5] !== ArrayValues) try {
-          hide(CollectionPrototype$1, ITERATOR$5, ArrayValues);
-        } catch (error) {
-          CollectionPrototype$1[ITERATOR$5] = ArrayValues;
-        }
-        if (!CollectionPrototype$1[TO_STRING_TAG$3]) hide(CollectionPrototype$1, TO_STRING_TAG$3, COLLECTION_NAME$1);
-        if (domIterables[COLLECTION_NAME$1]) for (var METHOD_NAME in es_array_iterator) {
-          // some Chrome versions have non-configurable methods on DOMTokenList
-          if (CollectionPrototype$1[METHOD_NAME] !== es_array_iterator[METHOD_NAME]) try {
-            hide(CollectionPrototype$1, METHOD_NAME, es_array_iterator[METHOD_NAME]);
-          } catch (error) {
-            CollectionPrototype$1[METHOD_NAME] = es_array_iterator[METHOD_NAME];
-          }
-        }
-      }
-    }
-
     function getMockUsers() {
       return _getMockUsers.apply(this, arguments);
     }
@@ -5791,29 +5452,29 @@ var app = (function () {
     function _getMockUsers() {
       _getMockUsers = _asyncToGenerator(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee2() {
+      regeneratorRuntime.mark(function _callee() {
         var count,
             gender,
             res,
             data,
             ntkData,
-            _args2 = arguments;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+            _args = arguments;
+        return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context.prev = _context.next) {
               case 0:
-                count = _args2.length > 0 && _args2[0] !== undefined ? _args2[0] : 20;
-                gender = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : '';
-                _context2.next = 4;
+                count = _args.length > 0 && _args[0] !== undefined ? _args[0] : 20;
+                gender = _args.length > 1 && _args[1] !== undefined ? _args[1] : '';
+                _context.next = 4;
                 return fetch("https://randomuser.me/api/?results=".concat(count, "&gender=").concat(gender, "&seed=alondanin"));
 
               case 4:
-                res = _context2.sent;
-                _context2.next = 7;
+                res = _context.sent;
+                _context.next = 7;
                 return res.json();
 
               case 7:
-                data = _context2.sent;
+                data = _context.sent;
                 ntkData = data.results.map(function (user) {
                   var ntkPerson = {
                     ntkDetails: {
@@ -5826,20 +5487,18 @@ var app = (function () {
                         hobbies: "bike, dance, comedies",
                         email: "".concat(user.email)
                       }
-                    },
-                    toApproveList: [],
-                    fromApproveList: []
+                    }
                   };
                   return ntkPerson;
                 });
-                return _context2.abrupt("return", ntkData);
+                return _context.abrupt("return", ntkData);
 
               case 10:
               case "end":
-                return _context2.stop();
+                return _context.stop();
             }
           }
-        }, _callee2);
+        }, _callee);
       }));
       return _getMockUsers.apply(this, arguments);
     }
@@ -5956,27 +5615,29 @@ var app = (function () {
 
                     var fromPerson = ntkp[foundIndex];
                     var me = BLM.getCurrentUser();
-                    fromPerson.toApproveList = fromPerson.toApproveList || [];
-                    var foundItem = fromPerson.toApproveList.find(function (item) {
+                    fromPerson.approvalList = fromPerson.approvalList || [];
+                    var foundItem = fromPerson.approvalList.find(function (item) {
                       return item.id === me.ntkDetails.id;
                     });
 
                     if (foundItem) {
-                      fromPerson.toApproveList = fromPerson.toApproveList.filter(function (item) {
+                      fromPerson.approvalList = fromPerson.approvalList.filter(function (item) {
                         return item.id !== me.ntkDetails.id;
                       });
-                      me.fromApproveList = me.fromApproveList.filter(function (item) {
+                      me.approvalList = me.approvalList.filter(function (item) {
                         return item.id !== fromNtkId;
                       });
                     } else {
-                      fromPerson.toApproveList.push({
+                      fromPerson.approvalList.push({
                         connectionStatus: ConnectionStatus.pending,
-                        id: me.ntkDetails.id
+                        id: me.ntkDetails.id,
+                        isTo: true
                       });
-                      me.fromApproveList = me.fromApproveList || [];
-                      me.fromApproveList.push({
+                      me.approvalList = me.approvalList || [];
+                      me.approvalList.push({
                         connectionStatus: ConnectionStatus.pending,
-                        id: fromNtkId
+                        id: fromNtkId,
+                        isTo: false
                       });
                     }
 
@@ -6016,27 +5677,42 @@ var app = (function () {
       }(),
       onApprovalChanged: function onApprovalChanged(toNtkId, isApproved) {
         ntkStore.update(function (state) {
-          var ntkp = state.ntkPersons;
-          var foundIndex = ntkp.findIndex(function (ntkPerson) {
+          var ntkp = _toConsumableArray(state.ntkPersons);
+
+          var currentPerson = BLM.getCurrentUser();
+          var otherPerson = ntkp.find(function (ntkPerson) {
             return ntkPerson.ntkDetails.id === toNtkId;
           });
 
-          if (foundIndex === -1) {
+          if (!otherPerson) {
             throw new Error('No person was found to update');
           }
 
-          var currentPerson = BLM.getCurrentUser();
-          var otherPerson = ntkp[foundIndex]; //Update other person with what the current person did with his friendship request:
-
-          var otherPersonFromApprovalDetails = otherPerson.fromApproveList.find(function (details) {
-            return details.id === currentPerson.ntkDetails.id;
+          var curentPersonToApprovalDetails = currentPerson.approvalList.find(function (details) {
+            return details.id === toNtkId && details.isTo;
           });
-          otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.resolved : ConnectionStatus.rejected; // Update current Perons with the same details in his to list:
-
-          var curentPersonToApprovalDetails = currentPerson.toApproveList.find(function (details) {
-            return details.id === toNtkId;
+          var otherPersonFromApprovalDetails = otherPerson.approvalList.find(function (details) {
+            return details.id === currentPerson.ntkDetails.id && !details.isTo;
           });
-          curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.resolved : ConnectionStatus.rejected;
+          curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
+          otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected; // if (isApproved) {
+          //     curentPersonToApprovalDetails.connectionStatus = ConnectionStatus.connected;
+          //     otherPersonFromApprovalDetails.connectionStatus = ConnectionStatus.connected;
+          //     // otherPerson.connectedNtks = otherPerson.connectedNtks || [];
+          //     // currentPerson.connectedNtks = currentPerson.connectedNtks || [];
+          //     // // Add the new connected id to the to list and the cutrrent list
+          //     // otherPerson.connectedNtks.push(currentPerson.ntkDetails.id);
+          //     // currentPerson.connectedNtks.push(toNtkId);
+          //     // // Remove the now-resolved approvals from the 2 related lists
+          //     // otherPerson.approvalList = otherPerson.approvalList.filter(item => item.id !== otherPersonFromApprovalDetails.id);
+          //     // currentPerson.approvalList = currentPerson.approvalList.filter(item => item.id !== curentPersonToApprovalDetails.id);
+          // } else {
+          //     //Update other person the outcome -rejection
+          //     otherPersonFromApprovalDetails.connectionStatus = ConnectionStatus.rejected;
+          //     // Update current Perons with the outcome -rejection
+          //     curentPersonToApprovalDetails.connectionStatus = ConnectionStatus.rejected
+          // }
+
           fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
             method: 'DELETE',
             headers: {
@@ -6051,7 +5727,10 @@ var app = (function () {
               }
             });
           });
-          return _objectSpread2({}, state);
+          return {
+            ntkPersons: ntkp,
+            hasFetched: state.hasFetched
+          };
         });
       },
       registerUser: function registerUser(user) {
@@ -6060,9 +5739,7 @@ var app = (function () {
           var newNTK = {
             ntkDetails: _objectSpread2({}, user, {
               id: uid$1()
-            }),
-            toApproveList: [],
-            fromApproveList: []
+            })
           };
           ntkp.push(newNTK);
           fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
@@ -6086,22 +5763,7 @@ var app = (function () {
         ntkStore.update(function () {
           return newState;
         });
-      } // export function getMyNtks(): NTKPerson[] {
-      //     const store = get(ntkStore);
-      //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
-      //         return ntk.isMarked
-      //     })
-      //     return ntks
-      // }
-      //
-      // export function getNtks(): NTKPerson[] {
-      //     const store = get(ntkStore);
-      //     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
-      //         return !ntk.isMarked
-      //     })
-      //     return ntks
-      // }
-
+      }
     };
 
     var appStatusStore = writable({
@@ -6312,7 +5974,6 @@ var app = (function () {
           try {
             var ntks = BLM.getNtks();
             var currentUser = customAppStatusStore.getCurrentUser();
-            console.log('==>currentUser', currentUser);
             return currentUser ? ntks.find(function (ntk) {
               return ntk.ntkDetails.id === currentUser.ntkDetails.id;
             }) : null;
@@ -6328,9 +5989,7 @@ var app = (function () {
           var newNTK = {
             ntkDetails: _objectSpread2({}, newUser, {
               id: uid$1()
-            }),
-            toApproveList: [],
-            fromApproveList: []
+            })
           };
           ntks.push(newNTK);
           console.log('register, ntks', ntks);
@@ -6371,16 +6030,25 @@ var app = (function () {
           return state.ntkPersons || [];
         }
       }, {
+        key: "getOtherNtks",
+        value: function getOtherNtks() {
+          var ntks = BLM.getNtks();
+          var currentUser = customAppStatusStore.getCurrentUser();
+          return currentUser ? ntks.filter(function (ntk) {
+            return ntk.ntkDetails.id !== currentUser.ntkDetails.id;
+          }) : null;
+        }
+      }, {
         key: "getMyNtks",
         value: function getMyNtks() {
           var currentUser = BLM.getCurrentUser();
           var allNkts = BLM.getNtks();
-          var fromNtks = allNkts.filter(function (ntk) {
-            return currentUser.fromApproveList && currentUser.fromApproveList.find(function (item) {
-              return item.id === ntk.ntkDetails.id;
+          var myNtks = currentUser.approvalList ? currentUser.approvalList.map(function (item) {
+            return allNkts.find(function (ntk) {
+              return ntk.ntkDetails.id === item.id && (item.connectionStatus === ConnectionStatus.connected || item.connectionStatus === ConnectionStatus.pending && !item.isTo);
             });
-          });
-          return fromNtks;
+          }) : [];
+          return myNtks;
         }
       }, {
         key: "getToNtks",
@@ -6388,11 +6056,49 @@ var app = (function () {
           var currentUser = BLM.getCurrentUser();
           var allNkts = BLM.getNtks();
           var toNtks = allNkts.filter(function (ntk) {
-            return currentUser.toApproveList && currentUser.toApproveList.find(function (item) {
-              return item.id === ntk.ntkDetails.id;
+            return currentUser.approvalList && currentUser.approvalList.find(function (item) {
+              return item.id === ntk.ntkDetails.id && item.isTo && item.connectionStatus === ConnectionStatus.pending;
             });
           });
           return toNtks;
+        }
+      }, {
+        key: "getCloneNtkPerson",
+        value: function getCloneNtkPerson(ntkPerson) {
+          var clone = JSON.parse(JSON.stringify(ntkPerson));
+          return clone;
+        }
+      }, {
+        key: "updateUserDetails",
+        value: function updateUserDetails(userDetails) {
+          var state = get_store_value(customNtkStore);
+          var ntks = state ? state.ntkPersons : [];
+          var currentUser = BLM.getCurrentUser();
+          currentUser.ntkDetails = userDetails;
+          fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(function () {
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+              method: 'POST',
+              body: JSON.stringify(ntks),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(function () {
+              console.log('register themn, ntks', ntks);
+              customNtkStore.updateStore({
+                hasFetched: state.hasFetched,
+                ntkPersons: ntks
+              });
+              customAppStatusStore.onLogin({
+                status: LoginStatus.LoggedIn,
+                currentUser: currentUser
+              });
+            });
+          });
         }
       }]);
 
@@ -7848,7 +7554,7 @@ var app = (function () {
     const file$8 = "src\\common\\Avatar.svelte";
 
     function create_fragment$b(ctx) {
-    	var div, img;
+    	var div, img, dispose;
 
     	return {
     		c: function create() {
@@ -7856,10 +7562,11 @@ var app = (function () {
     			img = element("img");
     			attr(img, "src", ctx.imageUrl);
     			attr(img, "class", "svelte-kx2vjb");
-    			add_location(img, file$8, 22, 4, 1240);
+    			add_location(img, file$8, 31, 2, 1415);
     			attr(div, "class", "avatar svelte-kx2vjb");
     			set_style(div, "height", ctx.height);
-    			add_location(div, file$8, 21, 0, 1189);
+    			add_location(div, file$8, 30, 0, 1347);
+    			dispose = listen(div, "click", ctx.onClick);
     		},
 
     		l: function claim(nodes) {
@@ -7888,12 +7595,21 @@ var app = (function () {
     			if (detaching) {
     				detach(div);
     			}
+
+    			dispose();
     		}
     	};
     }
 
     function instance$b($$self, $$props, $$invalidate) {
-    	let { imageUrl = './media/download.png', height = '100%' } = $$props;
+    	const dispatch = createEventDispatcher();
+      let { imageUrl = "./media/download.png", height = "100%" } = $$props;
+
+
+
+      function onClick() {
+          dispatch('click', null);
+      }
 
     	const writable_props = ['imageUrl', 'height'];
     	Object.keys($$props).forEach(key => {
@@ -7906,10 +7622,10 @@ var app = (function () {
     	};
 
     	$$self.$$.update = ($$dirty = { imageUrl: 1 }) => {
-    		if ($$dirty.imageUrl) { console.log('avatar', imageUrl); }
+    		if ($$dirty.imageUrl) { console.log("avatar", imageUrl); }
     	};
 
-    	return { imageUrl, height };
+    	return { imageUrl, height, onClick };
     }
 
     class Avatar extends SvelteComponentDev {
@@ -8220,10 +7936,10 @@ var app = (function () {
     			t1 = space();
     			span1 = element("span");
     			t2 = text(t2_value);
-    			add_location(span0, file$9, 157, 14, 8157);
-    			add_location(span1, file$9, 158, 14, 8190);
+    			add_location(span0, file$9, 157, 14, 8155);
+    			add_location(span1, file$9, 158, 14, 8188);
     			attr(h5, "class", "ntk-age svelte-pksw81");
-    			add_location(h5, file$9, 156, 12, 8121);
+    			add_location(h5, file$9, 156, 12, 8119);
     		},
 
     		m: function mount(target, anchor) {
@@ -8776,29 +8492,29 @@ var app = (function () {
     			t11 = space();
     			actions.$$.fragment.c();
     			attr(div0, "class", "inner svelte-pksw81");
-    			add_location(div0, file$9, 150, 8, 7861);
+    			add_location(div0, file$9, 150, 8, 7859);
     			attr(h3, "class", "ntk-name svelte-pksw81");
-    			add_location(h3, file$9, 154, 10, 8010);
+    			add_location(h3, file$9, 154, 10, 8008);
     			attr(div1, "class", "person-details svelte-pksw81");
-    			add_location(div1, file$9, 153, 8, 7970);
+    			add_location(div1, file$9, 153, 8, 7968);
     			attr(div2, "class", "avatar-container svelte-pksw81");
-    			add_location(div2, file$9, 149, 6, 7821);
+    			add_location(div2, file$9, 149, 6, 7819);
     			attr(div3, "class", "caption svelte-pksw81");
-    			add_location(div3, file$9, 166, 10, 8397);
+    			add_location(div3, file$9, 166, 10, 8395);
     			attr(div4, "class", "details svelte-pksw81");
-    			add_location(div4, file$9, 167, 10, 8444);
+    			add_location(div4, file$9, 167, 10, 8442);
     			attr(div5, "class", "ntk-details-row svelte-pksw81");
-    			add_location(div5, file$9, 165, 8, 8356);
+    			add_location(div5, file$9, 165, 8, 8354);
     			attr(div6, "class", "caption svelte-pksw81");
-    			add_location(div6, file$9, 170, 10, 8581);
+    			add_location(div6, file$9, 170, 10, 8579);
     			attr(div7, "class", "details svelte-pksw81");
-    			add_location(div7, file$9, 171, 10, 8627);
+    			add_location(div7, file$9, 171, 10, 8625);
     			attr(div8, "class", "ntk-details-row svelte-pksw81");
-    			add_location(div8, file$9, 169, 8, 8540);
+    			add_location(div8, file$9, 169, 8, 8538);
     			attr(div9, "class", "ntk-details-rows-container svelte-pksw81");
-    			add_location(div9, file$9, 164, 6, 8306);
+    			add_location(div9, file$9, 164, 6, 8304);
     			attr(div10, "class", "card-details svelte-pksw81");
-    			add_location(div10, file$9, 148, 4, 7758);
+    			add_location(div10, file$9, 148, 4, 7756);
     			dispose = listen(div10, "dblclick", ctx.onCardDblclick);
     		},
 
@@ -8918,7 +8634,7 @@ var app = (function () {
     			div = element("div");
     			card.$$.fragment.c();
     			attr(div, "class", "my-card svelte-pksw81");
-    			add_location(div, file$9, 146, 0, 7681);
+    			add_location(div, file$9, 146, 0, 7679);
     		},
 
     		l: function claim(nodes) {
@@ -8984,10 +8700,10 @@ var app = (function () {
         let approvalClass;
 
         switch (personCard.connectionStatus) {
-          case ConnectionStatus.approved:
+          case ConnectionStatus.connected:
             approvalClass = "is-approved";
             break;
-          case ConnectionStatus.disapproved:
+          case ConnectionStatus.rejected:
             approvalClass = "is-disapproved";
             break;
           case ConnectionStatus.pending:
@@ -11513,7 +11229,7 @@ var app = (function () {
 
     const file$f = "src\\common\\NTKList.svelte";
 
-    // (78:4) <VirtualList items={personCardList} let:item>
+    // (89:4) <VirtualList items={personCardList} let:item>
     function create_default_slot$6(ctx) {
     	var div, current;
 
@@ -11533,7 +11249,7 @@ var app = (function () {
     			div = element("div");
     			ntkcard.$$.fragment.c();
     			attr(div, "class", "item svelte-1kh51ze");
-    			add_location(div, file$f, 79, 6, 3534);
+    			add_location(div, file$f, 90, 6, 3929);
     		},
 
     		m: function mount(target, anchor) {
@@ -11571,7 +11287,7 @@ var app = (function () {
     	};
     }
 
-    // (102:0) {#if isNTKPersonDialogOpen}
+    // (113:0) {#if isNTKPersonDialogOpen}
     function create_if_block$2(ctx) {
     	var current;
 
@@ -11641,9 +11357,9 @@ var app = (function () {
     			if (if_block) if_block.c();
     			if_block_anchor = empty();
     			attr(div0, "class", "card-container svelte-1kh51ze");
-    			add_location(div0, file$f, 76, 2, 3377);
+    			add_location(div0, file$f, 87, 2, 3772);
     			attr(div1, "class", "container svelte-1kh51ze");
-    			add_location(div1, file$f, 75, 0, 3350);
+    			add_location(div1, file$f, 86, 0, 3745);
     		},
 
     		l: function claim(nodes) {
@@ -11722,14 +11438,17 @@ var app = (function () {
 
     function getConnectionStatus(ntkPerson) {
       const currentUser = BLM.getCurrentUser();
-      const foundApprovalItem = ntkPerson.toApproveList
-        ? ntkPerson.toApproveList.find(
-            item => item.id === currentUser.ntkDetails.id
-          )
-        : null;
-      const connectionStatus = foundApprovalItem
-        ? foundApprovalItem.connectionStatus
-        : ConnectionStatus.pending;
+      let connectionStatus;
+
+      const foundItem =
+        currentUser.approvalList &&
+        currentUser.approvalList.find(item => item.id === ntkPerson.ntkDetails.id);
+
+      if (foundItem) {
+        connectionStatus = foundItem.connectionStatus;
+      } else {
+        connectionStatus = ConnectionStatus.pending;
+      }
 
       return connectionStatus;
     }
@@ -11737,13 +11456,21 @@ var app = (function () {
     function getIsMarked(ntkPerson) {
       const currentUser = BLM.getCurrentUser();
 
-      const foundApprovalItem = currentUser.fromApproveList
-        ? currentUser.fromApproveList.find(
-            item => item.id === ntkPerson.ntkDetails.id
-          )
-        : null;
+      const foundApprovalItem = currentUser.approvalList && currentUser.approvalList.find(item=>item.id === ntkPerson.ntkDetails.id);
 
-        return !!foundApprovalItem;
+      // const foundApprovalItem = ntkPerson.approvalList
+      //   ? ntkPerson.approvalList.find(
+      //       item => item.id === currentUser.ntkDetails.id
+      //     )
+      //   : ntkPerson.approvalList
+      //   ? ntkPerson.approvalList.find(
+      //       item =>
+      //         item.id === currentUser.ntkDetails.id &&
+      //         item.connectionStatus === ConnectionStatus.connected
+      //     )
+      //   : null;
+
+      return !!foundApprovalItem;
     }
 
     function instance$j($$self, $$props, $$invalidate) {
@@ -11857,7 +11584,7 @@ var app = (function () {
     			div = element("div");
     			ntklist.$$.fragment.c();
     			attr(div, "class", "container svelte-1mbbivc");
-    			add_location(div, file$g, 49, 0, 2114);
+    			add_location(div, file$g, 48, 0, 2077);
     		},
 
     		l: function claim(nodes) {
@@ -11908,12 +11635,11 @@ var app = (function () {
       let ntkList;
 
       onMount(() => {
-        $$invalidate('ntkList', ntkList = BLM.getNtks());
+        $$invalidate('ntkList', ntkList = BLM.getOtherNtks());
       });
 
       const unsubscribe = customNtkStore.subscribe(state => {
-        console.log('all=>', state.ntkPersons);
-        $$invalidate('ntkList', ntkList = state.ntkPersons);
+        $$invalidate('ntkList', ntkList = BLM.getOtherNtks());
       });
 
       onDestroy(() => {
@@ -11939,7 +11665,7 @@ var app = (function () {
 
     const file$h = "src\\components\\MyNTKs.svelte";
 
-    // (71:2) {:else}
+    // (72:2) {:else}
     function create_else_block$1(ctx) {
     	var div, t, h2, current;
 
@@ -11960,9 +11686,9 @@ var app = (function () {
     			h2 = element("h2");
     			h2.textContent = "You havn't selected any Nice-to-Knows";
     			attr(h2, "class", "svelte-10qzlp5");
-    			add_location(h2, file$h, 73, 6, 3516);
+    			add_location(h2, file$h, 74, 6, 3558);
     			attr(div, "class", "no-ntks svelte-10qzlp5");
-    			add_location(div, file$h, 71, 4, 3428);
+    			add_location(div, file$h, 72, 4, 3470);
     		},
 
     		m: function mount(target, anchor) {
@@ -12001,7 +11727,7 @@ var app = (function () {
     	};
     }
 
-    // (69:2) {#if ntkList.length > 0}
+    // (70:2) {#if ntkList.length > 0}
     function create_if_block$3(ctx) {
     	var current;
 
@@ -12048,7 +11774,7 @@ var app = (function () {
     	};
     }
 
-    // (73:6) <Icon class="material-icons">
+    // (74:6) <Icon class="material-icons">
     function create_default_slot$7(ctx) {
     	var t;
 
@@ -12092,7 +11818,7 @@ var app = (function () {
     			div = element("div");
     			if_block.c();
     			attr(div, "class", "container svelte-10qzlp5");
-    			add_location(div, file$h, 67, 0, 3279);
+    			add_location(div, file$h, 68, 0, 3321);
     		},
 
     		l: function claim(nodes) {
@@ -12158,7 +11884,8 @@ var app = (function () {
       let ntkList = [];
 
       const unsubscribe = customNtkStore.subscribe(state => {
-        //ntkList = BLM.getMyNtks();
+        console.log('all=>', state.ntkPersons);
+        $$invalidate('ntkList', ntkList = BLM.getMyNtks());
       });
 
       onMount(() => {
@@ -18002,9 +17729,8 @@ var app = (function () {
     }
 
     /* src\common\TextBox.svelte generated by Svelte v3.9.1 */
-    const { console: console_1$3 } = globals;
 
-    // (39:4) {:else}
+    // (53:4) {:else}
     function create_else_block$5(ctx) {
     	var updating_value, t, current;
 
@@ -18033,7 +17759,7 @@ var app = (function () {
     	var helpertext = new HelperText({
     		props: {
     		validationMsg: true,
-    		$$slots: { default: [create_default_slot_1$4] },
+    		$$slots: { default: [create_default_slot_2$4] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -18094,9 +17820,9 @@ var app = (function () {
     	};
     }
 
-    // (25:0) {#if !isTextArea}
+    // (39:0) {#if !isTextArea}
     function create_if_block$8(ctx) {
-    	var updating_dirty, updating_invalid, updating_value, current;
+    	var updating_dirty, updating_invalid, updating_value, t, current;
 
     	function textfield_dirty_binding(value_1) {
     		ctx.textfield_dirty_binding.call(null, value_1);
@@ -18124,7 +17850,7 @@ var app = (function () {
     		updateInvalid: true,
     		label: ctx.label,
     		style: "min-width: " + (ctx.minWidth ? `${ctx.minWidth}px`: '250px'),
-    		$$slots: { default: [create_default_slot$a] },
+    		$$slots: { default: [create_default_slot_1$4] },
     		$$scope: { ctx }
     	};
     	if (ctx.dirty !== void 0) {
@@ -18142,13 +17868,26 @@ var app = (function () {
     	binding_callbacks.push(() => bind(textfield, 'invalid', textfield_invalid_binding));
     	binding_callbacks.push(() => bind(textfield, 'value', textfield_value_binding));
 
+    	var helpertext = new HelperText({
+    		props: {
+    		validationMsg: true,
+    		$$slots: { default: [create_default_slot$a] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
     	return {
     		c: function create() {
     			textfield.$$.fragment.c();
+    			t = space();
+    			helpertext.$$.fragment.c();
     		},
 
     		m: function mount(target, anchor) {
     			mount_component(textfield, target, anchor);
+    			insert(target, t, anchor);
+    			mount_component(helpertext, target, anchor);
     			current = true;
     		},
 
@@ -18170,28 +17909,41 @@ var app = (function () {
     				textfield_changes.value = ctx.value;
     			}
     			textfield.$set(textfield_changes);
+
+    			var helpertext_changes = {};
+    			if (changed.$$scope || changed.errorMessage) helpertext_changes.$$scope = { changed, ctx };
+    			helpertext.$set(helpertext_changes);
     		},
 
     		i: function intro(local) {
     			if (current) return;
     			transition_in(textfield.$$.fragment, local);
 
+    			transition_in(helpertext.$$.fragment, local);
+
     			current = true;
     		},
 
     		o: function outro(local) {
     			transition_out(textfield.$$.fragment, local);
+    			transition_out(helpertext.$$.fragment, local);
     			current = false;
     		},
 
     		d: function destroy(detaching) {
     			destroy_component(textfield, detaching);
+
+    			if (detaching) {
+    				detach(t);
+    			}
+
+    			destroy_component(helpertext, detaching);
     		}
     	};
     }
 
-    // (50:4) <HelperText validationMsg>
-    function create_default_slot_1$4(ctx) {
+    // (64:4) <HelperText validationMsg>
+    function create_default_slot_2$4(ctx) {
     	var t;
 
     	return {
@@ -18217,12 +17969,39 @@ var app = (function () {
     	};
     }
 
-    // (26:4) <Textfield type="{type}"                 class="{$$props.class}"                 fullwidth                 withTrailingIcon={value !== ''}                 bind:dirty={dirty}                 bind:invalid={invalid}                 updateInvalid                 bind:value={value}                 label="{label}"                 style="min-width: {minWidth ? `${minWidth}px`: '250px'}"        >
-    function create_default_slot$a(ctx) {
+    // (40:6) <Textfield type="{type}"                 class="{$$props.class}"                 fullwidth                 withTrailingIcon={value !== ''}                 bind:dirty={dirty}                 bind:invalid={invalid}                 updateInvalid                 bind:value={value}                 label="{label}"                 style="min-width: {minWidth ? `${minWidth}px`: '250px'}">
+    function create_default_slot_1$4(ctx) {
     	return {
     		c: noop,
     		m: noop,
     		d: noop
+    	};
+    }
+
+    // (52:6) <HelperText validationMsg>
+    function create_default_slot$a(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text(ctx.errorMessage);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		p: function update(changed, ctx) {
+    			if (changed.errorMessage) {
+    				set_data(t, ctx.errorMessage);
+    			}
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
     	};
     }
 
@@ -18306,7 +18085,7 @@ var app = (function () {
     function instance$x($$self, $$props, $$invalidate) {
     	
 
-        let { errorMessage='', label = '', minWidth, type, value='', dirty=false, invalid=false, isTextArea = false } = $$props;
+        let { isError = false, errorMessage='', label = '', minWidth, type, value='', dirty=false, invalid=false, isTextArea = false } = $$props;
 
     	function textfield_dirty_binding(value_1) {
     		dirty = value_1;
@@ -18330,6 +18109,7 @@ var app = (function () {
 
     	$$self.$set = $$new_props => {
     		$$invalidate('$$props', $$props = assign(assign({}, $$props), $$new_props));
+    		if ('isError' in $$new_props) $$invalidate('isError', isError = $$new_props.isError);
     		if ('errorMessage' in $$new_props) $$invalidate('errorMessage', errorMessage = $$new_props.errorMessage);
     		if ('label' in $$new_props) $$invalidate('label', label = $$new_props.label);
     		if ('minWidth' in $$new_props) $$invalidate('minWidth', minWidth = $$new_props.minWidth);
@@ -18340,11 +18120,12 @@ var app = (function () {
     		if ('isTextArea' in $$new_props) $$invalidate('isTextArea', isTextArea = $$new_props.isTextArea);
     	};
 
-    	$$self.$$.update = ($$dirty = { isTextArea: 1 }) => {
-    		if ($$dirty.isTextArea) { console.log('isTextArea',isTextArea); }
+    	$$self.$$.update = ($$dirty = { isError: 1 }) => {
+    		if ($$dirty.isError) ;
     	};
 
     	return {
+    		isError,
     		errorMessage,
     		label,
     		minWidth,
@@ -18365,16 +18146,24 @@ var app = (function () {
     class TextBox extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$x, create_fragment$x, safe_not_equal, ["errorMessage", "label", "minWidth", "type", "value", "dirty", "invalid", "isTextArea"]);
+    		init(this, options, instance$x, create_fragment$x, safe_not_equal, ["isError", "errorMessage", "label", "minWidth", "type", "value", "dirty", "invalid", "isTextArea"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
     		if (ctx.minWidth === undefined && !('minWidth' in props)) {
-    			console_1$3.warn("<TextBox> was created without expected prop 'minWidth'");
+    			console.warn("<TextBox> was created without expected prop 'minWidth'");
     		}
     		if (ctx.type === undefined && !('type' in props)) {
-    			console_1$3.warn("<TextBox> was created without expected prop 'type'");
+    			console.warn("<TextBox> was created without expected prop 'type'");
     		}
+    	}
+
+    	get isError() {
+    		throw new Error("<TextBox>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set isError(value) {
+    		throw new Error("<TextBox>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
 
     	get errorMessage() {
@@ -18628,11 +18417,62 @@ var app = (function () {
     	}
     }
 
+    /* src\common\Spinner.svelte generated by Svelte v3.9.1 */
+
+    const file$u = "src\\common\\Spinner.svelte";
+
+    function create_fragment$z(ctx) {
+    	var div2, div0, t, div1;
+
+    	return {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			t = space();
+    			div1 = element("div");
+    			attr(div0, "class", "block orange svelte-ac046o");
+    			add_location(div0, file$u, 65, 2, 4294);
+    			attr(div1, "class", "block blue svelte-ac046o");
+    			add_location(div1, file$u, 66, 2, 4326);
+    			attr(div2, "class", "blocks svelte-ac046o");
+    			add_location(div2, file$u, 64, 0, 4270);
+    		},
+
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, div2, anchor);
+    			append(div2, div0);
+    			append(div2, t);
+    			append(div2, div1);
+    		},
+
+    		p: noop,
+    		i: noop,
+    		o: noop,
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(div2);
+    			}
+    		}
+    	};
+    }
+
+    class Spinner extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, null, create_fragment$z, safe_not_equal, []);
+    	}
+    }
+
     /* src\components\Register.svelte generated by Svelte v3.9.1 */
 
-    const file$u = "src\\components\\Register.svelte";
+    const file$v = "src\\components\\Register.svelte";
 
-    // (156:8) <FileUpload on:input={gotFiles}>
+    // (149:8) <FileUpload on:input={gotFiles}>
     function create_default_slot_4$1(ctx) {
     	var current;
 
@@ -18675,7 +18515,7 @@ var app = (function () {
     	};
     }
 
-    // (194:8) <Label>
+    // (187:8) <Label>
     function create_default_slot_3$2(ctx) {
     	var t;
 
@@ -18696,8 +18536,8 @@ var app = (function () {
     	};
     }
 
-    // (193:6) <Button variant="raised" on:click={submit}>
-    function create_default_slot_2$4(ctx) {
+    // (186:6) <Button variant="raised" on:click={submit}>
+    function create_default_slot_2$5(ctx) {
     	var current;
 
     	var label = new Label({
@@ -18742,14 +18582,14 @@ var app = (function () {
     	};
     }
 
-    // (192:4) <Actions class="actions">
+    // (185:4) <Actions class="actions">
     function create_default_slot_1$5(ctx) {
     	var current;
 
     	var button = new Button_1({
     		props: {
     		variant: "raised",
-    		$$slots: { default: [create_default_slot_2$4] },
+    		$$slots: { default: [create_default_slot_2$5] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -18790,7 +18630,7 @@ var app = (function () {
     	};
     }
 
-    // (152:2) <Paper aria-labelledby="simple-title" aria-describedby="simple-content">
+    // (145:2) <Paper aria-labelledby="simple-title" aria-describedby="simple-content">
     function create_default_slot$b(ctx) {
     	var header, t1, div3, div1, t2, div0, updating_value, t3, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, current;
 
@@ -18925,16 +18765,16 @@ var app = (function () {
     			textbox4.$$.fragment.c();
     			t7 = space();
     			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-uydks0");
-    			add_location(header, file$u, 152, 4, 7458);
+    			attr(header, "class", "header svelte-1w6kha2");
+    			add_location(header, file$v, 145, 4, 7537);
     			attr(div0, "class", "name-tb");
-    			add_location(div0, file$u, 159, 8, 7701);
-    			attr(div1, "class", "avatar-container svelte-uydks0");
-    			add_location(div1, file$u, 154, 6, 7538);
+    			add_location(div0, file$v, 152, 8, 7772);
+    			attr(div1, "class", "avatar-container svelte-1w6kha2");
+    			add_location(div1, file$v, 147, 6, 7617);
     			attr(div2, "class", "form-details");
-    			add_location(div2, file$u, 167, 6, 7919);
-    			attr(div3, "class", "card-details svelte-uydks0");
-    			add_location(div3, file$u, 153, 4, 7504);
+    			add_location(div2, file$v, 160, 6, 7990);
+    			attr(div3, "class", "card-details svelte-1w6kha2");
+    			add_location(div3, file$v, 146, 4, 7583);
     		},
 
     		m: function mount(target, anchor) {
@@ -19058,8 +18898,50 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$z(ctx) {
+    // (191:2) {#if showSpinner}
+    function create_if_block$9(ctx) {
     	var div, current;
+
+    	var spinner = new Spinner({ $$inline: true });
+
+    	return {
+    		c: function create() {
+    			div = element("div");
+    			spinner.$$.fragment.c();
+    			attr(div, "class", "spinner-wrap svelte-1w6kha2");
+    			add_location(div, file$v, 191, 4, 8866);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, div, anchor);
+    			mount_component(spinner, div, null);
+    			current = true;
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(spinner.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(spinner.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(div);
+    			}
+
+    			destroy_component(spinner);
+    		}
+    	};
+    }
+
+    function create_fragment$A(ctx) {
+    	var div, t, current;
 
     	var paper = new Paper({
     		props: {
@@ -19071,12 +18953,16 @@ var app = (function () {
     		$$inline: true
     	});
 
+    	var if_block = (ctx.showSpinner) && create_if_block$9();
+
     	return {
     		c: function create() {
     			div = element("div");
     			paper.$$.fragment.c();
-    			attr(div, "class", "paper-wrap svelte-uydks0");
-    			add_location(div, file$u, 150, 0, 7352);
+    			t = space();
+    			if (if_block) if_block.c();
+    			attr(div, "class", "paper-wrap svelte-1w6kha2");
+    			add_location(div, file$v, 143, 0, 7431);
     		},
 
     		l: function claim(nodes) {
@@ -19086,6 +18972,8 @@ var app = (function () {
     		m: function mount(target, anchor) {
     			insert(target, div, anchor);
     			mount_component(paper, div, null);
+    			append(div, t);
+    			if (if_block) if_block.m(div, null);
     			current = true;
     		},
 
@@ -19093,17 +18981,36 @@ var app = (function () {
     			var paper_changes = {};
     			if (changed.$$scope || changed.hobbies || changed.aboutMe || changed.email || changed.age || changed.name || changed.imageUrl) paper_changes.$$scope = { changed, ctx };
     			paper.$set(paper_changes);
+
+    			if (ctx.showSpinner) {
+    				if (!if_block) {
+    					if_block = create_if_block$9();
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(div, null);
+    				} else {
+    									transition_in(if_block, 1);
+    				}
+    			} else if (if_block) {
+    				group_outros();
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
+    				check_outros();
+    			}
     		},
 
     		i: function intro(local) {
     			if (current) return;
     			transition_in(paper.$$.fragment, local);
 
+    			transition_in(if_block);
     			current = true;
     		},
 
     		o: function outro(local) {
     			transition_out(paper.$$.fragment, local);
+    			transition_out(if_block);
     			current = false;
     		},
 
@@ -19113,6 +19020,8 @@ var app = (function () {
     			}
 
     			destroy_component(paper);
+
+    			if (if_block) if_block.d();
     		}
     	};
     }
@@ -19135,6 +19044,7 @@ var app = (function () {
       let age;
       let aboutMe;
       let imageUrl;
+      let showSpinner = false;
 
       onMount(() => {});
 
@@ -19145,16 +19055,18 @@ var app = (function () {
       }
 
       function submit(e) {
-         BLM.register({
-            name,
-            age,
-            email,
-            imageUrl,
-            moreDetails: {
-              hobbies,
-              aboutMe
-            }
-          });
+        $$invalidate('showSpinner', showSpinner = true);
+
+        BLM.register({
+          name,
+          age,
+          email,
+          imageUrl,
+          moreDetails: {
+            hobbies,
+            aboutMe
+          }
+        });
       }
 
     	function textbox0_value_binding(value) {
@@ -19189,6 +19101,7 @@ var app = (function () {
     		age,
     		aboutMe,
     		imageUrl,
+    		showSpinner,
     		gotFiles,
     		submit,
     		textbox0_value_binding,
@@ -19202,13 +19115,13 @@ var app = (function () {
     class Register extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$z, create_fragment$z, safe_not_equal, []);
+    		init(this, options, instance$z, create_fragment$A, safe_not_equal, []);
     	}
     }
 
     /* src\components\Login.svelte generated by Svelte v3.9.1 */
 
-    const file$v = "src\\components\\Login.svelte";
+    const file$w = "src\\components\\Login.svelte";
 
     // (151:8) <Label>
     function create_default_slot_5$1(ctx) {
@@ -19299,7 +19212,7 @@ var app = (function () {
     }
 
     // (153:6) <Button variant="raised" on:click={submit}>
-    function create_default_slot_2$5(ctx) {
+    function create_default_slot_2$6(ctx) {
     	var current;
 
     	var label = new Label({
@@ -19361,7 +19274,7 @@ var app = (function () {
     	var button1 = new Button_1({
     		props: {
     		variant: "raised",
-    		$$slots: { default: [create_default_slot_2$5] },
+    		$$slots: { default: [create_default_slot_2$6] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19460,11 +19373,11 @@ var app = (function () {
     			t2 = space();
     			actions.$$.fragment.c();
     			attr(header, "class", "header svelte-1rpb5w6");
-    			add_location(header, file$v, 139, 4, 7630);
+    			add_location(header, file$w, 139, 4, 7630);
     			attr(div0, "class", "form-details svelte-1rpb5w6");
-    			add_location(div0, file$v, 141, 6, 7707);
+    			add_location(div0, file$w, 141, 6, 7707);
     			attr(div1, "class", "card-details svelte-1rpb5w6");
-    			add_location(div1, file$v, 140, 4, 7673);
+    			add_location(div1, file$w, 140, 4, 7673);
     		},
 
     		m: function mount(target, anchor) {
@@ -19523,7 +19436,7 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$A(ctx) {
+    function create_fragment$B(ctx) {
     	var div, current;
 
     	var paper = new Paper({
@@ -19540,7 +19453,7 @@ var app = (function () {
     			div = element("div");
     			paper.$$.fragment.c();
     			attr(div, "class", "paper-wrap svelte-1rpb5w6");
-    			add_location(div, file$v, 137, 0, 7575);
+    			add_location(div, file$w, 137, 0, 7575);
     		},
 
     		l: function claim(nodes) {
@@ -19609,7 +19522,7 @@ var app = (function () {
     class Login extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$A, create_fragment$A, safe_not_equal, []);
+    		init(this, options, instance$A, create_fragment$B, safe_not_equal, []);
     	}
     }
 
@@ -19656,13 +19569,597 @@ var app = (function () {
       }
     };
 
+    /* src\components\UserDetailsPopup.svelte generated by Svelte v3.9.1 */
+    const { console: console_1$3 } = globals;
+
+    const file$x = "src\\components\\UserDetailsPopup.svelte";
+
+    // (140:6) <FileUpload on:input={gotFiles}>
+    function create_default_slot_4$3(ctx) {
+    	var current;
+
+    	var avatar = new Avatar({
+    		props: { imageUrl: ctx.currentUser.ntkDetails.imageUrl, height: "100px" },
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			avatar.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(avatar, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var avatar_changes = {};
+    			if (changed.currentUser) avatar_changes.imageUrl = ctx.currentUser.ntkDetails.imageUrl;
+    			avatar.$set(avatar_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(avatar.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(avatar.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(avatar, detaching);
+    		}
+    	};
+    }
+
+    // (172:6) <Label>
+    function create_default_slot_3$4(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text("Submit");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
+    	};
+    }
+
+    // (171:4) <Button variant="raised" on:click={submit}>
+    function create_default_slot_2$7(ctx) {
+    	var current;
+
+    	var label = new Label({
+    		props: {
+    		$$slots: { default: [create_default_slot_3$4] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			label.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(label, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var label_changes = {};
+    			if (changed.$$scope) label_changes.$$scope = { changed, ctx };
+    			label.$set(label_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(label.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(label.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(label, detaching);
+    		}
+    	};
+    }
+
+    // (170:2) <Actions class="actions">
+    function create_default_slot_1$7(ctx) {
+    	var current;
+
+    	var button = new Button_1({
+    		props: {
+    		variant: "raised",
+    		$$slots: { default: [create_default_slot_2$7] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	button.$on("click", ctx.submit);
+
+    	return {
+    		c: function create() {
+    			button.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(button, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var button_changes = {};
+    			if (changed.$$scope) button_changes.$$scope = { changed, ctx };
+    			button.$set(button_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(button.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(button.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(button, detaching);
+    		}
+    	};
+    }
+
+    // (131:0) <Dialog    bind:this={simpleDialog}    aria-labelledby="simple-title"    aria-describedby="simple-content"    on:MDCDialog:closed={closeHandler}    on:MDCDialog:closing={onClosing}>
+    function create_default_slot$d(ctx) {
+    	var header, t1, div3, div1, t2, div0, t3_value = ctx.currentUser.ntkDetails.name + "", t3, t4, div2, updating_value, t5, updating_value_1, t6, updating_value_2, t7, updating_value_3, t8, current;
+
+    	var fileupload = new Index({
+    		props: {
+    		$$slots: { default: [create_default_slot_4$3] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	fileupload.$on("input", ctx.gotFiles);
+
+    	function textbox0_value_binding(value) {
+    		ctx.textbox0_value_binding.call(null, value);
+    		updating_value = true;
+    		add_flush_callback(() => updating_value = false);
+    	}
+
+    	let textbox0_props = {
+    		type: "number",
+    		label: "Age",
+    		minWidth: 150,
+    		errorMessage: "Please enter a number for your age"
+    	};
+    	if (ctx.currentUser.ntkDetails.age !== void 0) {
+    		textbox0_props.value = ctx.currentUser.ntkDetails.age;
+    	}
+    	var textbox0 = new TextBox({ props: textbox0_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox0, 'value', textbox0_value_binding));
+
+    	function textbox1_value_binding(value_1) {
+    		ctx.textbox1_value_binding.call(null, value_1);
+    		updating_value_1 = true;
+    		add_flush_callback(() => updating_value_1 = false);
+    	}
+
+    	let textbox1_props = {
+    		type: "email",
+    		label: "Email",
+    		minWidth: 350,
+    		errorMessage: "Please enter a valid email address"
+    	};
+    	if (ctx.currentUser.ntkDetails.email !== void 0) {
+    		textbox1_props.value = ctx.currentUser.ntkDetails.email;
+    	}
+    	var textbox1 = new TextBox({ props: textbox1_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox1, 'value', textbox1_value_binding));
+
+    	function textbox2_value_binding(value_2) {
+    		ctx.textbox2_value_binding.call(null, value_2);
+    		updating_value_2 = true;
+    		add_flush_callback(() => updating_value_2 = false);
+    	}
+
+    	let textbox2_props = {
+    		class: "about-me",
+    		isTextArea: true,
+    		label: "About Me"
+    	};
+    	if (ctx.currentUser.ntkDetails.moreDetails.aboutMe !== void 0) {
+    		textbox2_props.value = ctx.currentUser.ntkDetails.moreDetails.aboutMe;
+    	}
+    	var textbox2 = new TextBox({ props: textbox2_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox2, 'value', textbox2_value_binding));
+
+    	function textbox3_value_binding(value_3) {
+    		ctx.textbox3_value_binding.call(null, value_3);
+    		updating_value_3 = true;
+    		add_flush_callback(() => updating_value_3 = false);
+    	}
+
+    	let textbox3_props = {
+    		label: "Hobbies (seperated with commas)",
+    		minWidth: 350
+    	};
+    	if (ctx.currentUser.ntkDetails.moreDetails.hobbies !== void 0) {
+    		textbox3_props.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    	}
+    	var textbox3 = new TextBox({ props: textbox3_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox3, 'value', textbox3_value_binding));
+
+    	var actions = new Actions$1({
+    		props: {
+    		class: "actions",
+    		$$slots: { default: [create_default_slot_1$7] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			header = element("header");
+    			header.textContent = "Update User Details";
+    			t1 = space();
+    			div3 = element("div");
+    			div1 = element("div");
+    			fileupload.$$.fragment.c();
+    			t2 = space();
+    			div0 = element("div");
+    			t3 = text(t3_value);
+    			t4 = space();
+    			div2 = element("div");
+    			textbox0.$$.fragment.c();
+    			t5 = space();
+    			textbox1.$$.fragment.c();
+    			t6 = space();
+    			textbox2.$$.fragment.c();
+    			t7 = space();
+    			textbox3.$$.fragment.c();
+    			t8 = space();
+    			actions.$$.fragment.c();
+    			attr(header, "class", "header svelte-oc89b4");
+    			add_location(header, file$x, 136, 2, 6891);
+    			attr(div0, "class", "name-div svelte-oc89b4");
+    			add_location(div0, file$x, 143, 6, 7159);
+    			attr(div1, "class", "avatar-container svelte-oc89b4");
+    			add_location(div1, file$x, 138, 4, 6978);
+    			attr(div2, "class", "form-details");
+    			add_location(div2, file$x, 145, 4, 7234);
+    			attr(div3, "class", "card-details svelte-oc89b4");
+    			add_location(div3, file$x, 137, 2, 6946);
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, header, anchor);
+    			insert(target, t1, anchor);
+    			insert(target, div3, anchor);
+    			append(div3, div1);
+    			mount_component(fileupload, div1, null);
+    			append(div1, t2);
+    			append(div1, div0);
+    			append(div0, t3);
+    			append(div3, t4);
+    			append(div3, div2);
+    			mount_component(textbox0, div2, null);
+    			append(div2, t5);
+    			mount_component(textbox1, div2, null);
+    			append(div2, t6);
+    			mount_component(textbox2, div2, null);
+    			append(div2, t7);
+    			mount_component(textbox3, div2, null);
+    			insert(target, t8, anchor);
+    			mount_component(actions, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var fileupload_changes = {};
+    			if (changed.$$scope || changed.currentUser) fileupload_changes.$$scope = { changed, ctx };
+    			fileupload.$set(fileupload_changes);
+
+    			if ((!current || changed.currentUser) && t3_value !== (t3_value = ctx.currentUser.ntkDetails.name + "")) {
+    				set_data(t3, t3_value);
+    			}
+
+    			var textbox0_changes = {};
+    			if (!updating_value && changed.currentUser) {
+    				textbox0_changes.value = ctx.currentUser.ntkDetails.age;
+    			}
+    			textbox0.$set(textbox0_changes);
+
+    			var textbox1_changes = {};
+    			if (!updating_value_1 && changed.currentUser) {
+    				textbox1_changes.value = ctx.currentUser.ntkDetails.email;
+    			}
+    			textbox1.$set(textbox1_changes);
+
+    			var textbox2_changes = {};
+    			if (!updating_value_2 && changed.currentUser) {
+    				textbox2_changes.value = ctx.currentUser.ntkDetails.moreDetails.aboutMe;
+    			}
+    			textbox2.$set(textbox2_changes);
+
+    			var textbox3_changes = {};
+    			if (!updating_value_3 && changed.currentUser) {
+    				textbox3_changes.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    			}
+    			textbox3.$set(textbox3_changes);
+
+    			var actions_changes = {};
+    			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
+    			actions.$set(actions_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(fileupload.$$.fragment, local);
+
+    			transition_in(textbox0.$$.fragment, local);
+
+    			transition_in(textbox1.$$.fragment, local);
+
+    			transition_in(textbox2.$$.fragment, local);
+
+    			transition_in(textbox3.$$.fragment, local);
+
+    			transition_in(actions.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(fileupload.$$.fragment, local);
+    			transition_out(textbox0.$$.fragment, local);
+    			transition_out(textbox1.$$.fragment, local);
+    			transition_out(textbox2.$$.fragment, local);
+    			transition_out(textbox3.$$.fragment, local);
+    			transition_out(actions.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(header);
+    				detach(t1);
+    				detach(div3);
+    			}
+
+    			destroy_component(fileupload);
+
+    			destroy_component(textbox0);
+
+    			destroy_component(textbox1);
+
+    			destroy_component(textbox2);
+
+    			destroy_component(textbox3);
+
+    			if (detaching) {
+    				detach(t8);
+    			}
+
+    			destroy_component(actions, detaching);
+    		}
+    	};
+    }
+
+    function create_fragment$C(ctx) {
+    	var current;
+
+    	let dialog_props = {
+    		"aria-labelledby": "simple-title",
+    		"aria-describedby": "simple-content",
+    		$$slots: { default: [create_default_slot$d] },
+    		$$scope: { ctx }
+    	};
+    	var dialog = new Dialog({ props: dialog_props, $$inline: true });
+
+    	ctx.dialog_binding(dialog);
+    	dialog.$on("MDCDialog:closed", ctx.closeHandler);
+    	dialog.$on("MDCDialog:closing", onClosing$1);
+
+    	return {
+    		c: function create() {
+    			dialog.$$.fragment.c();
+    		},
+
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(dialog, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var dialog_changes = {};
+    			if (changed.$$scope || changed.currentUser) dialog_changes.$$scope = { changed, ctx };
+    			dialog.$set(dialog_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(dialog.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(dialog.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			ctx.dialog_binding(null);
+
+    			destroy_component(dialog, detaching);
+    		}
+    	};
+    }
+
+    function getBase64$1(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    function onClosing$1(e) {
+      console.log("onClosing", e);
+      e.stopPropagation();
+    }
+
+    function instance$B($$self, $$props, $$invalidate) {
+    	
+
+      let { currentUser } = $$props;
+      let simpleDialog;
+      // let name;
+      // let email;
+      // let hobbies;
+      // let age;
+      // let aboutMe;
+      // let imageUrl;
+
+      const dispatch = createEventDispatcher();
+
+      onMount(() => {
+        simpleDialog.open();
+        // const details = currentUser.ntkDetails;
+        // name = details.name;
+        // email = details.email;
+        // hobbies = details.hobbies;
+        // age = details.age;
+        // aboutMe = details.moreDetails.aboutMe;
+        // imageUrl = details.moreDetails.imageUrl;
+      });
+
+      async function gotFiles(event) {
+        const data = await getBase64$1(event.detail.files[0]);
+        console.log("vase84", data);
+        currentUser.ntkDetails.imageUrl = data; $$invalidate('currentUser', currentUser);
+      }
+
+      function closeHandler(e) {
+        dispatch("popupClosed", {});
+      }
+
+      function submit(e) {
+        BLM.updateUserDetails(currentUser.ntkDetails);
+      }
+
+    	const writable_props = ['currentUser'];
+    	Object.keys($$props).forEach(key => {
+    		if (!writable_props.includes(key) && !key.startsWith('$$')) console_1$3.warn(`<UserDetailsPopup> was created with unknown prop '${key}'`);
+    	});
+
+    	function textbox0_value_binding(value) {
+    		currentUser.ntkDetails.age = value;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox1_value_binding(value_1) {
+    		currentUser.ntkDetails.email = value_1;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox2_value_binding(value_2) {
+    		currentUser.ntkDetails.moreDetails.aboutMe = value_2;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox3_value_binding(value_3) {
+    		currentUser.ntkDetails.moreDetails.hobbies = value_3;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function dialog_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			$$invalidate('simpleDialog', simpleDialog = $$value);
+    		});
+    	}
+
+    	$$self.$set = $$props => {
+    		if ('currentUser' in $$props) $$invalidate('currentUser', currentUser = $$props.currentUser);
+    	};
+
+    	return {
+    		currentUser,
+    		simpleDialog,
+    		gotFiles,
+    		closeHandler,
+    		submit,
+    		textbox0_value_binding,
+    		textbox1_value_binding,
+    		textbox2_value_binding,
+    		textbox3_value_binding,
+    		dialog_binding
+    	};
+    }
+
+    class UserDetailsPopup extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$B, create_fragment$C, safe_not_equal, ["currentUser"]);
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+    		if (ctx.currentUser === undefined && !('currentUser' in props)) {
+    			console_1$3.warn("<UserDetailsPopup> was created without expected prop 'currentUser'");
+    		}
+    	}
+
+    	get currentUser() {
+    		throw new Error("<UserDetailsPopup>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set currentUser(value) {
+    		throw new Error("<UserDetailsPopup>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
     /* src\components\Header.svelte generated by Svelte v3.9.1 */
     const { console: console_1$4 } = globals;
 
-    const file$w = "src\\components\\Header.svelte";
+    const file$y = "src\\components\\Header.svelte";
 
-    // (125:6) <Button on:click={()=>isLogoutShowing = true} class="myClass">
-    function create_default_slot_2$6(ctx) {
+    // (140:6) <Button on:click={() => (isLogoutShowing = true)} class="myClass">
+    function create_default_slot_2$8(ctx) {
     	var span0, t1, span1, t2_value = ctx.currentUser ? ctx.currentUser.ntkDetails.name : '' + "", t2;
 
     	return {
@@ -19673,9 +20170,9 @@ var app = (function () {
     			span1 = element("span");
     			t2 = text(t2_value);
     			attr(span0, "class", "hi-span svelte-6n12fq");
-    			add_location(span0, file$w, 125, 8, 6328);
+    			add_location(span0, file$y, 140, 8, 6693);
     			attr(span1, "class", "userName-span");
-    			add_location(span1, file$w, 126, 8, 6369);
+    			add_location(span1, file$y, 141, 8, 6734);
     		},
 
     		m: function mount(target, anchor) {
@@ -19701,15 +20198,15 @@ var app = (function () {
     	};
     }
 
-    // (137:2) {#if isLogoutShowing}
-    function create_if_block$9(ctx) {
+    // (153:2) {#if isLogoutShowing}
+    function create_if_block_1$2(ctx) {
     	var current;
 
     	var card = new Card({
     		props: {
     		class: "logout-card",
     		padded: true,
-    		$$slots: { default: [create_default_slot$d] },
+    		$$slots: { default: [create_default_slot$e] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19744,8 +20241,8 @@ var app = (function () {
     	};
     }
 
-    // (139:6) <Label on:click={logout}>
-    function create_default_slot_1$7(ctx) {
+    // (155:6) <Label on:click={logout}>
+    function create_default_slot_1$8(ctx) {
     	var t;
 
     	return {
@@ -19765,13 +20262,13 @@ var app = (function () {
     	};
     }
 
-    // (138:4) <Card class="logout-card" padded on:click={()=>isLogoutShowing = false}>
-    function create_default_slot$d(ctx) {
+    // (154:4) <Card class="logout-card" padded on:click={() => (isLogoutShowing = false)}>
+    function create_default_slot$e(ctx) {
     	var current;
 
     	var label = new Label({
     		props: {
-    		$$slots: { default: [create_default_slot_1$7] },
+    		$$slots: { default: [create_default_slot_1$8] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19812,8 +20309,53 @@ var app = (function () {
     	};
     }
 
-    function create_fragment$B(ctx) {
-    	var header, div0, span, t1, div2, t2, t3, t4, div1, t5, t6, header_class_value, current;
+    // (160:0) {#if openUserUpdateDialog}
+    function create_if_block$a(ctx) {
+    	var current;
+
+    	var userdetailspopup = new UserDetailsPopup({
+    		props: { currentUser: BLM.getCloneNtkPerson(ctx.currentUser) },
+    		$$inline: true
+    	});
+    	userdetailspopup.$on("popupClosed", ctx.onPopupClosed);
+    	userdetailspopup.$on("submit", onUserDetailsSubmitted);
+
+    	return {
+    		c: function create() {
+    			userdetailspopup.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(userdetailspopup, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var userdetailspopup_changes = {};
+    			if (changed.BLM || changed.currentUser) userdetailspopup_changes.currentUser = BLM.getCloneNtkPerson(ctx.currentUser);
+    			userdetailspopup.$set(userdetailspopup_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(userdetailspopup.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(userdetailspopup.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(userdetailspopup, detaching);
+    		}
+    	};
+    }
+
+    function create_fragment$D(ctx) {
+    	var header, div0, span, t1, div2, t2, t3, t4, div1, t5, t6, header_class_value, t7, if_block1_anchor, current;
 
     	var myiconbutton0 = new MyIconButton({
     		props: {
@@ -19842,7 +20384,7 @@ var app = (function () {
     	var button = new Button_1({
     		props: {
     		class: "myClass",
-    		$$slots: { default: [create_default_slot_2$6] },
+    		$$slots: { default: [create_default_slot_2$8] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19853,8 +20395,11 @@ var app = (function () {
     		props: { imageUrl: ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : null },
     		$$inline: true
     	});
+    	avatar.$on("click", ctx.onAvatarClick);
 
-    	var if_block = (ctx.isLogoutShowing) && create_if_block$9(ctx);
+    	var if_block0 = (ctx.isLogoutShowing) && create_if_block_1$2(ctx);
+
+    	var if_block1 = (ctx.openUserUpdateDialog) && create_if_block$a(ctx);
 
     	return {
     		c: function create() {
@@ -19875,17 +20420,20 @@ var app = (function () {
     			t5 = space();
     			avatar.$$.fragment.c();
     			t6 = space();
-    			if (if_block) if_block.c();
+    			if (if_block0) if_block0.c();
+    			t7 = space();
+    			if (if_block1) if_block1.c();
+    			if_block1_anchor = empty();
     			attr(span, "class", "logo-inner svelte-6n12fq");
-    			add_location(span, file$w, 111, 4, 5814);
+    			add_location(span, file$y, 126, 4, 6175);
     			attr(div0, "class", "logo svelte-6n12fq");
-    			add_location(div0, file$w, 110, 2, 5790);
+    			add_location(div0, file$y, 125, 2, 6151);
     			attr(div1, "class", "userWrap svelte-6n12fq");
-    			add_location(div1, file$w, 123, 4, 6226);
+    			add_location(div1, file$y, 138, 4, 6587);
     			attr(div2, "class", "controls svelte-6n12fq");
-    			add_location(div2, file$w, 113, 2, 5872);
+    			add_location(div2, file$y, 128, 2, 6233);
     			attr(header, "class", header_class_value = "container " + (ctx.isHidden ? 'is-hidden' : '') + " svelte-6n12fq");
-    			add_location(header, file$w, 109, 0, 5730);
+    			add_location(header, file$y, 124, 0, 6091);
     		},
 
     		l: function claim(nodes) {
@@ -19909,7 +20457,10 @@ var app = (function () {
     			append(div1, t5);
     			mount_component(avatar, div1, null);
     			append(header, t6);
-    			if (if_block) if_block.m(header, null);
+    			if (if_block0) if_block0.m(header, null);
+    			insert(target, t7, anchor);
+    			if (if_block1) if_block1.m(target, anchor);
+    			insert(target, if_block1_anchor, anchor);
     			current = true;
     		},
 
@@ -19923,24 +20474,42 @@ var app = (function () {
     			avatar.$set(avatar_changes);
 
     			if (ctx.isLogoutShowing) {
-    				if (!if_block) {
-    					if_block = create_if_block$9(ctx);
-    					if_block.c();
-    					transition_in(if_block, 1);
-    					if_block.m(header, null);
+    				if (!if_block0) {
+    					if_block0 = create_if_block_1$2(ctx);
+    					if_block0.c();
+    					transition_in(if_block0, 1);
+    					if_block0.m(header, null);
     				} else {
-    									transition_in(if_block, 1);
+    									transition_in(if_block0, 1);
     				}
-    			} else if (if_block) {
+    			} else if (if_block0) {
     				group_outros();
-    				transition_out(if_block, 1, 1, () => {
-    					if_block = null;
+    				transition_out(if_block0, 1, 1, () => {
+    					if_block0 = null;
     				});
     				check_outros();
     			}
 
     			if ((!current || changed.isHidden) && header_class_value !== (header_class_value = "container " + (ctx.isHidden ? 'is-hidden' : '') + " svelte-6n12fq")) {
     				attr(header, "class", header_class_value);
+    			}
+
+    			if (ctx.openUserUpdateDialog) {
+    				if (if_block1) {
+    					if_block1.p(changed, ctx);
+    					transition_in(if_block1, 1);
+    				} else {
+    					if_block1 = create_if_block$a(ctx);
+    					if_block1.c();
+    					transition_in(if_block1, 1);
+    					if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+    				}
+    			} else if (if_block1) {
+    				group_outros();
+    				transition_out(if_block1, 1, 1, () => {
+    					if_block1 = null;
+    				});
+    				check_outros();
     			}
     		},
 
@@ -19956,7 +20525,8 @@ var app = (function () {
 
     			transition_in(avatar.$$.fragment, local);
 
-    			transition_in(if_block);
+    			transition_in(if_block0);
+    			transition_in(if_block1);
     			current = true;
     		},
 
@@ -19966,7 +20536,8 @@ var app = (function () {
     			transition_out(myiconbutton2.$$.fragment, local);
     			transition_out(button.$$.fragment, local);
     			transition_out(avatar.$$.fragment, local);
-    			transition_out(if_block);
+    			transition_out(if_block0);
+    			transition_out(if_block1);
     			current = false;
     		},
 
@@ -19985,7 +20556,17 @@ var app = (function () {
 
     			destroy_component(avatar);
 
-    			if (if_block) if_block.d();
+    			if (if_block0) if_block0.d();
+
+    			if (detaching) {
+    				detach(t7);
+    			}
+
+    			if (if_block1) if_block1.d(detaching);
+
+    			if (detaching) {
+    				detach(if_block1_anchor);
+    			}
     		}
     	};
     }
@@ -20003,16 +20584,30 @@ var app = (function () {
     }
 
     function logout() {
-     BLM.logout();
+      BLM.logout();
     }
 
-    function instance$B($$self, $$props, $$invalidate) {
+    function onUserDetailsSubmitted(e) {
+      const details = e.detail;
+      console.log('details',details);
+    }
+
+    function instance$C($$self, $$props, $$invalidate) {
       let { currentUser, isHidden = false } = $$props;
       let isLogoutShowing = false;
+      let openUserUpdateDialog = false;
 
       setContext("setViewToRegister", {
         setViewToRegister: () => customViewStore.setView(viewKeys.REGISTER)
       });
+
+      function onAvatarClick() {
+        $$invalidate('openUserUpdateDialog', openUserUpdateDialog = true);
+      }
+
+      function onPopupClosed() {
+        $$invalidate('openUserUpdateDialog', openUserUpdateDialog = false);
+      }
 
     	const writable_props = ['currentUser', 'isHidden'];
     	Object.keys($$props).forEach(key => {
@@ -20020,13 +20615,13 @@ var app = (function () {
     	});
 
     	function click_handler() {
-    		const $$result = isLogoutShowing = true;
+    		const $$result = (isLogoutShowing = true);
     		$$invalidate('isLogoutShowing', isLogoutShowing);
     		return $$result;
     	}
 
     	function click_handler_1() {
-    		const $$result = isLogoutShowing = false;
+    		const $$result = (isLogoutShowing = false);
     		$$invalidate('isLogoutShowing', isLogoutShowing);
     		return $$result;
     	}
@@ -20044,6 +20639,9 @@ var app = (function () {
     		currentUser,
     		isHidden,
     		isLogoutShowing,
+    		openUserUpdateDialog,
+    		onAvatarClick,
+    		onPopupClosed,
     		click_handler,
     		click_handler_1
     	};
@@ -20052,7 +20650,7 @@ var app = (function () {
     class Header extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$B, create_fragment$B, safe_not_equal, ["currentUser", "isHidden"]);
+    		init(this, options, instance$C, create_fragment$D, safe_not_equal, ["currentUser", "isHidden"]);
 
     		const { ctx } = this.$$;
     		const props = options.props || {};
@@ -20080,16 +20678,16 @@ var app = (function () {
 
     /* src\components\Loading.svelte generated by Svelte v3.9.1 */
 
-    const file$x = "src\\components\\Loading.svelte";
+    const file$z = "src\\components\\Loading.svelte";
 
-    function create_fragment$C(ctx) {
+    function create_fragment$E(ctx) {
     	var div;
 
     	return {
     		c: function create() {
     			div = element("div");
     			div.textContent = "LOADING APP...";
-    			add_location(div, file$x, 7, 0, 235);
+    			add_location(div, file$z, 7, 0, 235);
     		},
 
     		l: function claim(nodes) {
@@ -20115,16 +20713,16 @@ var app = (function () {
     class Loading extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, null, create_fragment$C, safe_not_equal, []);
+    		init(this, options, null, create_fragment$E, safe_not_equal, []);
     	}
     }
 
     /* src\AppDesktop.svelte generated by Svelte v3.9.1 */
 
-    const file$y = "src\\AppDesktop.svelte";
+    const file$A = "src\\AppDesktop.svelte";
 
-    function create_fragment$D(ctx) {
-    	var div, t, current;
+    function create_fragment$F(ctx) {
+    	var div1, t0, t1, div0, current;
 
     	var header = new Header({
     		props: {
@@ -20133,6 +20731,7 @@ var app = (function () {
     	},
     		$$inline: true
     	});
+    	header.$on("userClicked", onUserClicked);
 
     	var switch_value = ctx.currentView ? ctx.currentView.view : Loading;
 
@@ -20144,27 +20743,45 @@ var app = (function () {
     		var switch_instance = new switch_value(switch_props());
     	}
 
+    	const default_slot_template = ctx.$$slots.default;
+    	const default_slot = create_slot(default_slot_template, ctx, null);
+
     	return {
     		c: function create() {
-    			div = element("div");
+    			div1 = element("div");
     			header.$$.fragment.c();
-    			t = space();
+    			t0 = space();
     			if (switch_instance) switch_instance.$$.fragment.c();
-    			attr(div, "class", "container-flex svelte-nskwby");
-    			add_location(div, file$y, 59, 0, 2192);
+    			t1 = space();
+    			div0 = element("div");
+
+    			if (default_slot) default_slot.c();
+
+    			attr(div0, "class", "message-holder");
+    			add_location(div0, file$A, 67, 2, 2455);
+    			attr(div1, "class", "container-flex svelte-nskwby");
+    			add_location(div1, file$A, 64, 0, 2269);
     		},
 
     		l: function claim(nodes) {
+    			if (default_slot) default_slot.l(div0_nodes);
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
 
     		m: function mount(target, anchor) {
-    			insert(target, div, anchor);
-    			mount_component(header, div, null);
-    			append(div, t);
+    			insert(target, div1, anchor);
+    			mount_component(header, div1, null);
+    			append(div1, t0);
 
     			if (switch_instance) {
-    				mount_component(switch_instance, div, null);
+    				mount_component(switch_instance, div1, null);
+    			}
+
+    			append(div1, t1);
+    			append(div1, div0);
+
+    			if (default_slot) {
+    				default_slot.m(div0, null);
     			}
 
     			current = true;
@@ -20191,10 +20808,17 @@ var app = (function () {
 
     					switch_instance.$$.fragment.c();
     					transition_in(switch_instance.$$.fragment, 1);
-    					mount_component(switch_instance, div, null);
+    					mount_component(switch_instance, div1, t1);
     				} else {
     					switch_instance = null;
     				}
+    			}
+
+    			if (default_slot && default_slot.p && changed.$$scope) {
+    				default_slot.p(
+    					get_slot_changes(default_slot_template, ctx, changed, null),
+    					get_slot_context(default_slot_template, ctx, null)
+    				);
     			}
     		},
 
@@ -20204,28 +20828,37 @@ var app = (function () {
 
     			if (switch_instance) transition_in(switch_instance.$$.fragment, local);
 
+    			transition_in(default_slot, local);
     			current = true;
     		},
 
     		o: function outro(local) {
     			transition_out(header.$$.fragment, local);
     			if (switch_instance) transition_out(switch_instance.$$.fragment, local);
+    			transition_out(default_slot, local);
     			current = false;
     		},
 
     		d: function destroy(detaching) {
     			if (detaching) {
-    				detach(div);
+    				detach(div1);
     			}
 
     			destroy_component(header);
 
     			if (switch_instance) destroy_component(switch_instance);
+
+    			if (default_slot) default_slot.d(detaching);
     		}
     	};
     }
 
-    function instance$C($$self, $$props, $$invalidate) {
+    function onUserClicked(event) {
+      const user = event.detail;
+      
+    }
+
+    function instance$D($$self, $$props, $$invalidate) {
     	
 
       let currentView;
@@ -20250,15 +20883,15 @@ var app = (function () {
               $$invalidate('currentUser', currentUser = BLM.getCurrentUser());
               $$invalidate('showHeader', showHeader = true);
               break;
-              case 3: // LoginFailed
-              alert('failed');
+            case 3: // LoginFailed
+              alert("failed");
               break;
           }
         });
 
         viewStoreUnsubscriber = customViewStore.subscribe(state => {
-            console.log('state.currentView',state.currentView);
-            $$invalidate('currentView', currentView = state.currentView);
+          console.log("state.currentView", state.currentView);
+          $$invalidate('currentView', currentView = state.currentView);
         });
       });
 
@@ -20267,21 +20900,33 @@ var app = (function () {
         appStateUnsubscriber();
       });
 
-    	return { currentView, currentUser, showHeader };
+    	let { $$slots = {}, $$scope } = $$props;
+
+    	$$self.$set = $$props => {
+    		if ('$$scope' in $$props) $$invalidate('$$scope', $$scope = $$props.$$scope);
+    	};
+
+    	return {
+    		currentView,
+    		currentUser,
+    		showHeader,
+    		$$slots,
+    		$$scope
+    	};
     }
 
     class AppDesktop extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$C, create_fragment$D, safe_not_equal, []);
+    		init(this, options, instance$D, create_fragment$F, safe_not_equal, []);
     	}
     }
 
     /* src\App.svelte generated by Svelte v3.9.1 */
 
-    const file$z = "src\\App.svelte";
+    const file$B = "src\\App.svelte";
 
-    function create_fragment$E(ctx) {
+    function create_fragment$G(ctx) {
     	var main, current;
 
     	var desktop = new AppDesktop({ $$inline: true });
@@ -20291,7 +20936,7 @@ var app = (function () {
     			main = element("main");
     			desktop.$$.fragment.c();
     			attr(main, "class", "container");
-    			add_location(main, file$z, 8, 0, 261);
+    			add_location(main, file$B, 8, 0, 261);
     		},
 
     		l: function claim(nodes) {
@@ -20331,7 +20976,7 @@ var app = (function () {
     class App extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, null, create_fragment$E, safe_not_equal, []);
+    		init(this, options, null, create_fragment$G, safe_not_equal, []);
     	}
     }
 

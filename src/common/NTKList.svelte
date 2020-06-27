@@ -27,14 +27,17 @@
 
   function getConnectionStatus(ntkPerson) {
     const currentUser = BLM.getCurrentUser();
-    const foundApprovalItem = ntkPerson.toApproveList
-      ? ntkPerson.toApproveList.find(
-          item => item.id === currentUser.ntkDetails.id
-        )
-      : null;
-    const connectionStatus = foundApprovalItem
-      ? foundApprovalItem.connectionStatus
-      : ConnectionStatus.pending;
+    let connectionStatus;
+
+    const foundItem =
+      currentUser.approvalList &&
+      currentUser.approvalList.find(item => item.id === ntkPerson.ntkDetails.id);
+
+    if (foundItem) {
+      connectionStatus = foundItem.connectionStatus;
+    } else {
+      connectionStatus = ConnectionStatus.pending;
+    }
 
     return connectionStatus;
   }
@@ -42,13 +45,21 @@
   function getIsMarked(ntkPerson) {
     const currentUser = BLM.getCurrentUser();
 
-    const foundApprovalItem = currentUser.fromApproveList
-      ? currentUser.fromApproveList.find(
-          item => item.id === ntkPerson.ntkDetails.id
-        )
-      : null;
+    const foundApprovalItem = currentUser.approvalList && currentUser.approvalList.find(item=>item.id === ntkPerson.ntkDetails.id);
 
-      return !!foundApprovalItem;
+    // const foundApprovalItem = ntkPerson.approvalList
+    //   ? ntkPerson.approvalList.find(
+    //       item => item.id === currentUser.ntkDetails.id
+    //     )
+    //   : ntkPerson.approvalList
+    //   ? ntkPerson.approvalList.find(
+    //       item =>
+    //         item.id === currentUser.ntkDetails.id &&
+    //         item.connectionStatus === ConnectionStatus.connected
+    //     )
+    //   : null;
+
+    return !!foundApprovalItem;
   }
 </script>
 

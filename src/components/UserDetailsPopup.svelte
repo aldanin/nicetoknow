@@ -5,54 +5,42 @@
   import Button, { Label } from "@smui/button";
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
+  import { BLM } from "../BLM/BLM";
 
+  export let currentUser;
   let simpleDialog;
-  let name;
-  let email;
-  let hobbies;
-  let age;
-  let aboutMe;
-  let imageUrl;
+  // let name;
+  // let email;
+  // let hobbies;
+  // let age;
+  // let aboutMe;
+  // let imageUrl;
 
   const dispatch = createEventDispatcher();
 
   onMount(() => {
     simpleDialog.open();
+    // const details = currentUser.ntkDetails;
+    // name = details.name;
+    // email = details.email;
+    // hobbies = details.hobbies;
+    // age = details.age;
+    // aboutMe = details.moreDetails.aboutMe;
+    // imageUrl = details.moreDetails.imageUrl;
   });
 
   async function gotFiles(event) {
     const data = await getBase64(event.detail.files[0]);
-    console.log('vase84', data)
-    imageUrl = data;
+    console.log("vase84", data);
+    currentUser.ntkDetails.imageUrl = data;
   }
 
   function closeHandler(e) {
-    // dispatch('popupClosed', {
-    //     value : {
-    //         name,
-    //         age,
-    //         email,
-    //         moreDetails : {
-    //             hobbies,
-    //             aboutMe
-    //         }
-    //     }
-    // });
+    dispatch("popupClosed", {});
   }
 
   function submit(e) {
-    dispatch("submit", {
-      value: {
-        name,
-        age,
-        email,
-        imageUrl,
-        moreDetails: {
-          hobbies,
-          aboutMe
-        }
-      }
-    });
+    BLM.updateUserDetails(currentUser.ntkDetails);
   }
 
   function getBase64(file) {
@@ -119,6 +107,11 @@
     border-bottom: solid 1px #ececec;
     cursor: pointer;
 
+    .name-div {
+      width: 250px;
+      margin-left: 20px;
+    }
+
     .person-details {
       width: 200px;
 
@@ -162,39 +155,35 @@
   aria-describedby="simple-content"
   on:MDCDialog:closed={closeHandler}
   on:MDCDialog:closing={onClosing}>
-  <header class="header">register</header>
+  <header class="header">Update User Details</header>
   <div class="card-details">
     <div class="avatar-container">
-      <FileUpload on:input={gotFiles}><Avatar imageUrl={imageUrl}/></FileUpload>
-      
-      <div class="name-tb">
-        <TextBox
-          bind:value={name}
-          label="Name"
-          minWidth={250}
-          errorMessage="This field is required" />
-      </div>
+      <FileUpload on:input={gotFiles}>
+        <Avatar imageUrl = {currentUser.ntkDetails.imageUrl} height="100px" />
+      </FileUpload>
+
+      <div class="name-div">{currentUser.ntkDetails.name}</div>
     </div>
     <div class="form-details">
       <TextBox
         type="number"
-        bind:value={age}
+        bind:value={currentUser.ntkDetails.age}
         label="Age"
         minWidth={150}
         errorMessage="Please enter a number for your age" />
       <TextBox
         type="email"
-        bind:value={email}
+        bind:value={currentUser.ntkDetails.email}
         label="Email"
         minWidth={350}
         errorMessage="Please enter a valid email address" />
       <TextBox
         class="about-me"
         isTextArea={true}
-        bind:value={aboutMe}
+        bind:value={currentUser.ntkDetails.moreDetails.aboutMe}
         label="About Me" />
       <TextBox
-        bind:value={hobbies}
+        bind:value={currentUser.ntkDetails.moreDetails.hobbies}
         label="Hobbies (seperated with commas)"
         minWidth={350} />
     </div>

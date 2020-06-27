@@ -12,7 +12,8 @@
   let isNTKPersonDialogOpen = false;
 
   const unsubscribe = customNtkStore.subscribe(state => {
-    //ntkList = BLM.getMyNtks();
+    console.log('all=>', state.ntkPersons)
+    ntkList = BLM.getMyNtks();
   });
 
   function onMarkedChanged(event) {

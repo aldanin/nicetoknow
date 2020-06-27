@@ -1,7 +1,9 @@
 <script >
     import Textfield, {Input, Textarea} from '@smui/textfield';
     import HelperText from '@smui/textfield/helper-text/index';
+      import Icon from '@smui/textfield/icon/index';
 
+    export let isError = false;
     export let errorMessage='';
     export let label = '';
     export let minWidth;
@@ -12,8 +14,20 @@
     export let invalid=false;
     export let isTextArea = false;
     let invalidClickable=false;
+     let valueClickable = '';
+       let dirtyClickable = false;
 
-    $: console.log('isTextArea',isTextArea)
+    $: {
+        if (isError) {
+            clickableHandler();
+        }
+    }
+
+    function clickableHandler() {
+    valueClickable = '';
+    dirtyClickable = false;
+  }
+
 
 </script>
 
@@ -22,7 +36,7 @@
 </style>
 
 {#if !isTextArea}
-    <Textfield type="{type}"
+      <Textfield type="{type}"
                class="{$$props.class}"
                fullwidth
                withTrailingIcon={value !== ''}
@@ -31,10 +45,10 @@
                updateInvalid
                bind:value={value}
                label="{label}"
-               style="min-width: {minWidth ? `${minWidth}px`: '250px'}"
-
-    >
-    </Textfield>
+               style="min-width: {minWidth ? `${minWidth}px`: '250px'}">
+         
+      </Textfield>
+      <HelperText validationMsg>{errorMessage}</HelperText>
     {:else}
     <Textfield
             class="{$$props.class}"

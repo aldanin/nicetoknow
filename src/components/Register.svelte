@@ -7,6 +7,7 @@
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
   import { BLM } from "../BLM/BLM";
+  import Spinner from "../common/Spinner.svelte";
 
   let name;
   let email;
@@ -14,6 +15,7 @@
   let age;
   let aboutMe;
   let imageUrl;
+  let showSpinner = false;
 
   const dispatch = createEventDispatcher();
 
@@ -25,31 +27,19 @@
     imageUrl = data;
   }
 
-  function closeHandler(e) {
-    // dispatch('popupClosed', {
-    //     value : {
-    //         name,
-    //         age,
-    //         email,
-    //         moreDetails : {
-    //             hobbies,
-    //             aboutMe
-    //         }
-    //     }
-    // });
-  }
-
   function submit(e) {
-     BLM.register({
-        name,
-        age,
-        email,
-        imageUrl,
-        moreDetails: {
-          hobbies,
-          aboutMe
-        }
-      });
+    showSpinner = true;
+
+    BLM.register({
+      name,
+      age,
+      email,
+      imageUrl,
+      moreDetails: {
+        hobbies,
+        aboutMe
+      }
+    });
   }
 
   function getBase64(file) {
@@ -60,7 +50,6 @@
       reader.onerror = error => reject(error);
     });
   }
-
 </script>
 
 <style type="text/scss">
@@ -76,6 +65,7 @@
   }
 
   .paper-wrap {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -85,6 +75,11 @@
 
     .paper {
       width: 400px;
+    }
+
+    .spinner-wrap {
+      position: absolute;
+      z-index: 2;
     }
   }
 
@@ -172,7 +167,7 @@
     <div class="card-details">
       <div class="avatar-container">
         <FileUpload on:input={gotFiles}>
-          <Avatar imageUrl={imageUrl} height="100px"/>
+          <Avatar {imageUrl} height="100px" />
         </FileUpload>
 
         <div class="name-tb">
@@ -213,4 +208,9 @@
       </Button>
     </Actions>
   </Paper>
+  {#if showSpinner}
+    <div class="spinner-wrap">
+      <Spinner />
+    </div>
+  {/if}
 </div>

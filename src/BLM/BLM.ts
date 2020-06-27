@@ -78,8 +78,7 @@ export class BLM {
         try {
             let ntks = BLM.getNtks();
             const currentUser: NTKPerson = customAppStatusStore.getCurrentUser();
-            console.log('==>currentUser', currentUser)
-            return currentUser ? ntks.find(ntk => ntk.ntkDetails.id === currentUser.ntkDetails.id): null;
+            return currentUser ? ntks.find(ntk => ntk.ntkDetails.id === currentUser.ntkDetails.id) : null;
         } catch (err) {
             console.error(err)
         }
@@ -91,8 +90,6 @@ export class BLM {
 
         const newNTK: NTKPerson = {
             ntkDetails: { ...newUser, id: uid() },
-            toApproveList: [],
-            fromApproveList: [],
         }
         ntks.push(newNTK);
 
@@ -118,7 +115,7 @@ export class BLM {
                     hasFetched: state.hasFetched,
                     ntkPersons: ntks
                 });
-                 
+
                 customAppStatusStore.onLogin({
                     status: LoginStatus.LoggedIn,
                     currentUser: newNTK
@@ -137,22 +134,82 @@ export class BLM {
         return state.ntkPersons || [];
     }
 
+    static getOtherNtks(): NTKPerson[] {
+        let ntks = BLM.getNtks();
+        const currentUser: NTKPerson = customAppStatusStore.getCurrentUser();
+        return currentUser ? ntks.filter(ntk => ntk.ntkDetails.id !== currentUser.ntkDetails.id) : null;
+    }
+
     static getMyNtks(): NTKPerson[] {
         const currentUser = BLM.getCurrentUser();
         const allNkts = BLM.getNtks();
+        const myNtks = currentUser.approvalList
+            ? currentUser.approvalList.map(item => {
+                return allNkts.find(ntk => ntk.ntkDetails.id === item.id
+                    && (item.connectionStatus === ConnectionStatus.connected ||
+                        item.connectionStatus === ConnectionStatus.pending && !item.isTo));
+            })
+            : [];
 
-        const fromNtks = allNkts.filter(ntk => currentUser.fromApproveList && currentUser.fromApproveList.find(item => item.id === ntk.ntkDetails.id));
-
-        return fromNtks;
+        return myNtks;
     }
 
     static getToNtks(): NTKPerson[] {
         const currentUser = BLM.getCurrentUser();
         const allNkts = BLM.getNtks();
 
-        const toNtks = allNkts.filter(ntk => currentUser.toApproveList && currentUser.toApproveList.find(item => item.id === ntk.ntkDetails.id));
+        const toNtks = allNkts.filter(ntk =>
+            currentUser.approvalList && currentUser.approvalList.find(
+                item => item.id === ntk.ntkDetails.id &&
+                    item.isTo &&
+                    item.connectionStatus === ConnectionStatus.pending
+            ));
 
         return toNtks;
     }
+    static getCloneNtkPerson(ntkPerson: NTKPerson): NTKPerson {
+        const clone = JSON.parse(JSON.stringify(ntkPerson));
+        return clone;
+    }
+
+    static updateUserDetails(userDetails: NTKPersonDetails) {
+        const state: NTKStore = get(dataStore);
+        let ntks: NTKPerson[] = state ? state.ntkPersons : [];
+
+        const currentUser = BLM.getCurrentUser();
+
+        currentUser.ntkDetails = userDetails;
+
+
+        fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+
+        }).then(() => {
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                method: 'POST',
+                body: JSON.stringify(ntks),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+
+            }).then(() => {
+                console.log('register themn, ntks', ntks)
+                dataStore.updateStore({
+                    hasFetched: state.hasFetched,
+                    ntkPersons: ntks
+                });
+
+                customAppStatusStore.onLogin({
+                    status: LoginStatus.LoggedIn,
+                    currentUser: currentUser
+                })
+
+            });
+        })
+    }
+
 }
 

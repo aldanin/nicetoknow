@@ -31,15 +31,15 @@
           currentUser = BLM.getCurrentUser();
           showHeader = true;
           break;
-          case 3: // LoginFailed
-          alert('failed')
+        case 3: // LoginFailed
+          alert("failed");
           break;
       }
     });
 
     viewStoreUnsubscriber = viewStore.subscribe(state => {
-        console.log('state.currentView',state.currentView)
-        currentView = state.currentView;
+      console.log("state.currentView", state.currentView);
+      currentView = state.currentView;
     });
   });
 
@@ -47,16 +47,27 @@
     viewStoreUnsubscriber();
     appStateUnsubscriber();
   });
+
+  function onUserClicked(event) {
+    const user = event.detail;
+    
+  }
 </script>
 
 <style type="text/scss">
   .container-flex {
     flex-direction: column;
     background-color: whitesmoke;
+
+    .message-holder {
+    }
   }
 </style>
 
 <div class="container-flex">
-  <Header isHidden={!showHeader} currentUser={currentUser}/>
+  <Header isHidden={!showHeader} {currentUser} on:userClicked={onUserClicked} />
   <svelte:component this={currentView ? currentView.view : Loading} />
+  <div class="message-holder">
+    <slot />
+  </div>
 </div>

@@ -14,15 +14,14 @@ export type NTKPersonDetails = {
 
 export type NTKPerson = {
     ntkDetails: Partial<NTKPersonDetails>, 
-    toApproveList: ConnectionDetails[], // I need to approve these ids i.e. me -> others
-    fromApproveList: ConnectionDetails[], // Others need to approve me i.e. others -> me
+    approvalList?: ConnectionDetails[],
 }
 
 // For Card UI purposes only:
 export type PersonCard = {
     ntkDetails: Partial<NTKPersonDetails>, 
     isMarked: boolean,
-    connectionStatus: ConnectionStatus
+    connectionStatus: ConnectionStatus,
 }
 
 
@@ -34,7 +33,8 @@ export type NTKStore = {
 
 export type ConnectionDetails =  {
     id: string, // id of from/to person 
-    connectionStatus: ConnectionStatus
+    connectionStatus: ConnectionStatus,
+    isTo: boolean,
 }
 
 export type Gender = 'male' | 'female' | '';
@@ -42,7 +42,7 @@ export type Gender = 'male' | 'female' | '';
 export enum ConnectionStatus {
     pending = 1,
     rejected = 2,
-    resolved = 3
+    connected = 3
 }
 
 

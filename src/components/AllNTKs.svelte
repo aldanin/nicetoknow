@@ -11,12 +11,11 @@
   let isNTKPersonDialogOpen = false;
 
   onMount(() => {
-    ntkList = BLM.getNtks();
+    ntkList = BLM.getOtherNtks();
   });
 
   const unsubscribe = customNtkStore.subscribe(state => {
-    console.log('all=>', state.ntkPersons)
-    ntkList = state.ntkPersons;
+    ntkList = BLM.getOtherNtks();
   });
 
   function onMarkedChanged(event) {

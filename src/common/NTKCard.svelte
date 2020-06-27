@@ -40,10 +40,10 @@
     let approvalClass;
 
     switch (personCard.connectionStatus) {
-      case ConnectionStatus.approved:
+      case ConnectionStatus.connected:
         approvalClass = "is-approved";
         break;
-      case ConnectionStatus.disapproved:
+      case ConnectionStatus.rejected:
         approvalClass = "is-disapproved";
         break;
       case ConnectionStatus.pending:

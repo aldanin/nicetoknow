@@ -4838,3 +4838,14 @@ svg.mdc-button__icon {
   transition: none;
   opacity: 1;
   will-change: initial; }
+
+.mdc-text-field--with-leading-icon .mdc-text-field__icon,
+.mdc-text-field--with-trailing-icon .mdc-text-field__icon {
+  position: absolute;
+  bottom: 16px;
+  cursor: pointer; }
+
+.mdc-text-field__icon:not([tabindex]),
+.mdc-text-field__icon[tabindex="-1"] {
+  cursor: default;
+  pointer-events: none; }
