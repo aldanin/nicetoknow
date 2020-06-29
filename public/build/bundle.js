@@ -5478,14 +5478,16 @@ var app = (function () {
                 ntkData = data.results.map(function (user) {
                   var ntkPerson = {
                     ntkDetails: {
-                      id: "".concat(user.login.uid),
+                      id: user.login.uid,
                       name: "".concat(user.name.first, " ").concat(user.name.last),
                       age: user.dob.age,
-                      imageUrl: "".concat(user.picture.large),
+                      imageUrl: user.picture.large,
+                      email: user.email,
+                      cell: user.cell,
                       moreDetails: {
                         about: "Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue do the bulk of their work in the browser, Svelte shifts that work into a compile step that happens when you build your app.\n\nInstead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when the state of your app changes.",
                         hobbies: "bike, dance, comedies",
-                        email: "".concat(user.email)
+                        location: user.location
                       }
                     }
                   };
@@ -7562,11 +7564,11 @@ var app = (function () {
     			img = element("img");
     			attr(img, "src", ctx.imageUrl);
     			attr(img, "class", "svelte-kx2vjb");
-    			add_location(img, file$8, 31, 2, 1415);
+    			add_location(img, file$8, 31, 2, 1464);
     			attr(div, "class", "avatar svelte-kx2vjb");
     			set_style(div, "height", ctx.height);
-    			add_location(div, file$8, 30, 0, 1347);
-    			dispose = listen(div, "click", ctx.onClick);
+    			add_location(div, file$8, 30, 0, 1390);
+    			dispose = listen(div, "dblclick", ctx.onDblclick);
     		},
 
     		l: function claim(nodes) {
@@ -7607,8 +7609,8 @@ var app = (function () {
 
 
 
-      function onClick() {
-          dispatch('click', null);
+      function onDblclick() {
+          dispatch('dblclick', null);
       }
 
     	const writable_props = ['imageUrl', 'height'];
@@ -7622,10 +7624,10 @@ var app = (function () {
     	};
 
     	$$self.$$.update = ($$dirty = { imageUrl: 1 }) => {
-    		if ($$dirty.imageUrl) { console.log("avatar", imageUrl); }
+    		if ($$dirty.imageUrl) { console.log("avatar", imageUrl = imageUrl || "./media/download.png"); $$invalidate('imageUrl', imageUrl); }
     	};
 
-    	return { imageUrl, height, onClick };
+    	return { imageUrl, height, onDblclick };
     }
 
     class Avatar extends SvelteComponentDev {
@@ -12160,7 +12162,7 @@ var app = (function () {
     	}
     }
 
-    var viewKeys = {
+    var viewKeys$1 = {
       ALL_NTKS: 'allNtks',
       MY_NTKS: 'myNtks',
       NTKS_APPROVAL: 'ntksApproval',
@@ -18472,8 +18474,8 @@ var app = (function () {
 
     const file$v = "src\\components\\Register.svelte";
 
-    // (149:8) <FileUpload on:input={gotFiles}>
-    function create_default_slot_4$1(ctx) {
+    // (165:8) <FileUpload on:input={gotFiles}>
+    function create_default_slot_6$1(ctx) {
     	var current;
 
     	var avatar = new Avatar({
@@ -18515,7 +18517,74 @@ var app = (function () {
     	};
     }
 
-    // (187:8) <Label>
+    // (229:8) <Label>
+    function create_default_slot_5$1(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text("Cancel");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
+    	};
+    }
+
+    // (228:6) <Button color="secondary" variant="raised" on:click={cancel}>
+    function create_default_slot_4$1(ctx) {
+    	var current;
+
+    	var label = new Label({
+    		props: {
+    		$$slots: { default: [create_default_slot_5$1] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			label.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(label, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var label_changes = {};
+    			if (changed.$$scope) label_changes.$$scope = { changed, ctx };
+    			label.$set(label_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(label.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(label.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(label, detaching);
+    		}
+    	};
+    }
+
+    // (232:8) <Label>
     function create_default_slot_3$2(ctx) {
     	var t;
 
@@ -18536,7 +18605,7 @@ var app = (function () {
     	};
     }
 
-    // (186:6) <Button variant="raised" on:click={submit}>
+    // (231:6) <Button variant="raised" on:click={submit}>
     function create_default_slot_2$5(ctx) {
     	var current;
 
@@ -18582,11 +18651,22 @@ var app = (function () {
     	};
     }
 
-    // (185:4) <Actions class="actions">
+    // (227:4) <Actions class="actions">
     function create_default_slot_1$5(ctx) {
-    	var current;
+    	var t, current;
 
-    	var button = new Button_1({
+    	var button0 = new Button_1({
+    		props: {
+    		color: "secondary",
+    		variant: "raised",
+    		$$slots: { default: [create_default_slot_4$1] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	button0.$on("click", cancel);
+
+    	var button1 = new Button_1({
     		props: {
     		variant: "raised",
     		$$slots: { default: [create_default_slot_2$5] },
@@ -18594,49 +18674,66 @@ var app = (function () {
     	},
     		$$inline: true
     	});
-    	button.$on("click", ctx.submit);
+    	button1.$on("click", ctx.submit);
 
     	return {
     		c: function create() {
-    			button.$$.fragment.c();
+    			button0.$$.fragment.c();
+    			t = space();
+    			button1.$$.fragment.c();
     		},
 
     		m: function mount(target, anchor) {
-    			mount_component(button, target, anchor);
+    			mount_component(button0, target, anchor);
+    			insert(target, t, anchor);
+    			mount_component(button1, target, anchor);
     			current = true;
     		},
 
     		p: function update(changed, ctx) {
-    			var button_changes = {};
-    			if (changed.$$scope) button_changes.$$scope = { changed, ctx };
-    			button.$set(button_changes);
+    			var button0_changes = {};
+    			if (changed.$$scope) button0_changes.$$scope = { changed, ctx };
+    			button0.$set(button0_changes);
+
+    			var button1_changes = {};
+    			if (changed.$$scope) button1_changes.$$scope = { changed, ctx };
+    			button1.$set(button1_changes);
     		},
 
     		i: function intro(local) {
     			if (current) return;
-    			transition_in(button.$$.fragment, local);
+    			transition_in(button0.$$.fragment, local);
+
+    			transition_in(button1.$$.fragment, local);
 
     			current = true;
     		},
 
     		o: function outro(local) {
-    			transition_out(button.$$.fragment, local);
+    			transition_out(button0.$$.fragment, local);
+    			transition_out(button1.$$.fragment, local);
     			current = false;
     		},
 
     		d: function destroy(detaching) {
-    			destroy_component(button, detaching);
+    			destroy_component(button0, detaching);
+
+    			if (detaching) {
+    				detach(t);
+    			}
+
+    			destroy_component(button1, detaching);
     		}
     	};
     }
 
-    // (145:2) <Paper aria-labelledby="simple-title" aria-describedby="simple-content">
+    // (161:2) <Paper aria-labelledby="simple-title" aria-describedby="simple-content">
     function create_default_slot$b(ctx) {
-    	var header, t1, div3, div1, t2, div0, updating_value, t3, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, current;
+    	var header, t1, div5, div1, t2, div0, updating_value, t3, div4, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, div3, updating_value_5, t8, updating_value_6, t9, updating_value_7, t10, updating_value_8, t11, current;
 
     	var fileupload = new Index({
     		props: {
-    		$$slots: { default: [create_default_slot_4$1] },
+    		$$slots: { default: [create_default_slot_6$1] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -18710,8 +18807,8 @@ var app = (function () {
     		isTextArea: true,
     		label: "About Me"
     	};
-    	if (ctx.aboutMe !== void 0) {
-    		textbox3_props.value = ctx.aboutMe;
+    	if (ctx.about !== void 0) {
+    		textbox3_props.value = ctx.about;
     	}
     	var textbox3 = new TextBox({ props: textbox3_props, $$inline: true });
 
@@ -18734,6 +18831,79 @@ var app = (function () {
 
     	binding_callbacks.push(() => bind(textbox4, 'value', textbox4_value_binding));
 
+    	function textbox5_value_binding(value_5) {
+    		ctx.textbox5_value_binding.call(null, value_5);
+    		updating_value_5 = true;
+    		add_flush_callback(() => updating_value_5 = false);
+    	}
+
+    	let textbox5_props = {
+    		type: "number",
+    		label: "Age",
+    		minWidth: 150,
+    		errorMessage: "Please enter a number for your age"
+    	};
+    	if (ctx.age !== void 0) {
+    		textbox5_props.value = ctx.age;
+    	}
+    	var textbox5 = new TextBox({ props: textbox5_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox5, 'value', textbox5_value_binding));
+
+    	function textbox6_value_binding(value_6) {
+    		ctx.textbox6_value_binding.call(null, value_6);
+    		updating_value_6 = true;
+    		add_flush_callback(() => updating_value_6 = false);
+    	}
+
+    	let textbox6_props = {
+    		type: "email",
+    		label: "Email",
+    		minWidth: 350,
+    		errorMessage: "Please enter a valid email address"
+    	};
+    	if (ctx.email !== void 0) {
+    		textbox6_props.value = ctx.email;
+    	}
+    	var textbox6 = new TextBox({ props: textbox6_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox6, 'value', textbox6_value_binding));
+
+    	function textbox7_value_binding(value_7) {
+    		ctx.textbox7_value_binding.call(null, value_7);
+    		updating_value_7 = true;
+    		add_flush_callback(() => updating_value_7 = false);
+    	}
+
+    	let textbox7_props = {
+    		class: "about-me",
+    		isTextArea: true,
+    		label: "About Me"
+    	};
+    	if (ctx.about !== void 0) {
+    		textbox7_props.value = ctx.about;
+    	}
+    	var textbox7 = new TextBox({ props: textbox7_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox7, 'value', textbox7_value_binding));
+
+    	function textbox8_value_binding(value_8) {
+    		ctx.textbox8_value_binding.call(null, value_8);
+    		updating_value_8 = true;
+    		add_flush_callback(() => updating_value_8 = false);
+    	}
+
+    	let textbox8_props = {
+    		label: "Hobbies (seperated with commas)",
+    		minWidth: 350
+    	};
+    	if (ctx.hobbies !== void 0) {
+    		textbox8_props.value = ctx.hobbies;
+    	}
+    	var textbox8 = new TextBox({ props: textbox8_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox8, 'value', textbox8_value_binding));
+
     	var actions = new Actions$1({
     		props: {
     		class: "actions",
@@ -18748,13 +18918,14 @@ var app = (function () {
     			header = element("header");
     			header.textContent = "register";
     			t1 = space();
-    			div3 = element("div");
+    			div5 = element("div");
     			div1 = element("div");
     			fileupload.$$.fragment.c();
     			t2 = space();
     			div0 = element("div");
     			textbox0.$$.fragment.c();
     			t3 = space();
+    			div4 = element("div");
     			div2 = element("div");
     			textbox1.$$.fragment.c();
     			t4 = space();
@@ -18764,30 +18935,44 @@ var app = (function () {
     			t6 = space();
     			textbox4.$$.fragment.c();
     			t7 = space();
+    			div3 = element("div");
+    			textbox5.$$.fragment.c();
+    			t8 = space();
+    			textbox6.$$.fragment.c();
+    			t9 = space();
+    			textbox7.$$.fragment.c();
+    			t10 = space();
+    			textbox8.$$.fragment.c();
+    			t11 = space();
     			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-1w6kha2");
-    			add_location(header, file$v, 145, 4, 7537);
-    			attr(div0, "class", "name-tb");
-    			add_location(div0, file$v, 152, 8, 7772);
-    			attr(div1, "class", "avatar-container svelte-1w6kha2");
-    			add_location(div1, file$v, 147, 6, 7617);
-    			attr(div2, "class", "form-details");
-    			add_location(div2, file$v, 160, 6, 7990);
-    			attr(div3, "class", "card-details svelte-1w6kha2");
-    			add_location(div3, file$v, 146, 4, 7583);
+    			attr(header, "class", "header svelte-15qwcn0");
+    			add_location(header, file$v, 161, 4, 8271);
+    			attr(div0, "class", "name-tb svelte-15qwcn0");
+    			add_location(div0, file$v, 168, 8, 8506);
+    			attr(div1, "class", "avatar-container svelte-15qwcn0");
+    			add_location(div1, file$v, 163, 6, 8351);
+    			attr(div2, "class", "form-details-column svelte-15qwcn0");
+    			add_location(div2, file$v, 177, 8, 8760);
+    			attr(div3, "class", "form-details-column svelte-15qwcn0");
+    			add_location(div3, file$v, 200, 8, 9498);
+    			attr(div4, "class", "form-details svelte-15qwcn0");
+    			add_location(div4, file$v, 176, 6, 8724);
+    			attr(div5, "class", "card-details svelte-15qwcn0");
+    			add_location(div5, file$v, 162, 4, 8317);
     		},
 
     		m: function mount(target, anchor) {
     			insert(target, header, anchor);
     			insert(target, t1, anchor);
-    			insert(target, div3, anchor);
-    			append(div3, div1);
+    			insert(target, div5, anchor);
+    			append(div5, div1);
     			mount_component(fileupload, div1, null);
     			append(div1, t2);
     			append(div1, div0);
     			mount_component(textbox0, div0, null);
-    			append(div3, t3);
-    			append(div3, div2);
+    			append(div5, t3);
+    			append(div5, div4);
+    			append(div4, div2);
     			mount_component(textbox1, div2, null);
     			append(div2, t4);
     			mount_component(textbox2, div2, null);
@@ -18795,7 +18980,16 @@ var app = (function () {
     			mount_component(textbox3, div2, null);
     			append(div2, t6);
     			mount_component(textbox4, div2, null);
-    			insert(target, t7, anchor);
+    			append(div4, t7);
+    			append(div4, div3);
+    			mount_component(textbox5, div3, null);
+    			append(div3, t8);
+    			mount_component(textbox6, div3, null);
+    			append(div3, t9);
+    			mount_component(textbox7, div3, null);
+    			append(div3, t10);
+    			mount_component(textbox8, div3, null);
+    			insert(target, t11, anchor);
     			mount_component(actions, target, anchor);
     			current = true;
     		},
@@ -18824,8 +19018,8 @@ var app = (function () {
     			textbox2.$set(textbox2_changes);
 
     			var textbox3_changes = {};
-    			if (!updating_value_3 && changed.aboutMe) {
-    				textbox3_changes.value = ctx.aboutMe;
+    			if (!updating_value_3 && changed.about) {
+    				textbox3_changes.value = ctx.about;
     			}
     			textbox3.$set(textbox3_changes);
 
@@ -18834,6 +19028,30 @@ var app = (function () {
     				textbox4_changes.value = ctx.hobbies;
     			}
     			textbox4.$set(textbox4_changes);
+
+    			var textbox5_changes = {};
+    			if (!updating_value_5 && changed.age) {
+    				textbox5_changes.value = ctx.age;
+    			}
+    			textbox5.$set(textbox5_changes);
+
+    			var textbox6_changes = {};
+    			if (!updating_value_6 && changed.email) {
+    				textbox6_changes.value = ctx.email;
+    			}
+    			textbox6.$set(textbox6_changes);
+
+    			var textbox7_changes = {};
+    			if (!updating_value_7 && changed.about) {
+    				textbox7_changes.value = ctx.about;
+    			}
+    			textbox7.$set(textbox7_changes);
+
+    			var textbox8_changes = {};
+    			if (!updating_value_8 && changed.hobbies) {
+    				textbox8_changes.value = ctx.hobbies;
+    			}
+    			textbox8.$set(textbox8_changes);
 
     			var actions_changes = {};
     			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
@@ -18854,6 +19072,14 @@ var app = (function () {
 
     			transition_in(textbox4.$$.fragment, local);
 
+    			transition_in(textbox5.$$.fragment, local);
+
+    			transition_in(textbox6.$$.fragment, local);
+
+    			transition_in(textbox7.$$.fragment, local);
+
+    			transition_in(textbox8.$$.fragment, local);
+
     			transition_in(actions.$$.fragment, local);
 
     			current = true;
@@ -18866,6 +19092,10 @@ var app = (function () {
     			transition_out(textbox2.$$.fragment, local);
     			transition_out(textbox3.$$.fragment, local);
     			transition_out(textbox4.$$.fragment, local);
+    			transition_out(textbox5.$$.fragment, local);
+    			transition_out(textbox6.$$.fragment, local);
+    			transition_out(textbox7.$$.fragment, local);
+    			transition_out(textbox8.$$.fragment, local);
     			transition_out(actions.$$.fragment, local);
     			current = false;
     		},
@@ -18874,7 +19104,7 @@ var app = (function () {
     			if (detaching) {
     				detach(header);
     				detach(t1);
-    				detach(div3);
+    				detach(div5);
     			}
 
     			destroy_component(fileupload);
@@ -18889,8 +19119,16 @@ var app = (function () {
 
     			destroy_component(textbox4);
 
+    			destroy_component(textbox5);
+
+    			destroy_component(textbox6);
+
+    			destroy_component(textbox7);
+
+    			destroy_component(textbox8);
+
     			if (detaching) {
-    				detach(t7);
+    				detach(t11);
     			}
 
     			destroy_component(actions, detaching);
@@ -18898,7 +19136,7 @@ var app = (function () {
     	};
     }
 
-    // (191:2) {#if showSpinner}
+    // (237:2) {#if showSpinner}
     function create_if_block$9(ctx) {
     	var div, current;
 
@@ -18908,8 +19146,8 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			spinner.$$.fragment.c();
-    			attr(div, "class", "spinner-wrap svelte-1w6kha2");
-    			add_location(div, file$v, 191, 4, 8866);
+    			attr(div, "class", "spinner-wrap svelte-15qwcn0");
+    			add_location(div, file$v, 237, 4, 10562);
     		},
 
     		m: function mount(target, anchor) {
@@ -18961,8 +19199,8 @@ var app = (function () {
     			paper.$$.fragment.c();
     			t = space();
     			if (if_block) if_block.c();
-    			attr(div, "class", "paper-wrap svelte-1w6kha2");
-    			add_location(div, file$v, 143, 0, 7431);
+    			attr(div, "class", "paper-wrap svelte-15qwcn0");
+    			add_location(div, file$v, 159, 0, 8165);
     		},
 
     		l: function claim(nodes) {
@@ -18979,7 +19217,7 @@ var app = (function () {
 
     		p: function update(changed, ctx) {
     			var paper_changes = {};
-    			if (changed.$$scope || changed.hobbies || changed.aboutMe || changed.email || changed.age || changed.name || changed.imageUrl) paper_changes.$$scope = { changed, ctx };
+    			if (changed.$$scope || changed.hobbies || changed.about || changed.email || changed.age || changed.name || changed.imageUrl) paper_changes.$$scope = { changed, ctx };
     			paper.$set(paper_changes);
 
     			if (ctx.showSpinner) {
@@ -19026,6 +19264,10 @@ var app = (function () {
     	};
     }
 
+    function cancel() {
+      customViewStore.setView(viewKeys$1.LOGIN);
+    }
+
     function getBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -19042,7 +19284,7 @@ var app = (function () {
       let email;
       let hobbies;
       let age;
-      let aboutMe;
+      let about;
       let imageUrl;
       let showSpinner = false;
 
@@ -19064,7 +19306,7 @@ var app = (function () {
           imageUrl,
           moreDetails: {
             hobbies,
-            aboutMe
+            about
           }
         });
       }
@@ -19085,12 +19327,32 @@ var app = (function () {
     	}
 
     	function textbox3_value_binding(value_3) {
-    		aboutMe = value_3;
-    		$$invalidate('aboutMe', aboutMe);
+    		about = value_3;
+    		$$invalidate('about', about);
     	}
 
     	function textbox4_value_binding(value_4) {
     		hobbies = value_4;
+    		$$invalidate('hobbies', hobbies);
+    	}
+
+    	function textbox5_value_binding(value_5) {
+    		age = value_5;
+    		$$invalidate('age', age);
+    	}
+
+    	function textbox6_value_binding(value_6) {
+    		email = value_6;
+    		$$invalidate('email', email);
+    	}
+
+    	function textbox7_value_binding(value_7) {
+    		about = value_7;
+    		$$invalidate('about', about);
+    	}
+
+    	function textbox8_value_binding(value_8) {
+    		hobbies = value_8;
     		$$invalidate('hobbies', hobbies);
     	}
 
@@ -19099,7 +19361,7 @@ var app = (function () {
     		email,
     		hobbies,
     		age,
-    		aboutMe,
+    		about,
     		imageUrl,
     		showSpinner,
     		gotFiles,
@@ -19108,7 +19370,11 @@ var app = (function () {
     		textbox1_value_binding,
     		textbox2_value_binding,
     		textbox3_value_binding,
-    		textbox4_value_binding
+    		textbox4_value_binding,
+    		textbox5_value_binding,
+    		textbox6_value_binding,
+    		textbox7_value_binding,
+    		textbox8_value_binding
     	};
     }
 
@@ -19124,7 +19390,7 @@ var app = (function () {
     const file$w = "src\\components\\Login.svelte";
 
     // (151:8) <Label>
-    function create_default_slot_5$1(ctx) {
+    function create_default_slot_5$2(ctx) {
     	var t;
 
     	return {
@@ -19144,13 +19410,13 @@ var app = (function () {
     	};
     }
 
-    // (150:6) <Button on:click={showRegisterView} class="myClass">
+    // (150:6) <Button color="secondary" on:click={showRegisterView} class="myClass">
     function create_default_slot_4$2(ctx) {
     	var current;
 
     	var label = new Label({
     		props: {
-    		$$slots: { default: [create_default_slot_5$1] },
+    		$$slots: { default: [create_default_slot_5$2] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19263,6 +19529,7 @@ var app = (function () {
 
     	var button0 = new Button_1({
     		props: {
+    		color: "secondary",
     		class: "myClass",
     		$$slots: { default: [create_default_slot_4$2] },
     		$$scope: { ctx }
@@ -19372,12 +19639,12 @@ var app = (function () {
     			textbox.$$.fragment.c();
     			t2 = space();
     			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-1rpb5w6");
-    			add_location(header, file$w, 139, 4, 7630);
-    			attr(div0, "class", "form-details svelte-1rpb5w6");
-    			add_location(div0, file$w, 141, 6, 7707);
-    			attr(div1, "class", "card-details svelte-1rpb5w6");
-    			add_location(div1, file$w, 140, 4, 7673);
+    			attr(header, "class", "header svelte-1sgw10e");
+    			add_location(header, file$w, 139, 4, 7590);
+    			attr(div0, "class", "form-details svelte-1sgw10e");
+    			add_location(div0, file$w, 141, 6, 7667);
+    			attr(div1, "class", "card-details svelte-1sgw10e");
+    			add_location(div1, file$w, 140, 4, 7633);
     		},
 
     		m: function mount(target, anchor) {
@@ -19452,8 +19719,8 @@ var app = (function () {
     		c: function create() {
     			div = element("div");
     			paper.$$.fragment.c();
-    			attr(div, "class", "paper-wrap svelte-1rpb5w6");
-    			add_location(div, file$w, 137, 0, 7575);
+    			attr(div, "class", "paper-wrap svelte-1sgw10e");
+    			add_location(div, file$w, 137, 0, 7535);
     		},
 
     		l: function claim(nodes) {
@@ -19495,7 +19762,7 @@ var app = (function () {
     }
 
     function showRegisterView() {
-      customViewStore.setView(viewKeys.REGISTER);
+      customViewStore.setView(viewKeys$1.REGISTER);
     }
 
     function instance$A($$self, $$props, $$invalidate) {
@@ -19527,28 +19794,28 @@ var app = (function () {
     }
 
     var viewsRepo = [{
-      id: viewKeys.LOGIN,
+      id: viewKeys$1.LOGIN,
       view: Login,
       caption: 'Login'
     }, {
-      id: viewKeys.REGISTER,
+      id: viewKeys$1.REGISTER,
       view: Register,
       caption: 'Login'
     }, {
-      id: viewKeys.ALL_NTKS,
+      id: viewKeys$1.ALL_NTKS,
       view: AllNTKs,
       caption: 'All Nice-to-knows'
     }, {
-      id: viewKeys.MY_NTKS,
+      id: viewKeys$1.MY_NTKS,
       view: MyNTKs,
       caption: 'My Nice-to-knows'
     }, {
-      id: viewKeys.NTKS_APPROVAL,
+      id: viewKeys$1.NTKS_APPROVAL,
       view: NTKsApproval,
       caption: 'Nice-to-knows approval'
     }];
     function getView() {
-      var viewId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : viewKeys.MY_NTKS;
+      var viewId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : viewKeys$1.MY_NTKS;
       var found = viewsRepo.find(function (view) {
         return view.id === viewId;
       });
@@ -19574,8 +19841,8 @@ var app = (function () {
 
     const file$x = "src\\components\\UserDetailsPopup.svelte";
 
-    // (140:6) <FileUpload on:input={gotFiles}>
-    function create_default_slot_4$3(ctx) {
+    // (153:8) <FileUpload on:input={gotFiles}>
+    function create_default_slot_6$2(ctx) {
     	var current;
 
     	var avatar = new Avatar({
@@ -19617,7 +19884,74 @@ var app = (function () {
     	};
     }
 
-    // (172:6) <Label>
+    // (217:8) <Label>
+    function create_default_slot_5$3(ctx) {
+    	var t;
+
+    	return {
+    		c: function create() {
+    			t = text("Cancel");
+    		},
+
+    		m: function mount(target, anchor) {
+    			insert(target, t, anchor);
+    		},
+
+    		d: function destroy(detaching) {
+    			if (detaching) {
+    				detach(t);
+    			}
+    		}
+    	};
+    }
+
+    // (216:6) <Button color="secondary" variant="raised" on:click={cancel}>
+    function create_default_slot_4$3(ctx) {
+    	var current;
+
+    	var label = new Label({
+    		props: {
+    		$$slots: { default: [create_default_slot_5$3] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+
+    	return {
+    		c: function create() {
+    			label.$$.fragment.c();
+    		},
+
+    		m: function mount(target, anchor) {
+    			mount_component(label, target, anchor);
+    			current = true;
+    		},
+
+    		p: function update(changed, ctx) {
+    			var label_changes = {};
+    			if (changed.$$scope) label_changes.$$scope = { changed, ctx };
+    			label.$set(label_changes);
+    		},
+
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(label.$$.fragment, local);
+
+    			current = true;
+    		},
+
+    		o: function outro(local) {
+    			transition_out(label.$$.fragment, local);
+    			current = false;
+    		},
+
+    		d: function destroy(detaching) {
+    			destroy_component(label, detaching);
+    		}
+    	};
+    }
+
+    // (220:8) <Label>
     function create_default_slot_3$4(ctx) {
     	var t;
 
@@ -19638,7 +19972,7 @@ var app = (function () {
     	};
     }
 
-    // (171:4) <Button variant="raised" on:click={submit}>
+    // (219:6) <Button variant="raised" on:click={submit}>
     function create_default_slot_2$7(ctx) {
     	var current;
 
@@ -19684,11 +20018,22 @@ var app = (function () {
     	};
     }
 
-    // (170:2) <Actions class="actions">
+    // (215:3) <Actions class="actions">
     function create_default_slot_1$7(ctx) {
-    	var current;
+    	var t, current;
 
-    	var button = new Button_1({
+    	var button0 = new Button_1({
+    		props: {
+    		color: "secondary",
+    		variant: "raised",
+    		$$slots: { default: [create_default_slot_4$3] },
+    		$$scope: { ctx }
+    	},
+    		$$inline: true
+    	});
+    	button0.$on("click", cancel$1);
+
+    	var button1 = new Button_1({
     		props: {
     		variant: "raised",
     		$$slots: { default: [create_default_slot_2$7] },
@@ -19696,49 +20041,66 @@ var app = (function () {
     	},
     		$$inline: true
     	});
-    	button.$on("click", ctx.submit);
+    	button1.$on("click", ctx.submit);
 
     	return {
     		c: function create() {
-    			button.$$.fragment.c();
+    			button0.$$.fragment.c();
+    			t = space();
+    			button1.$$.fragment.c();
     		},
 
     		m: function mount(target, anchor) {
-    			mount_component(button, target, anchor);
+    			mount_component(button0, target, anchor);
+    			insert(target, t, anchor);
+    			mount_component(button1, target, anchor);
     			current = true;
     		},
 
     		p: function update(changed, ctx) {
-    			var button_changes = {};
-    			if (changed.$$scope) button_changes.$$scope = { changed, ctx };
-    			button.$set(button_changes);
+    			var button0_changes = {};
+    			if (changed.$$scope) button0_changes.$$scope = { changed, ctx };
+    			button0.$set(button0_changes);
+
+    			var button1_changes = {};
+    			if (changed.$$scope) button1_changes.$$scope = { changed, ctx };
+    			button1.$set(button1_changes);
     		},
 
     		i: function intro(local) {
     			if (current) return;
-    			transition_in(button.$$.fragment, local);
+    			transition_in(button0.$$.fragment, local);
+
+    			transition_in(button1.$$.fragment, local);
 
     			current = true;
     		},
 
     		o: function outro(local) {
-    			transition_out(button.$$.fragment, local);
+    			transition_out(button0.$$.fragment, local);
+    			transition_out(button1.$$.fragment, local);
     			current = false;
     		},
 
     		d: function destroy(detaching) {
-    			destroy_component(button, detaching);
+    			destroy_component(button0, detaching);
+
+    			if (detaching) {
+    				detach(t);
+    			}
+
+    			destroy_component(button1, detaching);
     		}
     	};
     }
 
-    // (131:0) <Dialog    bind:this={simpleDialog}    aria-labelledby="simple-title"    aria-describedby="simple-content"    on:MDCDialog:closed={closeHandler}    on:MDCDialog:closing={onClosing}>
+    // (144:0) <Dialog    bind:this={simpleDialog}    aria-labelledby="simple-title"    aria-describedby="simple-content"    on:MDCDialog:closed={closeHandler}    on:MDCDialog:closing={onClosing}>
     function create_default_slot$d(ctx) {
-    	var header, t1, div3, div1, t2, div0, t3_value = ctx.currentUser.ntkDetails.name + "", t3, t4, div2, updating_value, t5, updating_value_1, t6, updating_value_2, t7, updating_value_3, t8, current;
+    	var header, t1, div5, div1, t2, div0, updating_value, t3, div4, div2, updating_value_1, t4, updating_value_2, t5, updating_value_3, t6, updating_value_4, t7, div3, updating_value_5, t8, updating_value_6, t9, updating_value_7, t10, updating_value_8, t11, current;
 
     	var fileupload = new Index({
     		props: {
-    		$$slots: { default: [create_default_slot_4$3] },
+    		$$slots: { default: [create_default_slot_6$2] },
     		$$scope: { ctx }
     	},
     		$$inline: true
@@ -19752,13 +20114,12 @@ var app = (function () {
     	}
 
     	let textbox0_props = {
-    		type: "number",
-    		label: "Age",
-    		minWidth: 150,
-    		errorMessage: "Please enter a number for your age"
+    		label: "Name",
+    		minWidth: 250,
+    		errorMessage: "This field is required"
     	};
-    	if (ctx.currentUser.ntkDetails.age !== void 0) {
-    		textbox0_props.value = ctx.currentUser.ntkDetails.age;
+    	if (ctx.currentUser.ntkDetails.name !== void 0) {
+    		textbox0_props.value = ctx.currentUser.ntkDetails.name;
     	}
     	var textbox0 = new TextBox({ props: textbox0_props, $$inline: true });
 
@@ -19771,13 +20132,13 @@ var app = (function () {
     	}
 
     	let textbox1_props = {
-    		type: "email",
-    		label: "Email",
-    		minWidth: 350,
-    		errorMessage: "Please enter a valid email address"
+    		type: "number",
+    		label: "Age",
+    		minWidth: 150,
+    		errorMessage: "Please enter a number for your age"
     	};
-    	if (ctx.currentUser.ntkDetails.email !== void 0) {
-    		textbox1_props.value = ctx.currentUser.ntkDetails.email;
+    	if (ctx.currentUser.ntkDetails.age !== void 0) {
+    		textbox1_props.value = ctx.currentUser.ntkDetails.age;
     	}
     	var textbox1 = new TextBox({ props: textbox1_props, $$inline: true });
 
@@ -19790,12 +20151,13 @@ var app = (function () {
     	}
 
     	let textbox2_props = {
-    		class: "about-me",
-    		isTextArea: true,
-    		label: "About Me"
+    		type: "email",
+    		label: "Email",
+    		minWidth: 350,
+    		errorMessage: "Please enter a valid email address"
     	};
-    	if (ctx.currentUser.ntkDetails.moreDetails.aboutMe !== void 0) {
-    		textbox2_props.value = ctx.currentUser.ntkDetails.moreDetails.aboutMe;
+    	if (ctx.currentUser.ntkDetails.email !== void 0) {
+    		textbox2_props.value = ctx.currentUser.ntkDetails.email;
     	}
     	var textbox2 = new TextBox({ props: textbox2_props, $$inline: true });
 
@@ -19808,15 +20170,106 @@ var app = (function () {
     	}
 
     	let textbox3_props = {
-    		label: "Hobbies (seperated with commas)",
-    		minWidth: 350
+    		class: "about-me",
+    		isTextArea: true,
+    		label: "About Me"
     	};
-    	if (ctx.currentUser.ntkDetails.moreDetails.hobbies !== void 0) {
-    		textbox3_props.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    	if (ctx.currentUser.ntkDetails.moreDetails.about !== void 0) {
+    		textbox3_props.value = ctx.currentUser.ntkDetails.moreDetails.about;
     	}
     	var textbox3 = new TextBox({ props: textbox3_props, $$inline: true });
 
     	binding_callbacks.push(() => bind(textbox3, 'value', textbox3_value_binding));
+
+    	function textbox4_value_binding(value_4) {
+    		ctx.textbox4_value_binding.call(null, value_4);
+    		updating_value_4 = true;
+    		add_flush_callback(() => updating_value_4 = false);
+    	}
+
+    	let textbox4_props = {
+    		label: "Hobbies (seperated with commas)",
+    		minWidth: 350
+    	};
+    	if (ctx.currentUser.ntkDetails.moreDetails.hobbies !== void 0) {
+    		textbox4_props.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    	}
+    	var textbox4 = new TextBox({ props: textbox4_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox4, 'value', textbox4_value_binding));
+
+    	function textbox5_value_binding(value_5) {
+    		ctx.textbox5_value_binding.call(null, value_5);
+    		updating_value_5 = true;
+    		add_flush_callback(() => updating_value_5 = false);
+    	}
+
+    	let textbox5_props = {
+    		type: "number",
+    		label: "Age",
+    		minWidth: 150,
+    		errorMessage: "Please enter a number for your age"
+    	};
+    	if (ctx.currentUser.ntkDetails.age !== void 0) {
+    		textbox5_props.value = ctx.currentUser.ntkDetails.age;
+    	}
+    	var textbox5 = new TextBox({ props: textbox5_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox5, 'value', textbox5_value_binding));
+
+    	function textbox6_value_binding(value_6) {
+    		ctx.textbox6_value_binding.call(null, value_6);
+    		updating_value_6 = true;
+    		add_flush_callback(() => updating_value_6 = false);
+    	}
+
+    	let textbox6_props = {
+    		type: "email",
+    		label: "Email",
+    		minWidth: 350,
+    		errorMessage: "Please enter a valid email address"
+    	};
+    	if (ctx.currentUser.ntkDetails.moreDetails.email !== void 0) {
+    		textbox6_props.value = ctx.currentUser.ntkDetails.moreDetails.email;
+    	}
+    	var textbox6 = new TextBox({ props: textbox6_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox6, 'value', textbox6_value_binding));
+
+    	function textbox7_value_binding(value_7) {
+    		ctx.textbox7_value_binding.call(null, value_7);
+    		updating_value_7 = true;
+    		add_flush_callback(() => updating_value_7 = false);
+    	}
+
+    	let textbox7_props = {
+    		class: "about-me",
+    		isTextArea: true,
+    		label: "About Me"
+    	};
+    	if (ctx.currentUser.ntkDetails.moreDetails.about !== void 0) {
+    		textbox7_props.value = ctx.currentUser.ntkDetails.moreDetails.about;
+    	}
+    	var textbox7 = new TextBox({ props: textbox7_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox7, 'value', textbox7_value_binding));
+
+    	function textbox8_value_binding(value_8) {
+    		ctx.textbox8_value_binding.call(null, value_8);
+    		updating_value_8 = true;
+    		add_flush_callback(() => updating_value_8 = false);
+    	}
+
+    	let textbox8_props = {
+    		label: "Hobbies (seperated with commas)",
+    		minWidth: 350
+    	};
+    	if (ctx.currentUser.ntkDetails.moreDetails.hobbies !== void 0) {
+    		textbox8_props.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    	}
+    	var textbox8 = new TextBox({ props: textbox8_props, $$inline: true });
+
+    	binding_callbacks.push(() => bind(textbox8, 'value', textbox8_value_binding));
 
     	var actions = new Actions$1({
     		props: {
@@ -19832,54 +20285,78 @@ var app = (function () {
     			header = element("header");
     			header.textContent = "Update User Details";
     			t1 = space();
-    			div3 = element("div");
+    			div5 = element("div");
     			div1 = element("div");
     			fileupload.$$.fragment.c();
     			t2 = space();
     			div0 = element("div");
-    			t3 = text(t3_value);
-    			t4 = space();
-    			div2 = element("div");
     			textbox0.$$.fragment.c();
-    			t5 = space();
+    			t3 = space();
+    			div4 = element("div");
+    			div2 = element("div");
     			textbox1.$$.fragment.c();
-    			t6 = space();
+    			t4 = space();
     			textbox2.$$.fragment.c();
-    			t7 = space();
+    			t5 = space();
     			textbox3.$$.fragment.c();
+    			t6 = space();
+    			textbox4.$$.fragment.c();
+    			t7 = space();
+    			div3 = element("div");
+    			textbox5.$$.fragment.c();
     			t8 = space();
+    			textbox6.$$.fragment.c();
+    			t9 = space();
+    			textbox7.$$.fragment.c();
+    			t10 = space();
+    			textbox8.$$.fragment.c();
+    			t11 = space();
     			actions.$$.fragment.c();
-    			attr(header, "class", "header svelte-oc89b4");
-    			add_location(header, file$x, 136, 2, 6891);
-    			attr(div0, "class", "name-div svelte-oc89b4");
-    			add_location(div0, file$x, 143, 6, 7159);
-    			attr(div1, "class", "avatar-container svelte-oc89b4");
-    			add_location(div1, file$x, 138, 4, 6978);
-    			attr(div2, "class", "form-details");
-    			add_location(div2, file$x, 145, 4, 7234);
-    			attr(div3, "class", "card-details svelte-oc89b4");
-    			add_location(div3, file$x, 137, 2, 6946);
+    			attr(header, "class", "header svelte-ivg3z7");
+    			add_location(header, file$x, 149, 2, 7471);
+    			attr(div0, "class", "name-tb svelte-ivg3z7");
+    			add_location(div0, file$x, 156, 8, 7749);
+    			attr(div1, "class", "avatar-container svelte-ivg3z7");
+    			add_location(div1, file$x, 151, 6, 7562);
+    			attr(div2, "class", "form-details-column svelte-ivg3z7");
+    			add_location(div2, file$x, 165, 8, 8026);
+    			attr(div3, "class", "form-details-column svelte-ivg3z7");
+    			add_location(div3, file$x, 188, 8, 8880);
+    			attr(div4, "class", "form-details svelte-ivg3z7");
+    			add_location(div4, file$x, 164, 6, 7990);
+    			attr(div5, "class", "card-details svelte-ivg3z7");
+    			add_location(div5, file$x, 150, 4, 7528);
     		},
 
     		m: function mount(target, anchor) {
     			insert(target, header, anchor);
     			insert(target, t1, anchor);
-    			insert(target, div3, anchor);
-    			append(div3, div1);
+    			insert(target, div5, anchor);
+    			append(div5, div1);
     			mount_component(fileupload, div1, null);
     			append(div1, t2);
     			append(div1, div0);
-    			append(div0, t3);
-    			append(div3, t4);
-    			append(div3, div2);
-    			mount_component(textbox0, div2, null);
-    			append(div2, t5);
+    			mount_component(textbox0, div0, null);
+    			append(div5, t3);
+    			append(div5, div4);
+    			append(div4, div2);
     			mount_component(textbox1, div2, null);
-    			append(div2, t6);
+    			append(div2, t4);
     			mount_component(textbox2, div2, null);
-    			append(div2, t7);
+    			append(div2, t5);
     			mount_component(textbox3, div2, null);
-    			insert(target, t8, anchor);
+    			append(div2, t6);
+    			mount_component(textbox4, div2, null);
+    			append(div4, t7);
+    			append(div4, div3);
+    			mount_component(textbox5, div3, null);
+    			append(div3, t8);
+    			mount_component(textbox6, div3, null);
+    			append(div3, t9);
+    			mount_component(textbox7, div3, null);
+    			append(div3, t10);
+    			mount_component(textbox8, div3, null);
+    			insert(target, t11, anchor);
     			mount_component(actions, target, anchor);
     			current = true;
     		},
@@ -19889,33 +20366,59 @@ var app = (function () {
     			if (changed.$$scope || changed.currentUser) fileupload_changes.$$scope = { changed, ctx };
     			fileupload.$set(fileupload_changes);
 
-    			if ((!current || changed.currentUser) && t3_value !== (t3_value = ctx.currentUser.ntkDetails.name + "")) {
-    				set_data(t3, t3_value);
-    			}
-
     			var textbox0_changes = {};
     			if (!updating_value && changed.currentUser) {
-    				textbox0_changes.value = ctx.currentUser.ntkDetails.age;
+    				textbox0_changes.value = ctx.currentUser.ntkDetails.name;
     			}
     			textbox0.$set(textbox0_changes);
 
     			var textbox1_changes = {};
     			if (!updating_value_1 && changed.currentUser) {
-    				textbox1_changes.value = ctx.currentUser.ntkDetails.email;
+    				textbox1_changes.value = ctx.currentUser.ntkDetails.age;
     			}
     			textbox1.$set(textbox1_changes);
 
     			var textbox2_changes = {};
     			if (!updating_value_2 && changed.currentUser) {
-    				textbox2_changes.value = ctx.currentUser.ntkDetails.moreDetails.aboutMe;
+    				textbox2_changes.value = ctx.currentUser.ntkDetails.email;
     			}
     			textbox2.$set(textbox2_changes);
 
     			var textbox3_changes = {};
     			if (!updating_value_3 && changed.currentUser) {
-    				textbox3_changes.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    				textbox3_changes.value = ctx.currentUser.ntkDetails.moreDetails.about;
     			}
     			textbox3.$set(textbox3_changes);
+
+    			var textbox4_changes = {};
+    			if (!updating_value_4 && changed.currentUser) {
+    				textbox4_changes.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    			}
+    			textbox4.$set(textbox4_changes);
+
+    			var textbox5_changes = {};
+    			if (!updating_value_5 && changed.currentUser) {
+    				textbox5_changes.value = ctx.currentUser.ntkDetails.age;
+    			}
+    			textbox5.$set(textbox5_changes);
+
+    			var textbox6_changes = {};
+    			if (!updating_value_6 && changed.currentUser) {
+    				textbox6_changes.value = ctx.currentUser.ntkDetails.moreDetails.email;
+    			}
+    			textbox6.$set(textbox6_changes);
+
+    			var textbox7_changes = {};
+    			if (!updating_value_7 && changed.currentUser) {
+    				textbox7_changes.value = ctx.currentUser.ntkDetails.moreDetails.about;
+    			}
+    			textbox7.$set(textbox7_changes);
+
+    			var textbox8_changes = {};
+    			if (!updating_value_8 && changed.currentUser) {
+    				textbox8_changes.value = ctx.currentUser.ntkDetails.moreDetails.hobbies;
+    			}
+    			textbox8.$set(textbox8_changes);
 
     			var actions_changes = {};
     			if (changed.$$scope) actions_changes.$$scope = { changed, ctx };
@@ -19934,6 +20437,16 @@ var app = (function () {
 
     			transition_in(textbox3.$$.fragment, local);
 
+    			transition_in(textbox4.$$.fragment, local);
+
+    			transition_in(textbox5.$$.fragment, local);
+
+    			transition_in(textbox6.$$.fragment, local);
+
+    			transition_in(textbox7.$$.fragment, local);
+
+    			transition_in(textbox8.$$.fragment, local);
+
     			transition_in(actions.$$.fragment, local);
 
     			current = true;
@@ -19945,6 +20458,11 @@ var app = (function () {
     			transition_out(textbox1.$$.fragment, local);
     			transition_out(textbox2.$$.fragment, local);
     			transition_out(textbox3.$$.fragment, local);
+    			transition_out(textbox4.$$.fragment, local);
+    			transition_out(textbox5.$$.fragment, local);
+    			transition_out(textbox6.$$.fragment, local);
+    			transition_out(textbox7.$$.fragment, local);
+    			transition_out(textbox8.$$.fragment, local);
     			transition_out(actions.$$.fragment, local);
     			current = false;
     		},
@@ -19953,7 +20471,7 @@ var app = (function () {
     			if (detaching) {
     				detach(header);
     				detach(t1);
-    				detach(div3);
+    				detach(div5);
     			}
 
     			destroy_component(fileupload);
@@ -19966,8 +20484,18 @@ var app = (function () {
 
     			destroy_component(textbox3);
 
+    			destroy_component(textbox4);
+
+    			destroy_component(textbox5);
+
+    			destroy_component(textbox6);
+
+    			destroy_component(textbox7);
+
+    			destroy_component(textbox8);
+
     			if (detaching) {
-    				detach(t8);
+    				detach(t11);
     			}
 
     			destroy_component(actions, detaching);
@@ -20044,6 +20572,10 @@ var app = (function () {
       e.stopPropagation();
     }
 
+    function cancel$1() {
+      ViewStore.setView(viewKeys.LOGIN);
+    }
+
     function instance$B($$self, $$props, $$invalidate) {
     	
 
@@ -20089,22 +20621,47 @@ var app = (function () {
     	});
 
     	function textbox0_value_binding(value) {
-    		currentUser.ntkDetails.age = value;
+    		currentUser.ntkDetails.name = value;
     		$$invalidate('currentUser', currentUser);
     	}
 
     	function textbox1_value_binding(value_1) {
-    		currentUser.ntkDetails.email = value_1;
+    		currentUser.ntkDetails.age = value_1;
     		$$invalidate('currentUser', currentUser);
     	}
 
     	function textbox2_value_binding(value_2) {
-    		currentUser.ntkDetails.moreDetails.aboutMe = value_2;
+    		currentUser.ntkDetails.email = value_2;
     		$$invalidate('currentUser', currentUser);
     	}
 
     	function textbox3_value_binding(value_3) {
-    		currentUser.ntkDetails.moreDetails.hobbies = value_3;
+    		currentUser.ntkDetails.moreDetails.about = value_3;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox4_value_binding(value_4) {
+    		currentUser.ntkDetails.moreDetails.hobbies = value_4;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox5_value_binding(value_5) {
+    		currentUser.ntkDetails.age = value_5;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox6_value_binding(value_6) {
+    		currentUser.ntkDetails.moreDetails.email = value_6;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox7_value_binding(value_7) {
+    		currentUser.ntkDetails.moreDetails.about = value_7;
+    		$$invalidate('currentUser', currentUser);
+    	}
+
+    	function textbox8_value_binding(value_8) {
+    		currentUser.ntkDetails.moreDetails.hobbies = value_8;
     		$$invalidate('currentUser', currentUser);
     	}
 
@@ -20128,6 +20685,11 @@ var app = (function () {
     		textbox1_value_binding,
     		textbox2_value_binding,
     		textbox3_value_binding,
+    		textbox4_value_binding,
+    		textbox5_value_binding,
+    		textbox6_value_binding,
+    		textbox7_value_binding,
+    		textbox8_value_binding,
     		dialog_binding
     	};
     }
@@ -20170,9 +20732,9 @@ var app = (function () {
     			span1 = element("span");
     			t2 = text(t2_value);
     			attr(span0, "class", "hi-span svelte-6n12fq");
-    			add_location(span0, file$y, 140, 8, 6693);
+    			add_location(span0, file$y, 140, 8, 6696);
     			attr(span1, "class", "userName-span");
-    			add_location(span1, file$y, 141, 8, 6734);
+    			add_location(span1, file$y, 141, 8, 6737);
     		},
 
     		m: function mount(target, anchor) {
@@ -20395,7 +20957,7 @@ var app = (function () {
     		props: { imageUrl: ctx.currentUser ? ctx.currentUser.ntkDetails.imageUrl : null },
     		$$inline: true
     	});
-    	avatar.$on("click", ctx.onAvatarClick);
+    	avatar.$on("dblclick", ctx.onAvatarDblclick);
 
     	var if_block0 = (ctx.isLogoutShowing) && create_if_block_1$2(ctx);
 
@@ -20425,15 +20987,15 @@ var app = (function () {
     			if (if_block1) if_block1.c();
     			if_block1_anchor = empty();
     			attr(span, "class", "logo-inner svelte-6n12fq");
-    			add_location(span, file$y, 126, 4, 6175);
+    			add_location(span, file$y, 126, 4, 6178);
     			attr(div0, "class", "logo svelte-6n12fq");
-    			add_location(div0, file$y, 125, 2, 6151);
+    			add_location(div0, file$y, 125, 2, 6154);
     			attr(div1, "class", "userWrap svelte-6n12fq");
-    			add_location(div1, file$y, 138, 4, 6587);
+    			add_location(div1, file$y, 138, 4, 6590);
     			attr(div2, "class", "controls svelte-6n12fq");
-    			add_location(div2, file$y, 128, 2, 6233);
+    			add_location(div2, file$y, 128, 2, 6236);
     			attr(header, "class", header_class_value = "container " + (ctx.isHidden ? 'is-hidden' : '') + " svelte-6n12fq");
-    			add_location(header, file$y, 124, 0, 6091);
+    			add_location(header, file$y, 124, 0, 6094);
     		},
 
     		l: function claim(nodes) {
@@ -20572,15 +21134,15 @@ var app = (function () {
     }
 
     function onMyNtksClicked() {
-      customViewStore.setView(viewKeys.MY_NTKS);
+      customViewStore.setView(viewKeys$1.MY_NTKS);
     }
 
     function onShowMoreClicked() {
-      customViewStore.setView(viewKeys.ALL_NTKS);
+      customViewStore.setView(viewKeys$1.ALL_NTKS);
     }
 
     function onNtksApprovalClicked() {
-      customViewStore.setView(viewKeys.NTKS_APPROVAL);
+      customViewStore.setView(viewKeys$1.NTKS_APPROVAL);
     }
 
     function logout() {
@@ -20598,10 +21160,10 @@ var app = (function () {
       let openUserUpdateDialog = false;
 
       setContext("setViewToRegister", {
-        setViewToRegister: () => customViewStore.setView(viewKeys.REGISTER)
+        setViewToRegister: () => customViewStore.setView(viewKeys$1.REGISTER)
       });
 
-      function onAvatarClick() {
+      function onAvatarDblclick() {
         $$invalidate('openUserUpdateDialog', openUserUpdateDialog = true);
       }
 
@@ -20640,7 +21202,7 @@ var app = (function () {
     		isHidden,
     		isLogoutShowing,
     		openUserUpdateDialog,
-    		onAvatarClick,
+    		onAvatarDblclick,
     		onPopupClosed,
     		click_handler,
     		click_handler_1
@@ -20758,8 +21320,8 @@ var app = (function () {
     			if (default_slot) default_slot.c();
 
     			attr(div0, "class", "message-holder");
-    			add_location(div0, file$A, 67, 2, 2455);
-    			attr(div1, "class", "container-flex svelte-nskwby");
+    			add_location(div0, file$A, 67, 2, 2463);
+    			attr(div1, "class", "desktop container-flex svelte-nskwby");
     			add_location(div1, file$A, 64, 0, 2269);
     		},
 
@@ -20874,11 +21436,11 @@ var app = (function () {
         appStateUnsubscriber = customAppStatusStore.subscribe(state => {
           switch (state.loginStatus) {
             case 1: // Pedning
-              $$invalidate('currentView', currentView = getView(viewKeys.LOGIN));
+              $$invalidate('currentView', currentView = getView(viewKeys$1.LOGIN));
               $$invalidate('showHeader', showHeader = false);
               break;
             case 2: // LogedIn
-              $$invalidate('currentView', currentView = getView(viewKeys.ALL_NTKS));
+              $$invalidate('currentView', currentView = getView(viewKeys$1.ALL_NTKS));
               customNtkStore.setStoreAsync();
               $$invalidate('currentUser', currentUser = BLM.getCurrentUser());
               $$invalidate('showHeader', showHeader = true);

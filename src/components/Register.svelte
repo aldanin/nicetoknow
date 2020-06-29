@@ -8,12 +8,14 @@
   import FileUpload from "sveltefileuploadcomponent";
   import { BLM } from "../BLM/BLM";
   import Spinner from "../common/Spinner.svelte";
+  import ViewStore from "../state/view/viewStore";
+  import viewKeys from "../state/view/viewKeys";
 
   let name;
   let email;
   let hobbies;
   let age;
-  let aboutMe;
+  let about;
   let imageUrl;
   let showSpinner = false;
 
@@ -37,9 +39,13 @@
       imageUrl,
       moreDetails: {
         hobbies,
-        aboutMe
+        about
       }
     });
+  }
+
+  function cancel() {
+    ViewStore.setView(viewKeys.LOGIN);
   }
 
   function getBase64(file) {
@@ -74,7 +80,7 @@
     min-height: 0;
 
     .paper {
-      width: 400px;
+      width: 850pxpx;
     }
 
     .spinner-wrap {
@@ -84,6 +90,12 @@
   }
 
   .form-details {
+    display: flex;
+    justify-content: space-between;
+
+    .form-details-column {
+      width: 400px;
+    }
   }
 
   :global(.mdc-typography--body2),
@@ -97,7 +109,7 @@
     text-transform: inherit;
   }
 
-  :global(.actions) {
+  .actions {
     margin-top: 10px;
   }
 
@@ -106,12 +118,16 @@
   }
 
   .card-details {
-    width: 400px;
+    width: 850px;
     padding: 0 15px;
     overflow: auto;
 
     .file-uploader-class {
       height: 100px;
+    }
+
+    .name-tb {
+      margin-left: 20px;
     }
   }
 
@@ -119,14 +135,14 @@
     display: flex;
     height: 120px;
     width: 100%;
-    justify-content: space-evenly;
+    //justify-content: space-evenly;
     align-items: center;
     border-bottom: solid 1px #ececec;
     cursor: pointer;
 
     .person-details {
       width: 200px;
-
+      margin-left: 20px;
       h3,
       h5 {
         margin: 0;
@@ -179,33 +195,63 @@
         </div>
       </div>
       <div class="form-details">
-        <TextBox
-          type="number"
-          bind:value={age}
-          label="Age"
-          minWidth={150}
-          errorMessage="Please enter a number for your age" />
-        <TextBox
-          type="email"
-          bind:value={email}
-          label="Email"
-          minWidth={350}
-          errorMessage="Please enter a valid email address" />
-        <TextBox
-          class="about-me"
-          isTextArea={true}
-          bind:value={aboutMe}
-          label="About Me" />
-        <TextBox
-          bind:value={hobbies}
-          label="Hobbies (seperated with commas)"
-          minWidth={350} />
+        <div class="form-details-column">
+          <TextBox
+            type="number"
+            bind:value={age}
+            label="Age"
+            minWidth={150}
+            errorMessage="Please enter a number for your age" />
+          <TextBox
+            type="email"
+            bind:value={email}
+            label="Email"
+            minWidth={350}
+            errorMessage="Please enter a valid email address" />
+          <TextBox
+            class="about-me"
+            isTextArea={true}
+            bind:value={about}
+            label="About Me" />
+          <TextBox
+            bind:value={hobbies}
+            label="Hobbies (seperated with commas)"
+            minWidth={350} />
+        </div>
+        <div class="form-details-column">
+          <TextBox
+            type="number"
+            bind:value={age}
+            label="Age"
+            minWidth={150}
+            errorMessage="Please enter a number for your age" />
+          <TextBox
+            type="email"
+            bind:value={email}
+            label="Email"
+            minWidth={350}
+            errorMessage="Please enter a valid email address" />
+          <TextBox
+            class="about-me"
+            isTextArea={true}
+            bind:value={about}
+            label="About Me" />
+          <TextBox
+            bind:value={hobbies}
+            label="Hobbies (seperated with commas)"
+            minWidth={350} />
+        </div>
+
       </div>
     </div>
     <Actions class="actions">
+      <Button color="secondary" variant="raised" on:click={cancel}>
+        <Label>Cancel</Label>
+      </Button>
       <Button variant="raised" on:click={submit}>
         <Label>Submit</Label>
       </Button>
+    
     </Actions>
   </Paper>
   {#if showSpinner}

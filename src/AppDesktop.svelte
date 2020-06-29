@@ -64,7 +64,7 @@
   }
 </style>
 
-<div class="container-flex">
+<div class="desktop container-flex">
   <Header isHidden={!showHeader} {currentUser} on:userClicked={onUserClicked} />
   <svelte:component this={currentView ? currentView.view : Loading} />
   <div class="message-holder">

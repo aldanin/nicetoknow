@@ -1,5 +1,4 @@
 <script>
-  import viewKeys from "../state/view/viewKeys";
   import Register from "./Register.svelte";
   import { createEventDispatcher, getContext, onMount } from "svelte";
   import TextBox from "../common/TextBox.svelte";
@@ -9,6 +8,7 @@
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
   import ViewStore from "../state/view/viewStore";
+    import viewKeys from "../state/view/viewKeys";
   import {BLM} from "../BLM/BLM"
   
 
@@ -78,7 +78,7 @@
     text-transform: inherit;
   }
 
-  :global(.actions) {
+  .actions {
     margin-top: 10px;
     display: flex;
     justify-content: space-between;
@@ -158,7 +158,7 @@
       </div>
     </div>
     <Actions class="actions">
-      <Button on:click={showRegisterView} class="myClass">
+      <Button color="secondary" on:click={showRegisterView} class="myClass">
         <Label>Not Registered</Label>
       </Button>
       <Button variant="raised" on:click={submit}>

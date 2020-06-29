@@ -44,7 +44,7 @@
     NtkStore.registerUser(e.detail.value);
   }
 
-  function onAvatarClick() {
+  function onAvatarDblclick() {
     openUserUpdateDialog = true;
   }
 
@@ -148,7 +148,7 @@
       </Button>
       <Avatar
         imageUrl={currentUser ? currentUser.ntkDetails.imageUrl : null}
-        on:click={onAvatarClick} />
+        on:dblclick={onAvatarDblclick} />
     </div>
 
   </div>

@@ -4,22 +4,38 @@ export type NTKPersonDetails = {
     id?: string,
     name: string,
     age: number,
+    gender: Gender,
     imageUrl: string,
+    email: string,
+    cell?: string, //"25452155"
     moreDetails: {
         about: string;
         hobbies: string,
-        email: string
+        location?: {
+            street?: {
+                number: number,
+                name: string
+            },
+            city?: string,
+            state?: string,
+            country?: string,
+            postcode?: number,
+            coordinates?: {
+                latitude: string, // "15.8027"
+                longitude: string, // "-159.5965"
+            },
+        }
     }
 }
 
 export type NTKPerson = {
-    ntkDetails: Partial<NTKPersonDetails>, 
+    ntkDetails: Partial<NTKPersonDetails>,
     approvalList?: ConnectionDetails[],
 }
 
 // For Card UI purposes only:
 export type PersonCard = {
-    ntkDetails: Partial<NTKPersonDetails>, 
+    ntkDetails: Partial<NTKPersonDetails>,
     isMarked: boolean,
     connectionStatus: ConnectionStatus,
 }
@@ -31,7 +47,7 @@ export type NTKStore = {
     hasFetched: boolean,
 }
 
-export type ConnectionDetails =  {
+export type ConnectionDetails = {
     id: string, // id of from/to person 
     connectionStatus: ConnectionStatus,
     isTo: boolean,
@@ -52,9 +68,9 @@ export interface CustomNTKStore {
     setStoreAsync: () => void,
     onMarkedChanged: (id: string) => Promise<any>,
     onApprovalChanged: (id: string, isApproved: boolean) => void,
-    myNtkPersons:  NTKPerson[],
-    moreNtkPersons:  NTKPerson[],
-    registerUser: (user: NTKPersonDetails)  => void,
+    myNtkPersons: NTKPerson[],
+    moreNtkPersons: NTKPerson[],
+    registerUser: (user: NTKPersonDetails) => void,
     updateStore: (newState) => void,
 }
 

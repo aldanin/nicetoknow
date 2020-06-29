@@ -4,12 +4,12 @@
 const dispatch = createEventDispatcher();
   export let imageUrl = "./media/download.png";
   export let height = "100%";
-  $: console.log("avatar", imageUrl);
+  $: console.log("avatar", imageUrl = imageUrl || "./media/download.png");
 
 
 
-  function onClick() {
-      dispatch('click', null);
+  function onDblclick() {
+      dispatch('dblclick', null);
   }
 </script>
 
@@ -27,6 +27,6 @@ const dispatch = createEventDispatcher();
   }
 </style>
 
-<div class="avatar" style="height:{height};" on:click={onClick}>
+<div class="avatar" style="height:{height};" on:dblclick={onDblclick}>
   <img src={imageUrl} />
 </div>

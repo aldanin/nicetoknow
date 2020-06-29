@@ -56,6 +56,10 @@
     console.log("onClosing", e);
     e.stopPropagation();
   }
+
+   function cancel() {
+    ViewStore.setView(viewKeys.LOGIN);
+  }
 </script>
 
 <style type="text/scss">
@@ -70,7 +74,13 @@
     line-height: 45px;
   }
 
-  .form-details {
+   .form-details {
+    display: flex;
+    justify-content: space-between;
+
+    .form-details-column {
+      width: 400px;
+    }
   }
 
   :global(.mdc-typography--body2),
@@ -84,7 +94,7 @@
     text-transform: inherit;
   }
 
-  :global(.actions) {
+  .actions {
     margin-top: 10px;
   }
 
@@ -93,28 +103,31 @@
   }
 
   .card-details {
-    width: 400px;
+    width: 850px;
     padding: 0 15px;
     overflow: auto;
+
+    .file-uploader-class {
+      height: 100px;
+    }
+
+    .name-tb {
+      margin-left: 20px;
+    }
   }
 
   .avatar-container {
     display: flex;
     height: 120px;
     width: 100%;
-    justify-content: space-evenly;
+    //justify-content: space-evenly;
     align-items: center;
     border-bottom: solid 1px #ececec;
     cursor: pointer;
 
-    .name-div {
-      width: 250px;
-      margin-left: 20px;
-    }
-
     .person-details {
       width: 200px;
-
+      margin-left: 20px;
       h3,
       h5 {
         margin: 0;
@@ -156,41 +169,77 @@
   on:MDCDialog:closed={closeHandler}
   on:MDCDialog:closing={onClosing}>
   <header class="header">Update User Details</header>
-  <div class="card-details">
-    <div class="avatar-container">
-      <FileUpload on:input={gotFiles}>
-        <Avatar imageUrl = {currentUser.ntkDetails.imageUrl} height="100px" />
-      </FileUpload>
+    <div class="card-details">
+      <div class="avatar-container">
+        <FileUpload on:input={gotFiles}>
+          <Avatar imageUrl={currentUser.ntkDetails.imageUrl} height="100px" />
+        </FileUpload>
 
-      <div class="name-div">{currentUser.ntkDetails.name}</div>
+        <div class="name-tb">
+          <TextBox
+            bind:value={currentUser.ntkDetails.name}
+            label="Name"
+            minWidth={250}
+            errorMessage="This field is required" />
+        </div>
+      </div>
+      <div class="form-details">
+        <div class="form-details-column">
+          <TextBox
+            type="number"
+            bind:value={currentUser.ntkDetails.age}
+            label="Age"
+            minWidth={150}
+            errorMessage="Please enter a number for your age" />
+          <TextBox
+            type="email"
+            bind:value={currentUser.ntkDetails.email}
+            label="Email"
+            minWidth={350}
+            errorMessage="Please enter a valid email address" />
+          <TextBox
+            class="about-me"
+            isTextArea={true}
+            bind:value={currentUser.ntkDetails.moreDetails.about}
+            label="About Me" />
+          <TextBox
+            bind:value={currentUser.ntkDetails.moreDetails.hobbies}
+            label="Hobbies (seperated with commas)"
+            minWidth={350} />
+        </div>
+        <div class="form-details-column">
+          <TextBox
+            type="number"
+            bind:value={currentUser.ntkDetails.age}
+            label="Age"
+            minWidth={150}
+            errorMessage="Please enter a number for your age" />
+          <TextBox
+            type="email"
+            bind:value={currentUser.ntkDetails.moreDetails.email}
+            label="Email"
+            minWidth={350}
+            errorMessage="Please enter a valid email address" />
+          <TextBox
+            class="about-me"
+            isTextArea={true}
+            bind:value={currentUser.ntkDetails.moreDetails.about}
+            label="About Me" />
+          <TextBox
+            bind:value={currentUser.ntkDetails.moreDetails.hobbies}
+            label="Hobbies (seperated with commas)"
+            minWidth={350} />
+        </div>
+
+      </div>
     </div>
-    <div class="form-details">
-      <TextBox
-        type="number"
-        bind:value={currentUser.ntkDetails.age}
-        label="Age"
-        minWidth={150}
-        errorMessage="Please enter a number for your age" />
-      <TextBox
-        type="email"
-        bind:value={currentUser.ntkDetails.email}
-        label="Email"
-        minWidth={350}
-        errorMessage="Please enter a valid email address" />
-      <TextBox
-        class="about-me"
-        isTextArea={true}
-        bind:value={currentUser.ntkDetails.moreDetails.aboutMe}
-        label="About Me" />
-      <TextBox
-        bind:value={currentUser.ntkDetails.moreDetails.hobbies}
-        label="Hobbies (seperated with commas)"
-        minWidth={350} />
-    </div>
-  </div>
-  <Actions class="actions">
-    <Button variant="raised" on:click={submit}>
-      <Label>Submit</Label>
-    </Button>
-  </Actions>
+   <Actions class="actions">
+      <Button color="secondary" variant="raised" on:click={cancel}>
+        <Label>Cancel</Label>
+      </Button>
+      <Button variant="raised" on:click={submit}>
+        <Label>Submit</Label>
+      </Button>
+    
+    </Actions>
 </Dialog>

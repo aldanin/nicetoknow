@@ -1,0 +1,22 @@
+
+  @media (min-width: 592px) {
+    .desktop {
+        .mdc-dialog .mdc-dialog__surface {
+            max-width: unset;
+            }
+    }
+  }
+
+.desktop {
+    .smui-paper {
+        padding: 0;
+      }
+
+      .actions {
+        margin-top: 10px;
+      }
+
+      .mdc-dialog .mdc-dialog__surface {
+        max-height: unset;
+      }
+  }
