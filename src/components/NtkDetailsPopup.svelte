@@ -6,15 +6,32 @@
   import Avatar from "../common/Avatar.svelte";
   import FileUpload from "sveltefileuploadcomponent";
   import { BLM } from "../BLM/BLM";
+  import NTKMap from "../common/NTKMap.svelte";
 
-  export let currentUser;
+  export let ntkPerson;
   let simpleDialog;
-  // let name;
-  // let email;
-  // let hobbies;
-  // let age;
-  // let aboutMe;
-  // let imageUrl;
+  let location;
+
+  $: {
+    const lat =
+      ntkPerson.ntkDetails.moreDetails &&
+      ntkPerson.ntkDetails.moreDetails.location &&
+      ntkPerson.ntkDetails.moreDetails.location.coordinates &&
+      ntkPerson.ntkDetails.moreDetails.location.coordinates.latitude;
+    const lon =
+      ntkPerson.ntkDetails.moreDetails &&
+      ntkPerson.ntkDetails.moreDetails.location &&
+      ntkPerson.ntkDetails.moreDetails.location.coordinates &&
+      ntkPerson.ntkDetails.moreDetails.location.coordinates.longitude;
+    location =
+      lat && lon
+        ? {
+            lat : +lat,
+            lon: +lon,
+            label: `${ntkPerson.ntkDetails.moreDetails.location.country}, ${ntkPerson.ntkDetails.moreDetails.location.state}, ${ntkPerson.ntkDetails.moreDetails.location.city}`
+          }
+        : null;
+  }
 
   const dispatch = createEventDispatcher();
 
@@ -25,15 +42,15 @@
   async function gotFiles(event) {
     const data = await getBase64(event.detail.files[0]);
     console.log("vase84", data);
-    currentUser.ntkDetails.imageUrl = data;
+    ntkPerson.ntkDetails.imageUrl = data;
   }
 
   function closeHandler(e) {
-    dispatch("popupClosed", {});
+    dispatch("dialogClosed", e);
   }
 
   function submit(e) {
-    BLM.updateUserDetails(currentUser.ntkDetails);
+    BLM.updateUserDetails(ntkPerson.ntkDetails);
   }
 
   function getBase64(file) {
@@ -63,7 +80,30 @@
     line-height: 45px;
   }
 
-  .form-details {
+  .person-details {
+    display: flex;
+    justify-content: space-between;
+
+    .person-details-column {
+      width: 400px;
+
+      .ntk-detail {
+        color: gray;
+        .caption {
+          color: #b5b5b5;
+          padding-right: 5px;
+          font-weight: bold;
+        }
+        .detail {
+          font-style: italic;
+        }
+      }
+    }
+  }
+
+  .map-container {
+    height: 230px;
+    margin: 20px 0;
   }
 
   :global(.mdc-typography--body2),
@@ -86,40 +126,33 @@
   }
 
   .card-details {
-    width: 400px;
+    width: 850px;
     padding: 0 15px;
     overflow: auto;
+
+    .file-uploader-class {
+      height: 100px;
+    }
+
+    .name-tb {
+      margin-left: 20px;
+    }
   }
 
   .avatar-container {
     display: flex;
     height: 120px;
     width: 100%;
-    justify-content: space-evenly;
+    //justify-content: space-evenly;
     align-items: center;
     border-bottom: solid 1px #ececec;
-    cursor: pointer;
+    cursor: default;
 
     .name-div {
-      width: 250px;
       margin-left: 20px;
-    }
-
-    .person-details {
-      width: 200px;
-
-      h3,
-      h5 {
-        margin: 0;
-      }
-
-      .ntk-name {
-        margin-bottom: 10px;
-      }
-
-      .ntk-age {
-        color: #b3b3b3;
-      }
+      font-size: 200%;
+      font-weight: bold;
+      color: #989898;
     }
   }
 
@@ -148,42 +181,44 @@
   aria-describedby="simple-content"
   on:MDCDialog:closed={closeHandler}
   on:MDCDialog:closing={onClosing}>
-  <header class="header">Update User Details</header>
+  <!-- <header class="header">Update User Details</header> -->
   <div class="card-details">
     <div class="avatar-container">
-      <FileUpload on:input={gotFiles}>
-        <Avatar imageUrl = {currentUser.ntkDetails.imageUrl} height="100px" />
-      </FileUpload>
+     <Avatar imageUrl={ntkPerson.ntkDetails.imageUrl} height="100px" />
 
-      <div class="name-div">{currentUser.ntkDetails.name}</div>
+      <div class="name-div">{ntkPerson.ntkDetails.name}</div>
     </div>
-    <div class="form-details">
-      <TextBox
-        type="number"
-        bind:value={currentUser.ntkDetails.age}
-        label="Age"
-        minWidth={150}
-        errorMessage="Please enter a number for your age" />
-      <TextBox
-        type="email"
-        bind:value={currentUser.ntkDetails.email}
-        label="Email"
-        minWidth={350}
-        errorMessage="Please enter a valid email address" />
-      <TextBox
-        class="about-me"
-        isTextArea={true}
-        bind:value={currentUser.ntkDetails.moreDetails.aboutMe}
-        label="About Me" />
-      <TextBox
-        bind:value={currentUser.ntkDetails.moreDetails.hobbies}
-        label="Hobbies (seperated with commas)"
-        minWidth={350} />
+    <div class="person-details">
+      <div class="person-details-column">
+        <h5 class="ntk-detail">
+          <span class="caption">Age:</span>
+          <span class="detail">{ntkPerson.ntkDetails.age}</span>
+        </h5>
+
+        <h5 class="ntk-detail">
+          <span class="caption">About:</span>
+          <span class="detail">{ntkPerson.ntkDetails.moreDetails.about}</span>
+        </h5>
+        <h5 class="ntk-detail">
+          <span class="caption">Hobbies:</span>
+          <span class="detail">{ntkPerson.ntkDetails.moreDetails.hobbies}</span>
+        </h5>
+      </div>
+      <div class="person-details-column">
+        <div class="map-container">
+          <NTKMap mapDetails={location} />
+        </div>
+        <h5 class="ntk-detail">
+          <span class="caption">Hobbies:</span>
+          <span class="detail">{ntkPerson.ntkDetails.moreDetails.hobbies}</span>
+        </h5>
+      </div>
+
     </div>
   </div>
   <Actions class="actions">
-    <Button variant="raised" on:click={submit}>
-      <Label>Submit</Label>
+    <Button color="secondary" variant="raised">
+      <Label>Close</Label>
     </Button>
   </Actions>
 </Dialog>

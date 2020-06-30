@@ -27,7 +27,7 @@ export type NTKPersonDetails = {
         }
     }
 }
-
+// ntkPerson.ntkDetails.moreDetail.location.coordinates.latitude
 export type NTKPerson = {
     ntkDetails: Partial<NTKPersonDetails>,
     approvalList?: ConnectionDetails[],

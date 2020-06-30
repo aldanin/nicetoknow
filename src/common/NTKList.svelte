@@ -1,6 +1,6 @@
 <script>
   import NTKCard from "./NTKCard.svelte";
-  import NTKPersonPopup from "./NTKPersonPopup.svelte";
+  import NTKPersonDetailsPopup from "../components/NtkDetailsPopup.svelte";
   import VirtualList from "@sveltejs/svelte-virtual-list";
   import { BLM } from "../BLM/BLM";
   export let ntkList = [];
@@ -114,7 +114,7 @@
   </div>
 </div>
 {#if isNTKPersonDialogOpen}
-  <NTKPersonPopup
+  <NTKPersonDetailsPopup
     ntkPerson={currentSelectedPerson}
     on:dialogClosed={() => (isNTKPersonDialogOpen = false)} />
 {/if}
