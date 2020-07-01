@@ -1,25 +1,14 @@
 <script>
-  import { setContext, onMount, createEventDispatcher } from "svelte";
+  import { setContext, onMount } from "svelte";
   import MyIconButton from "../common/MyIconButton.svelte";
   import viewStore from "../state/view/viewStore";
   import viewKeys from "../state/view/viewKeys";
-  import NtkStore from "../state/ntk/nktStore";
-  import UserDetailsPopup from "../components/UserDetailsPopup.svelte";
-  import Avatar from "../common/Avatar.svelte";
   import Button, { Label } from "@smui/button";
-  import { BLM } from "../BLM/BLM";
-  import Card from "@smui/card";
   import Search from "../common/Search.svelte";
   import UserControls from "./UserControls.svelte";
 
-  const dispatch = createEventDispatcher();
-  let isRegistrationPopupOpen = false;
   export let currentUser;
   export let isHidden = false;
-  let isLogoutShowing = false;
-  let openUserUpdateDialog = false;
-
-  $: console.log("hjeader currentUser", currentUser);
 
   setContext("setViewToRegister", {
     setViewToRegister: () => viewStore.setView(viewKeys.REGISTER)
@@ -121,6 +110,5 @@
       on:click={onNtksApprovalClicked} />
     <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked} />
     <UserControls {currentUser}/>
-
   </div>
 </header>
