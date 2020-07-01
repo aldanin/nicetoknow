@@ -45,6 +45,7 @@ export type PersonCard = {
 export type NTKStore = {
     ntkPersons: NTKPerson[],
     hasFetched: boolean,
+    searchText?: string,
 }
 
 export type ConnectionDetails = {

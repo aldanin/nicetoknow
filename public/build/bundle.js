@@ -3600,6 +3600,20 @@ var app = (function () {
       forEach: arrayForEach
     });
 
+    var $includes = arrayIncludes.includes;
+
+
+    // `Array.prototype.includes` method
+    // https://tc39.github.io/ecma262/#sec-array.prototype.includes
+    _export({ target: 'Array', proto: true }, {
+      includes: function includes(el /* , fromIndex = 0 */) {
+        return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
+      }
+    });
+
+    // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+    addToUnscopables('includes');
+
     var $map = arrayIteration.map;
 
 
@@ -4439,6 +4453,44 @@ var app = (function () {
         });
         if (result.error) reject(result.value);
         return capability.promise;
+      }
+    });
+
+    var MATCH = wellKnownSymbol('match');
+
+    // `IsRegExp` abstract operation
+    // https://tc39.github.io/ecma262/#sec-isregexp
+    var isRegexp = function (it) {
+      var isRegExp;
+      return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
+    };
+
+    var notARegexp = function (it) {
+      if (isRegexp(it)) {
+        throw TypeError("The method doesn't accept regular expressions");
+      } return it;
+    };
+
+    var MATCH$1 = wellKnownSymbol('match');
+
+    var correctIsRegexpLogic = function (METHOD_NAME) {
+      var regexp = /./;
+      try {
+        '/./'[METHOD_NAME](regexp);
+      } catch (e) {
+        try {
+          regexp[MATCH$1] = false;
+          return '/./'[METHOD_NAME](regexp);
+        } catch (f) { /* empty */ }
+      } return false;
+    };
+
+    // `String.prototype.includes` method
+    // https://tc39.github.io/ecma262/#sec-string.prototype.includes
+    _export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
+      includes: function includes(searchString /* , position = 0 */) {
+        return !!~String(requireObjectCoercible(this))
+          .indexOf(notARegexp(searchString), arguments.length > 1 ? arguments[1] : undefined);
       }
     });
 
@@ -5545,7 +5597,8 @@ var app = (function () {
 
     var ntkStore = writable({
       ntkPersons: [],
-      hasFetched: false
+      hasFetched: false,
+      searchText: ''
     });
     var customNtkStore = {
       subscribe: ntkStore.subscribe,
@@ -5658,10 +5711,9 @@ var app = (function () {
                         }
                       });
                     });
-                    return {
-                      ntkPersons: ntkp,
-                      hasFetched: state.hasFetched
-                    };
+                    return _objectSpread2({}, state, {
+                      ntkPersons: ntkp
+                    });
                   });
 
                 case 1:
@@ -5698,24 +5750,7 @@ var app = (function () {
             return details.id === currentPerson.ntkDetails.id && !details.isTo;
           });
           curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
-          otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected; // if (isApproved) {
-          //     curentPersonToApprovalDetails.connectionStatus = ConnectionStatus.connected;
-          //     otherPersonFromApprovalDetails.connectionStatus = ConnectionStatus.connected;
-          //     // otherPerson.connectedNtks = otherPerson.connectedNtks || [];
-          //     // currentPerson.connectedNtks = currentPerson.connectedNtks || [];
-          //     // // Add the new connected id to the to list and the cutrrent list
-          //     // otherPerson.connectedNtks.push(currentPerson.ntkDetails.id);
-          //     // currentPerson.connectedNtks.push(toNtkId);
-          //     // // Remove the now-resolved approvals from the 2 related lists
-          //     // otherPerson.approvalList = otherPerson.approvalList.filter(item => item.id !== otherPersonFromApprovalDetails.id);
-          //     // currentPerson.approvalList = currentPerson.approvalList.filter(item => item.id !== curentPersonToApprovalDetails.id);
-          // } else {
-          //     //Update other person the outcome -rejection
-          //     otherPersonFromApprovalDetails.connectionStatus = ConnectionStatus.rejected;
-          //     // Update current Perons with the outcome -rejection
-          //     curentPersonToApprovalDetails.connectionStatus = ConnectionStatus.rejected
-          // }
-
+          otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
           fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
             method: 'DELETE',
             headers: {
@@ -5730,10 +5765,9 @@ var app = (function () {
               }
             });
           });
-          return {
-            ntkPersons: ntkp,
-            hasFetched: state.hasFetched
-          };
+          return _objectSpread2({}, state, {
+            ntkPersons: ntkp
+          });
         });
       },
       registerUser: function registerUser(user) {
@@ -5763,8 +5797,10 @@ var app = (function () {
         });
       },
       updateStore: function updateStore(newState) {
-        ntkStore.update(function () {
-          return newState;
+        ntkStore.update(function (state) {
+          var statee = _objectSpread2({}, state, {}, newState);
+
+          return statee;
         });
       }
     };
@@ -5932,7 +5968,7 @@ var app = (function () {
                 switch (_context3.prev = _context3.next) {
                   case 0:
                     _context3.prev = 0;
-                    ntks = BLM.getNtks();
+                    ntks = BLM.getNtks(true);
                     foundNtk = ntks.find(function (ntk) {
                       return ntk.ntkDetails.name === userName.trim();
                     });
@@ -5975,7 +6011,7 @@ var app = (function () {
         key: "getCurrentUser",
         value: function getCurrentUser() {
           try {
-            var ntks = BLM.getNtks();
+            var ntks = BLM.getNtks(true);
             var currentUser = customAppStatusStore.getCurrentUser();
             return currentUser ? ntks.find(function (ntk) {
               return ntk.ntkDetails.id === currentUser.ntkDetails.id;
@@ -6029,8 +6065,14 @@ var app = (function () {
       }, {
         key: "getNtks",
         value: function getNtks() {
+          var getFullList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
           var state = get_store_value(customNtkStore);
-          return state.ntkPersons || [];
+          var ntkPersons = state.ntkPersons || [];
+          var finalNtks = !getFullList && state.searchText && state.searchText.length > 1 ? ntkPersons.filter(function (ntk) {
+            var result = ntk.ntkDetails.name.toLowerCase().includes(state.searchText.toLowerCase());
+            return result;
+          }) : ntkPersons;
+          return finalNtks;
         }
       }, {
         key: "getOtherNtks",
@@ -6051,13 +6093,15 @@ var app = (function () {
               return ntk.ntkDetails.id === item.id && (item.connectionStatus === ConnectionStatus.connected || item.connectionStatus === ConnectionStatus.pending && !item.isTo);
             });
           }) : [];
-          return myNtks;
+          return myNtks.filter(function (ntk) {
+            return !!ntk;
+          });
         }
       }, {
         key: "getToNtks",
         value: function getToNtks() {
           var currentUser = BLM.getCurrentUser();
-          var allNkts = BLM.getNtks();
+          var allNkts = BLM.getNtks(true);
           var toNtks = allNkts.filter(function (ntk) {
             return currentUser.approvalList && currentUser.approvalList.find(function (item) {
               return item.id === ntk.ntkDetails.id && item.isTo && item.connectionStatus === ConnectionStatus.pending;
@@ -6105,8 +6149,10 @@ var app = (function () {
         }
       }, {
         key: "onSearchChanged",
-        value: function onSearchChanged(searchWord) {
-          console.log('BLM, ', searchWord);
+        value: function onSearchChanged(searchText) {
+          customNtkStore.updateStore({
+            searchText: searchText
+          });
         }
       }]);
 

@@ -6,7 +6,8 @@ import { BLM } from '../../BLM/BLM';
 // TODO https://nice-to-know.firebaseio.com/
 const ntkStore = writable<NTKStore>({
     ntkPersons: [],
-    hasFetched: false
+    hasFetched: false,
+    searchText: ''
 });
 
 const customNtkStore: CustomNTKStore = {
@@ -80,7 +81,7 @@ const customNtkStore: CustomNTKStore = {
                 })
             })
 
-            return { ntkPersons: ntkp, hasFetched: state.hasFetched };
+            return { ...state, ntkPersons: ntkp };
         })
     },
     onApprovalChanged: (toNtkId: string, isApproved: boolean) => {
@@ -100,25 +101,6 @@ const customNtkStore: CustomNTKStore = {
             curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
             otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
 
-            // if (isApproved) {
-            //     curentPersonToApprovalDetails.connectionStatus = ConnectionStatus.connected;
-            //     otherPersonFromApprovalDetails.connectionStatus = ConnectionStatus.connected;
-
-            //     // otherPerson.connectedNtks = otherPerson.connectedNtks || [];
-            //     // currentPerson.connectedNtks = currentPerson.connectedNtks || [];
-            //     // // Add the new connected id to the to list and the cutrrent list
-            //     // otherPerson.connectedNtks.push(currentPerson.ntkDetails.id);
-            //     // currentPerson.connectedNtks.push(toNtkId);
-            //     // // Remove the now-resolved approvals from the 2 related lists
-            //     // otherPerson.approvalList = otherPerson.approvalList.filter(item => item.id !== otherPersonFromApprovalDetails.id);
-            //     // currentPerson.approvalList = currentPerson.approvalList.filter(item => item.id !== curentPersonToApprovalDetails.id);
-            // } else {
-            //     //Update other person the outcome -rejection
-            //     otherPersonFromApprovalDetails.connectionStatus = ConnectionStatus.rejected;
-            //     // Update current Perons with the outcome -rejection
-            //     curentPersonToApprovalDetails.connectionStatus = ConnectionStatus.rejected
-            // }
-
             fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
                 method: 'DELETE',
                 headers: {
@@ -136,7 +118,7 @@ const customNtkStore: CustomNTKStore = {
                 })
             })
 
-            return { ntkPersons: ntkp, hasFetched: state.hasFetched };
+            return { ...state, ntkPersons: ntkp };
         })
     },
     registerUser: (user: NTKPersonDetails) => {
@@ -168,8 +150,9 @@ const customNtkStore: CustomNTKStore = {
         })
     },
     updateStore: (newState) => {
-        ntkStore.update(() => {
-            return newState
+        ntkStore.update((state) => {
+            const statee = {...state, ...newState}
+            return statee
         })
     }
 }

@@ -1,7 +1,7 @@
 import { NTKPerson, NTKStore, NTKPersonDetails, ConnectionStatus } from "../state/ntk/ntk.model";
 import { getMockUsers } from "../state/ntk/mock";
 import uid from "uid";
-import { LoginStatus, CustomAppStatusStore } from "../state/app/appStatus.model";
+import { LoginStatus } from "../state/app/appStatus.model";
 import dataStore from "../state/ntk/nktStore";
 import customAppStatusStore from "../state/app/appStatusStore";
 import { get } from 'svelte/store';
@@ -52,7 +52,7 @@ export class BLM {
 
     static async login(userName: string) {
         try {
-            let ntks = BLM.getNtks();
+            let ntks = BLM.getNtks(true);
 
             const foundNtk = ntks.find(ntk => ntk.ntkDetails.name === userName.trim());
 
@@ -76,7 +76,7 @@ export class BLM {
 
     static getCurrentUser(): NTKPerson {
         try {
-            let ntks = BLM.getNtks();
+            let ntks = BLM.getNtks(true);
             const currentUser: NTKPerson = customAppStatusStore.getCurrentUser();
             return currentUser ? ntks.find(ntk => ntk.ntkDetails.id === currentUser.ntkDetails.id) : null;
         } catch (err) {
@@ -129,9 +129,17 @@ export class BLM {
         customAppStatusStore.onLogout()
     }
 
-    static getNtks(): NTKPerson[] {
+    static getNtks(getFullList: boolean = false): NTKPerson[] {
         const state: NTKStore = get(dataStore);
-        return state.ntkPersons || [];
+        const ntkPersons = state.ntkPersons || [];
+        const finalNtks = !getFullList && state.searchText && state.searchText.length > 1
+            ? ntkPersons.filter(ntk => {
+                const result = ntk.ntkDetails.name.toLowerCase().includes(state.searchText.toLowerCase())
+                return result;
+            })
+            : ntkPersons;
+
+        return finalNtks;
     }
 
     static getOtherNtks(): NTKPerson[] {
@@ -151,12 +159,12 @@ export class BLM {
             })
             : [];
 
-        return myNtks;
+        return myNtks.filter(ntk => !!ntk);
     }
 
     static getToNtks(): NTKPerson[] {
         const currentUser = BLM.getCurrentUser();
-        const allNkts = BLM.getNtks();
+        const allNkts = BLM.getNtks(true);
 
         const toNtks = allNkts.filter(ntk =>
             currentUser.approvalList && currentUser.approvalList.find(
@@ -211,8 +219,9 @@ export class BLM {
         })
     }
 
-    static onSearchChanged(searchWord) {
-        console.log('BLM, ', searchWord)
+    static onSearchChanged(searchText: string) {
+        dataStore.updateStore({
+            searchText
+        })
     }
 }
-
