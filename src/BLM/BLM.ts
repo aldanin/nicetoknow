@@ -211,5 +211,8 @@ export class BLM {
         })
     }
 
+    static onSearchChanged(searchWord) {
+        console.log('BLM, ', searchWord)
+    }
 }
 
