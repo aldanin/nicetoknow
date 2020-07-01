@@ -3,11 +3,14 @@
   import UserDetailsPopup from "../components/UserDetailsPopup.svelte";
   import Avatar from "../common/Avatar.svelte";
   import { BLM } from "../BLM/BLM";
+  import Card from "@smui/card";
 
   let isRegistrationPopupOpen = false;
   let isLogoutShowing = false;
   let openUserUpdateDialog = false;
   export let currentUser;
+
+  $: console.log("hjeader currentUser", currentUser);
 
   function logout() {
     BLM.logout();
@@ -28,7 +31,35 @@
 </script>
 
 <style type="text/scss">
+  .userWrap {
+    display: flex;
+    align-items: center;
+    height: 80%;
 
+    :global(.myClass) {
+      color: white;
+      font-size: 80%;
+    }
+
+    :global(.mdc-button__label) {
+      color: gainsboro;
+      font-size: 70%;
+      text-decoration: underline;
+    }
+
+    .hi-span {
+      margin-right: 1em;
+    }
+  }
+
+  :global(.logout-card) {
+    position: absolute;
+    top: 40px;
+    right: 100px;
+    z-index: 2;
+    cursor: pointer;
+    color: #0089ff;
+  }
 </style>
 
 <div class="userWrap">
@@ -42,6 +73,11 @@
   <Avatar
     imageUrl={currentUser ? currentUser.ntkDetails.imageUrl : null}
     on:dblclick={onAvatarDblclick} />
+  {#if isLogoutShowing}
+    <Card class="logout-card" padded on:click={() => (isLogoutShowing = false)}>
+      <Label on:click={logout}>Log out</Label>
+    </Card>
+  {/if}
 </div>
 {#if openUserUpdateDialog}
   <UserDetailsPopup

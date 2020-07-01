@@ -10,6 +10,7 @@
   import { BLM } from "../BLM/BLM";
   import Card from "@smui/card";
   import Search from "../common/Search.svelte";
+  import UserControls from "./UserControls.svelte";
 
   const dispatch = createEventDispatcher();
   let isRegistrationPopupOpen = false;
@@ -36,27 +37,6 @@
     viewStore.setView(viewKeys.NTKS_APPROVAL);
   }
 
-  function logout() {
-    BLM.logout();
-  }
-
-  function registrationSubmitted(e) {
-    isRegistrationPopupOpen = false;
-    NtkStore.registerUser(e.detail.value);
-  }
-
-  function onAvatarDblclick() {
-    openUserUpdateDialog = true;
-  }
-
-  function onPopupClosed() {
-    openUserUpdateDialog = false;
-  }
-
-  function onUserDetailsSubmitted(e) {
-    const details = e.detail;
-    console.log("details", details);
-  }
 </script>
 
 <style type="text/scss">
@@ -121,13 +101,6 @@
     visibility: hidden;
   }
 
-  :global(.logout-card) {
-    position: absolute;
-    top: 40px;
-    right: 100px;
-    z-index: 2;
-    cursor: pointer;
-  }
 </style>
 
 <header class="container {isHidden ? 'is-hidden' : ''}">
@@ -147,30 +120,7 @@
       title="Nice-to-know's to approve"
       on:click={onNtksApprovalClicked} />
     <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked} />
-    <div class="userWrap">
-      <Button on:click={() => (isLogoutShowing = true)} class="myClass">
-        <span class="hi-span">Hi</span>
-        <span class="userName-span">
-          {currentUser ? currentUser.ntkDetails.name : ''}
-        </span>
-
-      </Button>
-      <Avatar
-        imageUrl={currentUser ? currentUser.ntkDetails.imageUrl : null}
-        on:dblclick={onAvatarDblclick} />
-    </div>
+    <UserControls {currentUser}/>
 
   </div>
-  {#if isLogoutShowing}
-    <Card class="logout-card" padded on:click={() => (isLogoutShowing = false)}>
-      <Label on:click={logout}>Log out</Label>
-    </Card>
-  {/if}
 </header>
-
-{#if openUserUpdateDialog}
-  <UserDetailsPopup
-    currentUser={BLM.getCloneNtkPerson(currentUser)}
-    on:popupClosed={onPopupClosed}
-    on:submit={onUserDetailsSubmitted} />
-{/if}
