@@ -9,7 +9,7 @@
   import Button, { Label } from "@smui/button";
   import { BLM } from "../BLM/BLM";
   import Card from "@smui/card";
-  import TextBox from "../common/TextBox.svelte";
+  import Search from "../common/Search.svelte";
 
   const dispatch = createEventDispatcher();
   let isRegistrationPopupOpen = false;
@@ -17,7 +17,6 @@
   export let isHidden = false;
   let isLogoutShowing = false;
   let openUserUpdateDialog = false;
-  let searchWord;
 
   $: console.log("hjeader currentUser", currentUser);
 
@@ -58,10 +57,6 @@
     const details = e.detail;
     console.log("details", details);
   }
-
-  function onSearchKeyup(event) {
-    BLM.onSearchChanged(event.detail);
-  }
 </script>
 
 <style type="text/scss">
@@ -87,10 +82,7 @@
     }
 
     .mid-controls {
-      :global(.mdc-text-field__input) {
-        color: white;
-        border-bottom-color: white;
-      }
+      height: 100%;
     }
 
     .controls {
@@ -105,6 +97,7 @@
 
         :global(.myClass) {
           color: white;
+          font-size: 80%;
         }
 
         :global(.mdc-button__label) {
@@ -142,12 +135,7 @@
     <span class="logo-inner">Nice to know</span>
   </div>
   <div class="mid-controls">
-    <TextBox
-      type="text"
-      bind:value={searchWord}
-      label="Email"
-      minWidth={350}
-      on:keyup={onSearchKeyup} />
+    <Search />
   </div>
   <div class="controls">
     <MyIconButton
