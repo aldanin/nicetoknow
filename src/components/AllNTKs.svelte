@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import NTKList from "../common/NTKList.svelte";
   import customNtkStore from "../state/ntk/nktStore";
+  import viewStore from "../state/view/viewStore";
   import NTKPersonPopup from "../common/NTKPersonPopup.svelte";
   import { BLM } from "../BLM/BLM";
 
@@ -9,6 +10,7 @@
   let currentSelectedPerson;
 
   let isNTKPersonDialogOpen = false;
+  let isGridView = false;
 
   onMount(() => {
     ntkList = BLM.getOtherNtks();
@@ -18,12 +20,18 @@
     ntkList = BLM.getOtherNtks();
   });
 
+  const unsubscribe2 = viewStore.subscribe(state => {
+    isGridView = state.isGridView;
+    console.log("isGridView 2", isGridView);
+  });
+
   function onMarkedChanged(event) {
     customNtkStore.onMarkedChanged(event.detail.id);
   }
 
   onDestroy(() => {
     unsubscribe();
+    unsubscribe2();
   });
   //
   // function onPersonSelected(event) {

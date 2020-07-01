@@ -22,11 +22,11 @@
     appStateUnsubscriber = appStateStore.subscribe(state => {
       switch (state.loginStatus) {
         case 1: // Pedning
-          currentView = getView(viewKeys.LOGIN);
+        viewStore.setView(viewKeys.LOGIN);
           showHeader = false;
           break;
         case 2: // LogedIn
-          currentView = getView(viewKeys.ALL_NTKS);
+        viewStore.setView(viewKeys.ALL_NTKS);
           customNtkStore.setStoreAsync();
           currentUser = BLM.getCurrentUser();
           showHeader = true;

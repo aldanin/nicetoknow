@@ -3,6 +3,7 @@ import { getView } from './viewRepo';
 
 const viewStore = writable({
     currentView: getView('login'),
+    isGridView: false,
 });
 
 const customViewStore = {
@@ -12,6 +13,12 @@ const customViewStore = {
             return {
                 currentView: getView(viewId),
             }
+        })
+    }),
+    isGridViewChanged: ((isGridView: boolean) => { 
+        console.log('isGridView', isGridView)
+        viewStore.update(state => {
+            return {...state, isGridView}
         })
     }),
 }

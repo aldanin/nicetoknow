@@ -9,7 +9,7 @@
 </script>
 
 {#if mapDetails}
-  <Map lat={mapDetails.lat} lon={mapDetails.lon} zoom={3.5}>
+  <Map lat={mapDetails.lat} lon={mapDetails.lon} zoom={3.5}>  
     <MapMarker
       lat={mapDetails.lat}
       lon={mapDetails.lon}

@@ -1,14 +1,18 @@
 <script>
-  import { setContext, onMount } from "svelte";
+  import { setContext, onMount, createEventDispatcher } from "svelte";
   import MyIconButton from "../common/MyIconButton.svelte";
   import viewStore from "../state/view/viewStore";
   import viewKeys from "../state/view/viewKeys";
   import Button, { Label } from "@smui/button";
   import Search from "../common/Search.svelte";
   import UserControls from "./UserControls.svelte";
+  import Switch from "@smui/switch";
+  import FormField from "@smui/form-field";
 
   export let currentUser;
   export let isHidden = false;
+
+  const dispatch = createEventDispatcher();
 
   setContext("setViewToRegister", {
     setViewToRegister: () => viewStore.setView(viewKeys.REGISTER)
@@ -24,6 +28,11 @@
 
   function onNtksApprovalClicked() {
     viewStore.setView(viewKeys.NTKS_APPROVAL);
+  }
+
+  function onViewChanged(event) {
+    const state = event.currentTarget.checked;
+    viewStore.isGridViewChanged(state)
   }
 
 </script>
@@ -52,6 +61,8 @@
 
     .mid-controls {
       height: 100%;
+      display: flex;
+      align-items: center;
     }
 
     .controls {
@@ -89,7 +100,6 @@
   .is-hidden {
     visibility: hidden;
   }
-
 </style>
 
 <header class="container {isHidden ? 'is-hidden' : ''}">
@@ -98,6 +108,10 @@
   </div>
   <div class="mid-controls">
     <Search />
+    <FormField class="switch">
+      <Switch on:change={onViewChanged} />
+      <span slot="label">Grid View</span>
+    </FormField>
   </div>
   <div class="controls">
     <MyIconButton
@@ -109,6 +123,6 @@
       title="Nice-to-know's to approve"
       on:click={onNtksApprovalClicked} />
     <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked} />
-    <UserControls {currentUser}/>
+    <UserControls {currentUser} />
   </div>
 </header>
