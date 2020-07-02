@@ -29,7 +29,7 @@ export default {
         ["sass", {
           includePaths: [
             // styles folder contains the necessary "_smui-theme.scss" file.
-            "./src/styles",
+            "./src/_styles",
             "./node_modules",
           ]
         }]

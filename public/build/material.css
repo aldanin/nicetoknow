@@ -1,16 +1,3 @@
-@media (min-width: 592px) {
-  .desktop .mdc-dialog .mdc-dialog__surface {
-    max-width: unset; } }
-
-.desktop .smui-paper {
-  padding: 0; }
-
-.desktop .actions {
-  margin-top: 10px; }
-
-.desktop .mdc-dialog .mdc-dialog__surface {
-  max-height: unset; }
-
 .mdc-icon-button {
   width: 48px;
   height: 48px;

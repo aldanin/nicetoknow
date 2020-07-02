@@ -38,7 +38,7 @@
     "rollup-plugin-terser": "^5.1.1",
     "surge": "^0.21.3",
     "svelte": "^3.9.1",
-    "svelte-material-ui": "^1.0.0-beta.20",
+    "svelte-material-ui": "^1.0.0-beta.21",
     "svelte-preprocess": "^3.1.1",
     "typescript": "^3.5.3"
   },
