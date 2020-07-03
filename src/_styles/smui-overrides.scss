@@ -1,22 +1,43 @@
 
-  @media (min-width: 592px) {
-    .desktop {
-        .mdc-dialog .mdc-dialog__surface {
+ 
+@media (min-width: 592px) {
+    body {
+      .desktop.container-flex {
+        .smui-paper {
+            padding: 0; 
+          }
+      
+          .actions {
+            margin-top: 10px;
+          }
+      
+          .mdc-dialog .mdc-dialog__surface {
+            max-height: unset;  
             max-width: unset;
-            }
+          }
+      }
     }
   }
 
 .desktop {
     .smui-paper {
-        padding: 0;
+        padding: 0; 
       }
 
       .actions {
         margin-top: 10px;
       }
 
-      .mdc-dialog .mdc-dialog__surface {
-        max-height: unset;
+      :global(.mdc-dialog .mdc-dialog__surface) {
+        max-height: unset;  
       }
+
+      .mdc-switch.mdc-switch--checked .mdc-switch__thumb {
+            border-color: #66de66;
+      }
+
+      .mdc-switch:not(.mdc-switch--checked) .mdc-switch__thumb {
+        background-color: #80c1bf;
+        border-color: #80c1bf;
+    }
   }

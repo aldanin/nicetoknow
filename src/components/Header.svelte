@@ -63,6 +63,12 @@
       height: 100%;
       display: flex;
       align-items: center;
+
+        .switch {
+    color: #efefef;
+    width: 150px;
+    font-weight: bold;
+  }
     }
 
     .controls {
@@ -100,6 +106,8 @@
   .is-hidden {
     visibility: hidden;
   }
+
+
 </style>
 
 <header class="container {isHidden ? 'is-hidden' : ''}">
@@ -109,7 +117,7 @@
   <div class="mid-controls">
     <Search />
     <FormField class="switch">
-      <Switch on:change={onViewChanged} />
+      <Switch color="primary"  on:change={onViewChanged} />
       <span slot="label">Grid View</span>
     </FormField>
   </div>

@@ -63,7 +63,7 @@
 </script>
 
 <style type="text/scss">
-  .content {
+  .content { 
   }
 
   :global(.is-approved) {

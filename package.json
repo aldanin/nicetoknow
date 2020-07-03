@@ -48,7 +48,6 @@
     "@types/lodash": "^4.14.137",
     "core-js": "^3.2.1",
     "mapbox-gl": "^1.11.0",
-    "regenerator-runtime": "^0.13.3",
     "sirv-cli": "^0.4.4",
     "sveltefileuploadcomponent": "^0.1.0",
     "uid": "^1.0.0"
