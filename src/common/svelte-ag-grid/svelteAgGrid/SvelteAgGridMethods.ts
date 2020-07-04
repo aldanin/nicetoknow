@@ -16,16 +16,18 @@ function setGridOptions(componentContext, userGridOptions, userColDefs) {
     }
 
     const finalOptions: agGrid.GridOptions = {
-       
+
         ...userGridOptions,
         columnDefs: userColDefs,
         onSelectionChanged,
         onGridReady,
-         defaultColDef: {
+        defaultColDef: {
             tooltipValueGetter: (params) => {
-return 'alon'
+                return params.value
             }
-        }, 
+        },
+        enableBrowserTooltips: true,
+
     };
 
     return finalOptions;

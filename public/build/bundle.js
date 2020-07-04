@@ -61945,9 +61945,10 @@ var app = (function () {
         onGridReady: onGridReady,
         defaultColDef: {
           tooltipValueGetter: function tooltipValueGetter(params) {
-            return 'alon';
+            return params.value;
           }
-        }
+        },
+        enableBrowserTooltips: true
       });
 
       return finalOptions;
@@ -62153,7 +62154,7 @@ var app = (function () {
     			div = element("div");
     			svelteaggrid.$$.fragment.c();
     			attr(div, "class", "container svelte-c9tfay");
-    			add_location(div, file$r, 84, 0, 2700);
+    			add_location(div, file$r, 110, 0, 3447);
     		},
 
     		l: function claim(nodes) {
@@ -62196,7 +62197,19 @@ var app = (function () {
     	};
     }
 
-    function onSelectionChanged(event) {
+    function avatarRenderer(params) {
+      return `<div style='display:flex;align-items:center;height: 100%;'>
+                 <img src=${params.value} style='height:85%;border-radius: 50%;'/>
+            </div>`;
+    }
+
+    function genderRenderer(params) {  
+      const emoji = params.value === 'male' ? '&#128104' : (params.value === 'female' ? '&#128105' : '');
+      return  `<span style='font-size: 1.5em;'>${emoji}</span`;
+    }
+
+    function onCellDoubleClicked(event) {
+      const id = event.data.id;
       console.log("onSelectionChanged", event);
     }
 
@@ -62230,9 +62243,19 @@ var app = (function () {
       //     }
 
       const colDefs = [
+        {
+            headerName: '',
+          field: "avatar",
+          cellRenderer: avatarRenderer,
+          width: 50
+        },
         { field: "name", maxWidth: 150 },
         { field: "age", minWidth: 150 },
-        { field: "gender", maxWidth: 90 },
+        {
+          field: "gender",
+          maxWidth: 90,
+          cellRenderer: genderRenderer
+        },
         { field: "cell", minWidth: 150 },
         { field: "email", minWidth: 150 },
         { field: "about", minWidth: 150 },
@@ -62241,12 +62264,15 @@ var app = (function () {
       ];
 
       const gridOptions = {
+          getRowNodeId: (data) => {
+            return data.id;
+          },
         defaultColDef: {
           flex: 1,
           minWidth: 100
         },
         rowSelection: "single",
-        onSelectionChanged: onSelectionChanged,
+        onCellDoubleClicked: onCellDoubleClicked,
         onGridReady: event => {
           console.log("gridView, ", event.api);
         }
@@ -62270,6 +62296,7 @@ var app = (function () {
               const location = details.moreDetails.location || {};
               return {
                 id: details.id,
+                avatar: details.imageUrl,
                 name: details.name,
                 age: details.age,
                 gender: details.gender,
@@ -62278,7 +62305,7 @@ var app = (function () {
                 imgaeUrl: details.imgaeUrl,
                 about: details.moreDetails.about,
                 hobbies: details.moreDetails.hobbies,
-                address: `${location.street.number} ${location.street.name}, ${location.state}, ${location.country}` 
+                address: `${location.street.number} ${location.street.name}, ${location.state}, ${location.country}`
               };
             }));
           } }
