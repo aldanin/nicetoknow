@@ -1,3 +1,5 @@
+import * as agGrid from 'ag-grid-community'
+
 function setGridOptions(componentContext, userGridOptions, userColDefs) {
 
     function onSelectionChanged(event) {
@@ -10,20 +12,27 @@ function setGridOptions(componentContext, userGridOptions, userColDefs) {
             api: event.api,
         })
         userGridOptions.onGridReady && userGridOptions.onGridReady(event);
+        componentContext.onSvelteGridReady(event);
     }
 
-    const finalOptions={
+    const finalOptions: agGrid.GridOptions = {
+       
         ...userGridOptions,
-        columnDefs : userColDefs,
+        columnDefs: userColDefs,
         onSelectionChanged,
         onGridReady,
+         defaultColDef: {
+            tooltipValueGetter: (params) => {
+return 'alon'
+            }
+        }, 
     };
 
     return finalOptions;
 }
 
 
-const methods={
+const methods = {
     setGridOptions
 }
 

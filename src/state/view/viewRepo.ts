@@ -1,5 +1,5 @@
 // @ts-ignore
-import GeneralNTKs from '../../components/AllNTKs.svelte';
+import GeneralNTKs from '../../components/allNTKs/AllNTKs.svelte';
 // @ts-ignore
 import MyNTKs from '../../components/MyNTKs.svelte';
 // @ts-ignore

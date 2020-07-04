@@ -10,6 +10,7 @@ export async function getMockUsers(count = 20, gender: Gender = '') :  Promise<N
                 id: user.login.uid,
                 name: `${user.name.first} ${user.name.last}`,
                 age: user.dob.age,
+                gender: user.gender,
                 imageUrl: user.picture.large,
                 email: user.email,
                 cell: user.cell,

@@ -11,6 +11,7 @@
 
   export let currentUser;
   export let isHidden = false;
+  export let isGridView = false;
 
   const dispatch = createEventDispatcher();
 
@@ -32,9 +33,8 @@
 
   function onViewChanged(event) {
     const state = event.currentTarget.checked;
-    viewStore.isGridViewChanged(state)
+    viewStore.isGridViewChanged(state);
   }
-
 </script>
 
 <style type="text/scss">
@@ -64,11 +64,11 @@
       display: flex;
       align-items: center;
 
-        .switch {
-    color: #efefef;
-    width: 150px;
-    font-weight: bold;
-  }
+      .switch {
+        color: #efefef;
+        width: 150px;
+        font-weight: bold;
+      }
     }
 
     .controls {
@@ -103,11 +103,19 @@
     }
   }
 
+  .switch-label {
+   margin-left: 10px;
+    white-space: nowrap;
+    color: #98f1d8;
+    text-transform: uppercase;
+    font-family: sans-serif;
+    font-size: 75%;
+    font-weight: bold;
+  }
+
   .is-hidden {
     visibility: hidden;
   }
-
-
 </style>
 
 <header class="container {isHidden ? 'is-hidden' : ''}">
@@ -117,9 +125,19 @@
   <div class="mid-controls">
     <Search />
     <FormField class="switch">
-      <Switch color="primary"  on:change={onViewChanged} />
-      <span slot="label">Grid View</span>
+      <Switch
+        color="primary"
+        bind:checked={isGridView}
+        on:change={onViewChanged} />
+     
     </FormField>
+     <span class="switch-label">
+        {#if isGridView}
+        Card View
+        {:else
+        }Grid View
+        {/if}
+      </span>
   </div>
   <div class="controls">
     <MyIconButton
