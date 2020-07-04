@@ -6,7 +6,7 @@
   import NTKPersonPopup from "../../common/NTKPersonPopup.svelte";
   import { BLM } from "../../BLM/BLM";
   import CardView from "./CardView.svelte";
-  import GridView from "./GridView.svelte";
+  import GridView from "./gridView/GridView.svelte";
 
   let ntkList;
   let currentSelectedPerson;

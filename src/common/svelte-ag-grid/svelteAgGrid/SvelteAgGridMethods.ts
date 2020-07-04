@@ -3,7 +3,11 @@ import * as agGrid from 'ag-grid-community'
 function setGridOptions(componentContext, userGridOptions, userColDefs) {
 
     function onSelectionChanged(event) {
-        userGridOptions.onSelectionChanged(event);
+        userGridOptions.onSelectionChanged && userGridOptions.onSelectionChanged(event);
+    }
+
+    function onCellDoubleClicked(event) {
+        userGridOptions.onCellDoubleClicked && userGridOptions.onCellDoubleClicked(event);
     }
 
     function onGridReady(event) {
@@ -20,6 +24,7 @@ function setGridOptions(componentContext, userGridOptions, userColDefs) {
         ...userGridOptions,
         columnDefs: userColDefs,
         onSelectionChanged,
+        onCellDoubleClicked,
         onGridReady,
         defaultColDef: {
             tooltipValueGetter: (params) => {
