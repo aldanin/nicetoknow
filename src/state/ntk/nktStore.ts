@@ -1,12 +1,13 @@
 import { writable, get } from 'svelte/store';
-import { NTKStore, CustomNTKStore, NTKPerson, NTKPersonDetails } from './ntk.model';
-import {getMockNtk, getMockUsers} from './mock';
+import { NTKStore, CustomNTKStore, NTKPerson, NTKPersonDetails, ConnectionStatus, ConnectionDetails } from './ntk.model';
 import uid from 'uid';
+import { BLM } from '../../BLM/BLM';
 
-
+// TODO https://nice-to-know.firebaseio.com/
 const ntkStore = writable<NTKStore>({
     ntkPersons: [],
-    hasFetched: false
+    hasFetched: false,
+    searchText: ''
 });
 
 const customNtkStore: CustomNTKStore = {
@@ -15,73 +16,145 @@ const customNtkStore: CustomNTKStore = {
         const store = get(ntkStore);
         return !store.hasFetched;
     },
-    setStoreAsync: () => {
-        getMockUsers(1500).then(ntks => {
+    setStoreAsync: async () => {
+        try {
+            console.log('setStoreAsync')
+            const ntks = await BLM.fetchNtks();
+
             ntkStore.update(state => {
                 return {
-                    ntkPersons: [...ntks, ...state.ntkPersons],
+                    ntkPersons: [...ntks],
                     hasFetched: true
                 }
             })
-        })
+        } catch (err) {
+            console.log(err)
+        }
     },
-    onMarkedChanged: (ntkId: string) => {
+    onMarkedChanged: async (fromNtkId: string) => {
         ntkStore.update(state => {
-            const ntkp = state.ntkPersons;
-            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === ntkId);
+            const ntkp = [...state.ntkPersons];
+            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === fromNtkId);
             if (foundIndex === -1) {
                 throw new Error('No person was found to update')
             }
-            ntkp[foundIndex].isMarked = !ntkp[foundIndex].isMarked;
 
-            ntkp.splice(foundIndex, 1, ntkp[foundIndex]);
+            const fromPerson = ntkp[foundIndex];
+            const me = BLM.getCurrentUser();
 
-            return {...state};
+            fromPerson.approvalList = fromPerson.approvalList || [];
+            const foundItem = fromPerson.approvalList.find(item => item.id === me.ntkDetails.id)
+
+            if (foundItem) {
+                fromPerson.approvalList = fromPerson.approvalList.filter(item => item.id !== me.ntkDetails.id);
+                me.approvalList = me.approvalList.filter(item => item.id !== fromNtkId)
+            } else {
+                fromPerson.approvalList.push({
+                    connectionStatus: ConnectionStatus.pending,
+                    id: me.ntkDetails.id,
+                    isTo: true
+                });
+
+                me.approvalList = me.approvalList || [];
+                me.approvalList.push({
+                    connectionStatus: ConnectionStatus.pending,
+                    id: fromNtkId,
+                    isTo: false
+                })
+            }
+
+
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+
+            }).then(() => {
+                fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                    method: 'POST',
+                    body: JSON.stringify(ntkp),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+
+                })
+            })
+
+            return { ...state, ntkPersons: ntkp };
         })
     },
-    onApprovalChanged: (ntkId: string, isApproved: boolean) => {
+    onApprovalChanged: (toNtkId: string, isApproved: boolean) => {
         ntkStore.update(state => {
-            const ntkp = state.ntkPersons;
-            const foundIndex = ntkp.findIndex((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === ntkId);
-            if (foundIndex === -1) {
+            const ntkp = [...state.ntkPersons];
+            const currentPerson = BLM.getCurrentUser();
+            const otherPerson = ntkp.find((ntkPerson: NTKPerson) => ntkPerson.ntkDetails.id === toNtkId);
+            if (!otherPerson) {
                 throw new Error('No person was found to update')
             }
-            ntkp[foundIndex].isApproved = isApproved;
 
-            ntkp.splice(foundIndex, 1, ntkp[foundIndex]);
+            const curentPersonToApprovalDetails =
+                currentPerson.approvalList.find((details: ConnectionDetails) => details.id === toNtkId && details.isTo);
+            const otherPersonFromApprovalDetails =
+                otherPerson.approvalList.find((details: ConnectionDetails) => details.id === currentPerson.ntkDetails.id && !details.isTo);
 
-            return {...state};
+            curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
+            otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
+
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+
+            }).then(() => {
+                fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                    method: 'POST',
+                    body: JSON.stringify(ntkp),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+
+                })
+            })
+
+            return { ...state, ntkPersons: ntkp };
         })
     },
     registerUser: (user: NTKPersonDetails) => {
         ntkStore.update(state => {
             const ntkp = state.ntkPersons;
-            const newNTK: NTKPerson  = {
-                ntkDetails: {...user, id: uid()},
-                isMarked: false,
-                isApproved: false,
+            const newNTK: NTKPerson = {
+                ntkDetails: { ...user, id: uid() },
             }
             ntkp.push(newNTK);
 
-            return {...state};
+            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+
+            }).then(() => {
+                fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                    method: 'POST',
+                    body: JSON.stringify(ntkp),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+
+                })
+            })
+
+            return { ...state };
+        })
+    },
+    updateStore: (newState) => {
+        ntkStore.update((state) => {
+            const statee = {...state, ...newState}
+            return statee
         })
     }
 }
-
-// export function getMyNtks(): NTKPerson[] {
-//     const store = get(ntkStore);
-//     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
-//         return ntk.isMarked
-//     })
-//     return ntks
-// }
-//
-// export function getNtks(): NTKPerson[] {
-//     const store = get(ntkStore);
-//     const ntks = store.ntkPersons.filter((ntk: NTKPerson) => {
-//         return !ntk.isMarked
-//     })
-//     return ntks
-// }
 
 export default customNtkStore;

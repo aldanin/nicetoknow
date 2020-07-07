@@ -1,79 +1,164 @@
 <script>
-    import MyIconButton from '../common/MyIconButton.svelte';
-    import viewStore from '../state/view/viewStore';
-    import viewKeys from '../state/view/viewKeys';
-    import NtkStore from '../state/ntk/nktStore.ts';
-    import RegistrationPopup from '../components/RegistrationPopup.svelte';
+  import { setContext, onMount, createEventDispatcher } from "svelte";
+  import MyIconButton from "../common/MyIconButton.svelte";
+  import viewStore from "../state/view/viewStore";
+  import viewKeys from "../state/view/viewKeys";
+  import Button, { Label } from "@smui/button";
+  import Search from "../common/Search.svelte";
+  import UserControls from "./UserControls.svelte";
+  import Switch from "@smui/switch";
+  import FormField from "@smui/form-field";
 
-    let isRegistrationPopupOpen = false;
+  export let currentUser;
+  export let isHidden = false;
+  export let isGridView = false;
+  let isViewSwitchDisabled = false;
 
-    function onMyNtksClicked() {
-        viewStore.setView(viewKeys.MY_NTKS);
-    }
+  const dispatch = createEventDispatcher();
 
-    function onShowMoreClicked() {
-        viewStore.setView(viewKeys.ALL_NTKS);
-    }
+  setContext("setViewToRegister", {
+    setViewToRegister: () => viewStore.setView(viewKeys.REGISTER)
+  });
 
-    function onNtksApprovalClicked() {
-        viewStore.setView(viewKeys.NTKS_APPROVAL);
-    }
+  function onMyNtksClicked() {
+    isViewSwitchDisabled = true;
+    viewStore.setView(viewKeys.MY_NTKS);
+  }
 
-    function showRegistrationForm() {
-        isRegistrationPopupOpen = true;
-    }
+  function onShowMoreClicked() {
+    isViewSwitchDisabled = false;
+    viewStore.setView(viewKeys.ALL_NTKS);
+  }
 
-    function registrationSubmitted(e){
-        isRegistrationPopupOpen = false;
-        NtkStore.registerUser(e.detail.value);
-    }
+  function onNtksApprovalClicked() {
+    isViewSwitchDisabled = true;
+    viewStore.setView(viewKeys.NTKS_APPROVAL);
+  }
+
+  function onViewChanged(event) {
+    const state = event.currentTarget.checked;
+    viewStore.isGridViewChanged(state);
+  }
 </script>
 
 <style type="text/scss">
-    .container {
-        max-width: 100%;
-        width: unset;
-        height: 60px;
-        box-shadow: 0 4px 2px -2px grey;
-        background-color: #a70000;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 30px;
+  .container {
+    max-width: 100%;
+    width: unset;
+    height: 60px;
+    box-shadow: 0 4px 2px -2px grey;
+    background-color: #a70000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    position: relative;
 
-        .logo {
-            font-family: fantasy;
-            font-style: italic;
-            fonty-weight: bold;
-            color: #e8e8ff;
-            font-weight: 500;
-            font-size: 25px;
-        }
-
-        .controls {
-            color: white;
-        }
-
-        :global(.focused-button) {
-            color:yellow;
-        }
+    .logo {
+      font-family: fantasy;
+      font-style: italic;
+      fonty-weight: bold;
+      color: #e8e8ff;
+      font-weight: 500;
+      font-size: 25px;
     }
+
+    .mid-controls {
+      height: 100%;
+      display: flex;
+      align-items: center;
+
+      .switch {
+        color: #efefef;
+        width: 150px;
+        font-weight: bold;
+      }
+    }
+
+    .controls {
+      display: flex;
+      height: 100%;
+      color: white;
+      align-items: center;
+      .userWrap {
+        display: flex;
+        align-items: center;
+        height: 80%;
+
+        :global(.myClass) {
+          color: white;
+          font-size: 80%;
+        }
+
+        :global(.mdc-button__label) {
+          color: gainsboro;
+          font-size: 70%;
+          text-decoration: underline;
+        }
+
+        .hi-span {
+          margin-right: 1em;
+        }
+      }
+    }
+
+    :global(.focused-button) {
+      color: yellow;
+    }
+  }
+
+  .switch-label {
+    margin-left: 10px;
+    white-space: nowrap;
+    color: #98f1d8;
+    text-transform: uppercase;
+    font-family: sans-serif;
+    font-size: 75%;
+    font-weight: bold;
+
+    &.disabled  {
+      color: #947272; 
+    }
+
+    &.grid-view:not(.disabled) {
+      color: #66de66;
+    }
+  }
+
+  .is-hidden {
+    visibility: hidden;
+  }
 </style>
 
-<header class="container">
-    <div class="logo">
-        <span class="logo-inner">Nice to know</span>
-    </div>
-    <div class="controls">
-        <MyIconButton icon="favorite_border" title="My Nice-to-know's" on:click={onMyNtksClicked}/>
-        <MyIconButton icon="favorite" title="Nice-to-know's to approve" on:click={onNtksApprovalClicked}/>
-        <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked}/>
-        <MyIconButton icon="how_to_reg" title="Show more" on:click={showRegistrationForm}/>
-    </div>
-</header>
+<header class="container {isHidden ? 'is-hidden' : ''}"> 
+  <div class="logo">
+    <span class="logo-inner">Nice to know</span>
+  </div>
+  <div class="mid-controls">
+    <Search />
+    <FormField class="switch">
+      <Switch
+        color="primary"
+        class= { isGridView ? 'grid-view' : ''}
+        bind:checked={isGridView}
+        disabled={isViewSwitchDisabled} 
+        on:change={onViewChanged} />
 
-{#if isRegistrationPopupOpen}
-    <RegistrationPopup
-            on:submit={registrationSubmitted}
-    />
-{/if}
+    </FormField>
+    <span class="switch-label {isViewSwitchDisabled ? 'disabled' : ''} {isGridView ? 'grid-view' : ''}">
+      {#if isGridView}Card View{:else}Grid View{/if}
+    </span>
+  </div>
+  <div class="controls">
+    <MyIconButton
+      icon="favorite_border"
+      title="My Nice-to-know's"
+      on:click={onMyNtksClicked} />
+    <MyIconButton
+      icon="favorite"
+      title="Nice-to-know's to approve"
+      on:click={onNtksApprovalClicked} />
+    <MyIconButton icon="face" title="Show more" on:click={onShowMoreClicked} />
+    <UserControls {currentUser} />
+  </div>
+</header>

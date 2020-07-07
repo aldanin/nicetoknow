@@ -1,6 +1,6 @@
-<script lang="js">
-  import Desktop from './AppDesktop.svelte';
-  export let name;
+<script>
+  import Desktop from "./AppDesktop.svelte";
+
 </script>
 
 <style type="text/scss">
@@ -8,5 +8,5 @@
 </style>
 
 <main class="container">
-  <Desktop/>
+  <Desktop />
 </main>

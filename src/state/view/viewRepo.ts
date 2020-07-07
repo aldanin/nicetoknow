@@ -1,11 +1,15 @@
 // @ts-ignore
-import GeneralNTKs from '../../components/AllNTKs.svelte';
+import GeneralNTKs from '../../components/allNTKs/AllNTKs.svelte';
 // @ts-ignore
 import MyNTKs from '../../components/MyNTKs.svelte';
 // @ts-ignore
 import NTKsApproval from '../../components/NTKsApproval.svelte';
 // @ts-ignore
 import viewKeys from "./viewKeys";
+// @ts-ignore
+import Login from '../../components/Login.svelte';
+// @ts-ignore
+import Register from '../../components/Register.svelte';
 
 export type ViewObject = {
     id: string,
@@ -14,6 +18,16 @@ export type ViewObject = {
 };
 
 const viewsRepo: ViewObject[] = [
+    {
+        id: viewKeys.LOGIN,
+        view: Login,
+        caption: 'Login',
+    },
+    {
+        id: viewKeys.REGISTER,
+        view: Register,
+        caption: 'Login',
+    },
     {
         id: viewKeys.ALL_NTKS,
         view: GeneralNTKs,
@@ -32,7 +46,6 @@ const viewsRepo: ViewObject[] = [
 ];
 
 export  function getView(viewId = viewKeys.MY_NTKS): ViewObject {
-    // @ts-ignore
     const found: ViewObject = viewsRepo.find(view => view.id === viewId);
 
     return found;
