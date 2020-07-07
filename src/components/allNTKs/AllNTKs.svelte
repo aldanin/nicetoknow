@@ -7,12 +7,15 @@
   import { BLM } from "../../BLM/BLM";
   import CardView from "./CardView.svelte";
   import GridView from "./gridView/GridView.svelte";
+  import { get } from 'svelte/store';
 
   let ntkList;
   let currentSelectedPerson;
 
   let isNTKPersonDialogOpen = false;
-  let isGridView = false;
+
+  const temp = get(viewStore);
+  let isGridView = get(viewStore).isGridView;
 
   onMount(() => {
     ntkList = BLM.getOtherNtks();

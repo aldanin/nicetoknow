@@ -8,7 +8,8 @@ export type GridRow = {
     cell: string,
     about: string,
     hobbies: string,
-    address: string
+    address: string,
+    isMarked: boolean,
 }
 
 export type GridOptionsProps = {

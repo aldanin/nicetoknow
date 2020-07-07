@@ -47,6 +47,18 @@
 
     const foundApprovalItem = currentUser.approvalList && currentUser.approvalList.find(item=>item.id === ntkPerson.ntkDetails.id);
 
+    // const foundApprovalItem = ntkPerson.approvalList
+    //   ? ntkPerson.approvalList.find(
+    //       item => item.id === currentUser.ntkDetails.id
+    //     )
+    //   : ntkPerson.approvalList
+    //   ? ntkPerson.approvalList.find(
+    //       item =>
+    //         item.id === currentUser.ntkDetails.id &&
+    //         item.connectionStatus === ConnectionStatus.connected
+    //     )
+    //   : null;
+
     return !!foundApprovalItem;
   }
 </script>

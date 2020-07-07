@@ -16,7 +16,8 @@ export function mapNtkPersonToGridRow(ntkList: NTKPerson[]): GridRow[] {
             cell: details.cell,
             about: details.moreDetails.about,
             hobbies: details.moreDetails.hobbies,
-            address: `${location.street.number} ${location.street.name}, ${location.state}, ${location.country}`
+            address: `${location.street.number} ${location.street.name}, ${location.state}, ${location.country}`,
+            // isMarked: ntkPerson.
         };
     });
 
@@ -48,6 +49,12 @@ export function getColDefs(): ColDef[] {
             field: "avatar",
             cellRenderer: avatarRenderer,
             width: 50
+        },
+        {
+            headerName: '',
+            field: 'isMarked',
+            cellRenderer:isMarkedRenderer,
+            width: 70
         },
         { field: "name", maxWidth: 150 },
         { field: "age", minWidth: 150 },
@@ -87,7 +94,8 @@ export function getGridOptions(props: GridOptionsProps) : GridOptions {
         onCellDoubleClicked: props.onCellDoubleClicked,
         onGridReady: event => {
           console.log("gridView, ", event.api);
-        }
+        },
+
       };
 
       return gridOptions; 
@@ -102,6 +110,10 @@ function avatarRenderer(params) {
 function genderRenderer(params) {
     const emoji = params.value === 'male' ? '&#128104' : (params.value === 'female' ? '&#128105' : '');
     return `<span style='font-size: 1.5em;'>${emoji}</span`;
+}
+
+function isMarkedRenderer(params) {
+    return params.value === true ?`Marked`: 'Unmarked'
 }
 
 

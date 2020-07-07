@@ -12,6 +12,7 @@
   export let currentUser;
   export let isHidden = false;
   export let isGridView = false;
+  let isViewSwitchDisabled = false;
 
   const dispatch = createEventDispatcher();
 
@@ -20,14 +21,17 @@
   });
 
   function onMyNtksClicked() {
+    isViewSwitchDisabled = true;
     viewStore.setView(viewKeys.MY_NTKS);
   }
 
   function onShowMoreClicked() {
+    isViewSwitchDisabled = false;
     viewStore.setView(viewKeys.ALL_NTKS);
   }
 
   function onNtksApprovalClicked() {
+    isViewSwitchDisabled = true;
     viewStore.setView(viewKeys.NTKS_APPROVAL);
   }
 
@@ -104,13 +108,21 @@
   }
 
   .switch-label {
-   margin-left: 10px;
+    margin-left: 10px;
     white-space: nowrap;
     color: #98f1d8;
     text-transform: uppercase;
     font-family: sans-serif;
     font-size: 75%;
     font-weight: bold;
+
+    &.disabled  {
+      color: #947272; 
+    }
+
+    &.grid-view:not(.disabled) {
+      color: #66de66;
+    }
   }
 
   .is-hidden {
@@ -118,7 +130,7 @@
   }
 </style>
 
-<header class="container {isHidden ? 'is-hidden' : ''}">
+<header class="container {isHidden ? 'is-hidden' : ''}"> 
   <div class="logo">
     <span class="logo-inner">Nice to know</span>
   </div>
@@ -127,17 +139,15 @@
     <FormField class="switch">
       <Switch
         color="primary"
+        class= { isGridView ? 'grid-view' : ''}
         bind:checked={isGridView}
+        disabled={isViewSwitchDisabled} 
         on:change={onViewChanged} />
-     
+
     </FormField>
-     <span class="switch-label">
-        {#if isGridView}
-        Card View
-        {:else
-        }Grid View
-        {/if}
-      </span>
+    <span class="switch-label {isViewSwitchDisabled ? 'disabled' : ''} {isGridView ? 'grid-view' : ''}">
+      {#if isGridView}Card View{:else}Grid View{/if}
+    </span>
   </div>
   <div class="controls">
     <MyIconButton
