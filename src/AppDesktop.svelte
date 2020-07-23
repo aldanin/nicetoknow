@@ -58,13 +58,33 @@
   .container-flex {
     flex-direction: column;
     background-color: whitesmoke;
-
+    background-image: url("https://d1csarkz8obe9u.cloudfront.net/posterpreviews/blue-zoom-meeting-background-design-template-164c405e512fcad0288c70855047a2e4_screen.jpg?ts=1586358952");
+    background-repeat: no-repeat;
+    background-size: cover;
     .message-holder {
     }
   }
+
+  .NTK {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 200px;
+    text-shadow: 10px 10px 10px black;
+    color: #da4343;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.2;
+    font-weight: bold;
+    font-style: italic;
+  }
 </style>
 
-<div class="desktop container-flex">
+<div class="desktop container-flex"> 
+  <div class="NTK"><span>Nice To Know</span></div>
   <Header isHidden={!showHeader} {currentUser} on:userClicked={onUserClicked} />
   <svelte:component this={currentView ? currentView.view : Loading} />
   <div class="message-holder">
