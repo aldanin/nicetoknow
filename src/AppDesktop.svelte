@@ -58,7 +58,7 @@
   .container-flex {
     flex-direction: column;
     background-color: whitesmoke;
-    background-image: url("https://d1csarkz8obe9u.cloudfront.net/posterpreviews/blue-zoom-meeting-background-design-template-164c405e512fcad0288c70855047a2e4_screen.jpg?ts=1586358952");
+    background-image: url("https://ak.picdn.net/shutterstock/videos/970717/thumb/1.jpg");
     background-repeat: no-repeat;
     background-size: cover;
     .message-holder {

@@ -54,7 +54,7 @@ export class BLM {
         try {
             let ntks = BLM.getNtks(true);
 
-            const foundNtk = ntks.find(ntk => ntk.ntkDetails.name === userName.trim());
+            const foundNtk = ntks.find(ntk => ntk.ntkDetails.name.toLowerCase() === userName.toLowerCase().trim());
 
             if (foundNtk) {
                 customAppStatusStore.onLogin({
