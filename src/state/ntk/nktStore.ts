@@ -2,8 +2,8 @@ import { writable, get } from 'svelte/store';
 import { NTKStore, CustomNTKStore, NTKPerson, NTKPersonDetails, ConnectionStatus, ConnectionDetails } from './ntk.model';
 import uid from 'uid';
 import { BLM } from '../../BLM/BLM';
+import {BACKEND_URL} from '../../BLM/constants';
 
-// TODO https://nice-to-know.firebaseio.com/
 const ntkStore = writable<NTKStore>({
     ntkPersons: [],
     hasFetched: false,
@@ -64,14 +64,14 @@ const customNtkStore: CustomNTKStore = {
             }
 
 
-            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            fetch(BACKEND_URL, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
                 }
 
             }).then(() => {
-                fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                fetch(BACKEND_URL, {
                     method: 'POST',
                     body: JSON.stringify(ntkp),
                     headers: {
@@ -101,14 +101,14 @@ const customNtkStore: CustomNTKStore = {
             curentPersonToApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
             otherPersonFromApprovalDetails.connectionStatus = isApproved ? ConnectionStatus.connected : ConnectionStatus.rejected;
 
-            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            fetch(BACKEND_URL, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
                 }
 
             }).then(() => {
-                fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                fetch(BACKEND_URL, {
                     method: 'POST',
                     body: JSON.stringify(ntkp),
                     headers: {
@@ -129,14 +129,14 @@ const customNtkStore: CustomNTKStore = {
             }
             ntkp.push(newNTK);
 
-            fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+            fetch(BACKEND_URL, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
                 }
 
             }).then(() => {
-                fetch('https://nice-to-know.firebaseio.com/ntkp.json', {
+                fetch(BACKEND_URL, {
                     method: 'POST',
                     body: JSON.stringify(ntkp),
                     headers: {

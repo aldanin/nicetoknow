@@ -16,11 +16,8 @@
 
   const dispatch = createEventDispatcher();
   const setViewToRegister = getContext("setViewToRegister");
-  let elm; 
 
-  onMount(() => {
-    
-  });
+  onMount(() => {});
 
   function submit(e) {
     BLM.login(userName);
@@ -157,9 +154,8 @@
       <div class="form-details">
         <TextBox
           bind:value={userName}
-          bind:this={elm}
           label="Please Enter your user name"
-          minWidth={350}/>
+          minWidth={350} />
       </div>
     </div>
     <Actions class="actions">

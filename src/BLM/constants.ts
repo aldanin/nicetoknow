@@ -1,0 +1,1 @@
+export const BACKEND_URL = 'https://nice-to-know.firebaseio.com/ntkp.json';
