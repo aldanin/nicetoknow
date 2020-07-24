@@ -5,7 +5,7 @@ import { ColDef, GridOptions } from "ag-grid-community";
 export function mapNtkPersonToGridRow(ntkList: NTKPerson[]): GridRow[] {
     const gridData: GridRow[] = ntkList.map(ntkPerson => {
         const details = ntkPerson.ntkDetails;
-        const location = details.moreDetails.location || {};
+        const location = details.moreDetails.location;
         return {
             id: details.id,
             avatar: details.imageUrl,
@@ -16,7 +16,9 @@ export function mapNtkPersonToGridRow(ntkList: NTKPerson[]): GridRow[] {
             cell: details.cell,
             about: details.moreDetails.about,
             hobbies: details.moreDetails.hobbies,
-            address: `${location.street.number} ${location.street.name}, ${location.state}, ${location.country}`,
+            address: location
+            ? `${location.street.number} ${location.street.name}, ${location.state}, ${location.country}`
+            : '',
             // isMarked: ntkPerson.
         };
     });

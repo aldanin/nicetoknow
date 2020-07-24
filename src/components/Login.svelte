@@ -57,6 +57,7 @@
     height: 100%;
     width: 100%;
     min-height: 0;
+    margin-bottom: 400px;
 
     .paper {
       width: 400px;
