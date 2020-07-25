@@ -11,7 +11,7 @@
 
   export let gridOptions;
   export let colDefs;
-  export let theme = "ag-theme-alpine";
+  export let theme = "ag-theme-alpine-dark"; 
 
   export let gridData;
   let pervGridData;
