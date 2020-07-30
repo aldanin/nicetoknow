@@ -9,9 +9,9 @@
   import FileUpload from "sveltefileuploadcomponent";
   import ViewStore from "../state/view/viewStore";
     import viewKeys from "../state/view/viewKeys";
-  import {BLM} from "../BLM/BLM"
+  import {BLM} from "../BLM/BLM";
+  import messageService from '../sysMessageService/systemMessage.store';
   
-
   let userName;
 
   const dispatch = createEventDispatcher();
@@ -24,6 +24,7 @@
   }
 
   function showRegisterView() {
+    messageService.closeMessage();
     ViewStore.setView(viewKeys.REGISTER);
   }
 
@@ -162,7 +163,7 @@
       <Button color="secondary" on:click={showRegisterView} class="myClass">
         <Label>Not Registered</Label>
       </Button>
-      <Button variant="raised" on:click={submit}>
+      <Button variant="raised" on:click={submit} disabled={!userName}>
         <Label>Submit</Label>
       </Button>
     </Actions>

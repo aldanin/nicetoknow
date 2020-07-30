@@ -8,6 +8,7 @@
   import { getView } from "../src/state/view/viewRepo";
   import { BLM } from "./BLM/BLM";
   import Loading from "./components/Loading.svelte";
+  import messageService from './sysMessageService/systemMessage.store';
 
   let currentView;
   let currentUser;
@@ -32,9 +33,11 @@
           showHeader = true;
           break;
         case 3: // LoginFailed
-          alert("failed");
-          break;
+          messageService.showMessage('User not found', true);
+          return;
       }
+
+      messageService.closeMessage();
     });
 
     viewStoreUnsubscriber = viewStore.subscribe(state => {
@@ -61,8 +64,6 @@
     background-image: url("https://ak.picdn.net/shutterstock/videos/970717/thumb/1.jpg");
     background-repeat: no-repeat;
     background-size: cover;
-    .message-holder {
-    }
   }
 
   .NTK {
@@ -87,7 +88,4 @@
   <div class="NTK"><span>Nice To Know</span></div>
   <Header isHidden={!showHeader} {currentUser} on:userClicked={onUserClicked} />
   <svelte:component this={currentView ? currentView.view : Loading} />
-  <div class="message-holder">
-    <slot />
-  </div>
 </div>

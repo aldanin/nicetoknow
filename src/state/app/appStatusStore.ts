@@ -3,7 +3,7 @@ import { LoginStatus, LoginDetails } from './appStatus.model';
 
 const appStatusStore = writable({
     loginStatus: LoginStatus.Pending,
-    currentUser: null
+    currentUser: null,
 });
 
 const customAppStatusStore = {
