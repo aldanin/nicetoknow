@@ -3,6 +3,7 @@ import { NTKStore, CustomNTKStore, NTKPerson, NTKPersonDetails, ConnectionStatus
 import uid from 'uid';
 import { BLM } from '../../BLM/BLM';
 import {BACKEND_URL} from '../../BLM/constants';
+import messageService from '../../sysMessageService/systemMessage.store'
 
 const ntkStore = writable<NTKStore>({
     ntkPersons: [],
@@ -43,12 +44,16 @@ const customNtkStore: CustomNTKStore = {
             const me = BLM.getCurrentUser();
 
             fromPerson.approvalList = fromPerson.approvalList || [];
-            const foundItem = fromPerson.approvalList.find(item => item.id === me.ntkDetails.id)
+            const foundItem = fromPerson.approvalList.find(item => item.id === me.ntkDetails.id);
+
+            let friendshipAsked = false;
 
             if (foundItem) {
                 fromPerson.approvalList = fromPerson.approvalList.filter(item => item.id !== me.ntkDetails.id);
-                me.approvalList = me.approvalList.filter(item => item.id !== fromNtkId)
+                me.approvalList = me.approvalList.filter(item => item.id !== fromNtkId);
+
             } else {
+                friendshipAsked = true;
                 fromPerson.approvalList.push({
                     connectionStatus: ConnectionStatus.pending,
                     id: me.ntkDetails.id,
@@ -80,6 +85,10 @@ const customNtkStore: CustomNTKStore = {
 
                 })
             })
+
+            const message = friendshipAsked ? 'Friendship request sent' : 'Friendship termination request sent'
+
+            messageService.showMessage(message);
 
             return { ...state, ntkPersons: ntkp };
         })

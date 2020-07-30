@@ -248,7 +248,7 @@
       <Button color="secondary" variant="raised" on:click={cancel}>
         <Label>Cancel</Label>
       </Button>
-      <Button variant="raised" on:click={submit}>
+      <Button variant="raised" disabled ={!name} on:click={submit}>
         <Label>Submit</Label>
       </Button>
     

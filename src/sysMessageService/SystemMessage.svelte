@@ -28,9 +28,9 @@
     if (isAuto && messageObj.isOpen) {
       setTimeout(
         () => {
-          // systemMessageService.closeMessage();
+           systemMessageService.closeMessage();
         },
-        messageObj.isError ? 5000 : 2000
+        2000
       );
     } else {
       systemMessageService.closeMessage();
@@ -40,19 +40,26 @@
 
 <style type="text/scss">
   .wrap {
-    height: 100px;
-    width: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 80px;
+    min-width: 200px;
     border: solid 1px #757575;
     border-radius: 8px;
 
     .message-wrap {
       color: white;
-      h3,
-      h4 {
+      h5,
+      p {
         margin: 10px;
       }
 
-      h3 {
+      p {
+        font-weight: bold;
+      }
+
+      h5 {
         color: rgb(224, 224, 224);
       }
     }
@@ -73,15 +80,15 @@
     class:msgError={messageObj.isError}
     in:fly={{ x: -100, duration: 1000, easing: quintOut }}
     out:fly={{ x: -100, duration: 800, easing: quintOut }}
-    on:introend={() => closeMessage(true)}
+    on:introend={() => !messageObj.isError && closeMessage(true)}
     on:click={() => closeMessage()}>
 
     <div class="message-wrap">
       {#if messageObj.isError}
-        <h3>Error</h3>
+        <h5>Error</h5>
       {/if}
 
-      <h4>{messageObj.text}</h4>
+      <p>{messageObj.text}</p>
     </div>
   </div>
 {/if}
