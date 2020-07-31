@@ -61,7 +61,6 @@
     fullwidth
     lineRipple={false}
     bind:value
-    on:change={() => alert('asdasd')}
     {label}
     input$aria-controls="helper-text-fullwidth"
     input$aria-describedby="helper-text-fullwidth" />
